@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #f6eedf;
+  --color-surface: #fffdf8;
+
+  --color-text-primary: #1d1b19;
+  --color-text-secondary: #756d63;
+  --color-text-tertiary: #9c9388;
+  --color-text-disabled: #bdb5aa;
+
+  --color-border: #e2d7c7;
+  --color-border-strong: #d2c4b1;
+
+  --color-primary: #1f4e5f;
+  --color-primary-hover: #173c48;
+
+  --color-accent: #ef5d7a;
+  --color-accent-hover: #d84c67;
+
+  --color-muted: #efe5d6;
+
+  --color-success: #4f765e;
+  --color-error: #c84b55;
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --radius-control: 0.625rem;
+  --radius-panel: 0.875rem;
+  --aspect-mobile-shell: 9 / 19.5;
+}
+
+@layer base {
+  *,
+  ::before,
+  ::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    min-height: 100%;
+    background: var(--color-background);
+  }
+
+  body {
+    min-width: 320px;
+    min-height: 100dvh;
+    margin: 0;
+    background: var(--color-background);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@layer components {
+  .safe-area-bottom {
+    padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+  }
+
+  .page-content {
+    padding-inline: 1.25rem;
+  }
+
+  .type-display {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 2.5rem;
+    letter-spacing: -0.025em;
+  }
+
+  .type-heading {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 2rem;
+    letter-spacing: -0.02em;
+  }
+
+  .type-subheading {
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.75rem;
+  }
+
+  .type-title {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.5rem;
+  }
+
+  .type-body {
+    font-size: 0.9375rem;
+    font-weight: 400;
+    line-height: 1.375rem;
+  }
+
+  .type-body-small {
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.25rem;
+  }
+
+  .type-caption {
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1.125rem;
+  }
+}
