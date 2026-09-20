@@ -1,5 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 
+import { getAuthConfig } from "@/features/auth/config/authConfig";
+import {
+  createCodeVerifier,
+  createKakaoAuthorizationUrl,
+  createS256CodeChallenge,
+  createSecureRandomValue,
+} from "@/features/auth/lib/kakaoAuthorization";
+import {
+  clearKakaoLoginTransaction,
+  saveKakaoLoginTransaction,
+} from "@/features/auth/storage/kakaoLoginTransaction";
 import type { LoginFeedback, LoginStatus } from "@/features/auth/types/auth";
 
 const feedbackDuration: Record<LoginFeedback["kind"], number> = {
@@ -25,11 +36,36 @@ export function useLogin() {
     return () => window.clearTimeout(timeoutId);
   }, [feedback]);
 
-  const beginLogin = useCallback(() => {
+  const beginLogin = useCallback(async () => {
     setFeedback(null);
+    setStatus("loading");
 
-    // TODO: Connect the confirmed Kakao authentication flow here. Do not set
-    // loading until the selected SDK, redirect, or API contract is available.
+    try {
+      const { kakaoRedirectUri, kakaoRestApiKey } = getAuthConfig();
+      const state = createSecureRandomValue();
+      const nonce = createSecureRandomValue();
+      const codeVerifier = createCodeVerifier();
+      const codeChallenge = await createS256CodeChallenge(codeVerifier);
+
+      saveKakaoLoginTransaction({ codeVerifier, nonce, state });
+
+      window.location.assign(
+        createKakaoAuthorizationUrl({
+          clientId: kakaoRestApiKey,
+          codeChallenge,
+          nonce,
+          redirectUri: kakaoRedirectUri,
+          state,
+        }),
+      );
+    } catch {
+      clearKakaoLoginTransaction();
+      setStatus("server-error");
+      setFeedback({
+        kind: "server-error",
+        message: "지금은 로그인할 수 없어요. 잠시 후 다시 시도해 주세요",
+      });
+    }
   }, []);
 
   const handleLoginCancelled = useCallback(() => {
@@ -54,8 +90,6 @@ export function useLogin() {
   }, []);
 
   const handleLoginSuccess = useCallback(() => {
-    // TODO: Use the confirmed response contract to distinguish returning and
-    // new members, then restore the prior page or begin onboarding.
     setFeedback(null);
     setStatus("success");
   }, []);
