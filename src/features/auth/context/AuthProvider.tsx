@@ -1,6 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
+import {
+  clearAccessToken,
+  getAccessToken,
+  setAccessToken,
+  subscribeAccessToken,
+} from "@/features/auth/lib/accessTokenStore";
 import { AuthContext } from "@/features/auth/context/authContext";
 
 interface AuthProviderProps {
@@ -8,12 +14,17 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [accessToken, setAccessTokenState] = useState<string | null>(
+    getAccessToken,
+  );
+
+  useEffect(() => subscribeAccessToken(setAccessTokenState), []);
 
   return (
     <AuthContext.Provider
       value={{
         accessToken,
+        clearAccessToken,
         isAuthenticated: accessToken !== null,
         setAccessToken,
       }}
