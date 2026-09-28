@@ -1,24 +1,25 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #f6eedf;
-  --color-surface: #fffdf8;
+  --color-background: #fcfaf7;
+  --color-surface: #ffffff;
 
-  --color-text-primary: #1d1b19;
-  --color-text-secondary: #756d63;
-  --color-text-tertiary: #9c9388;
-  --color-text-disabled: #bdb5aa;
+  --color-text-primary: #24211f;
+  --color-text-secondary: #6f6963;
+  --color-text-tertiary: #9a938c;
+  --color-text-disabled: #c7bfb4;
 
-  --color-border: #e2d7c7;
-  --color-border-strong: #d2c4b1;
+  --color-border: #e8e1d8;
+  --color-border-strong: #d8cec2;
 
-  --color-primary: #1f4e5f;
-  --color-primary-hover: #173c48;
+  --color-primary: #252a2c;
+  --color-primary-hover: #1a1d1e;
 
-  --color-accent: #ef5d7a;
-  --color-accent-hover: #d84c67;
+  --color-accent: #d95f73;
+  --color-accent-hover: #c14a5e;
+  --color-accent-soft: #fbecef;
 
-  --color-muted: #efe5d6;
+  --color-muted: #f7f3ed;
 
   --color-success: #4f765e;
   --color-error: #c84b55;
@@ -82,9 +83,9 @@
   }
 
   .type-heading {
-    font-size: 1.5rem;
+    font-size: 1.375rem;
     font-weight: 700;
-    line-height: 2rem;
+    line-height: 1.75rem;
     letter-spacing: -0.02em;
   }
 
@@ -95,7 +96,7 @@
   }
 
   .type-title {
-    font-size: 1.0625rem;
+    font-size: 1rem;
     font-weight: 600;
     line-height: 1.5rem;
   }
@@ -113,8 +114,8 @@
   }
 
   .type-caption {
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     font-weight: 400;
-    line-height: 1.125rem;
+    line-height: 1.1875rem;
   }
 }
