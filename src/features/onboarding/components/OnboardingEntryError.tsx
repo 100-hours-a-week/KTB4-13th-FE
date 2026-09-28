@@ -1,5 +1,5 @@
 import { Toast } from "@/common/components/Toast";
-import { RetryButton } from "@/features/onboarding/components/RetryButton";
+import { RetryButton } from "@/common/components/RetryButton";
 
 interface OnboardingEntryErrorProps {
   onRetry: () => void;
