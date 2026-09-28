@@ -15,8 +15,8 @@ export function Router() {
         <Route element={<RedirectAuthenticatedUser />}>
           <Route path="/login" element={<LoginPage />} />
         </Route>
+        <Route path="/" element={<HomePage />} />
         <Route element={<RequireAuth />}>
-          <Route path="/" element={<HomePage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
         </Route>
         <Route path="*" element={<Navigate replace to="/login" />} />
