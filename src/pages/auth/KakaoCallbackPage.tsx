@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Navigate } from "react-router-dom";
 
 import { Toast } from "@/common/components/Toast";
 import { loginWithKakao } from "@/features/auth/api/kakaoLoginApi";
@@ -7,6 +8,8 @@ import {
   clearKakaoLoginTransaction,
   readKakaoLoginTransaction,
 } from "@/features/auth/storage/kakaoLoginTransaction";
+import { OnboardingEntryError } from "@/features/onboarding/components/OnboardingEntryError";
+import { useOnboardingEntryPath } from "@/features/onboarding/hooks/useOnboardingEntryPath";
 
 type CallbackStatus = "loading" | "success" | "error";
 
@@ -23,6 +26,7 @@ export function KakaoCallbackPage() {
   const hasProcessed = useRef(false);
   const [status, setStatus] = useState<CallbackStatus>("loading");
   const [message, setMessage] = useState("로그인 처리 중이에요");
+  const { entry, retry } = useOnboardingEntryPath(status === "success");
 
   useEffect(() => {
     if (hasProcessed.current) {
@@ -87,6 +91,14 @@ export function KakaoCallbackPage() {
 
     void processCallback();
   }, [setAccessToken]);
+
+  if (status === "success" && entry.kind === "ready") {
+    return <Navigate replace to={entry.path} />;
+  }
+
+  if (status === "success" && entry.kind === "error") {
+    return <OnboardingEntryError onRetry={retry} />;
+  }
 
   return (
     <main className="flex min-h-dvh items-center justify-center bg-surface px-5 py-10">

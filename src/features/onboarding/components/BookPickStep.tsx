@@ -1,4 +1,4 @@
-import { sampleBooks } from "@/features/onboarding/mocks/onboardingMockData";
+import { onboardingBookCandidates } from "@/features/onboarding/mocks/onboardingBookCandidates";
 
 interface BookPickStepProps {
   onToggleBook: (id: string) => void;
@@ -8,7 +8,7 @@ interface BookPickStepProps {
 export function BookPickStep({ onToggleBook, selectedBookIds }: BookPickStepProps) {
   return (
     <div className="grid grid-cols-3 gap-3">
-      {sampleBooks.map((book) => {
+      {onboardingBookCandidates.map((book) => {
         const isSelected = selectedBookIds.includes(book.id);
 
         return (

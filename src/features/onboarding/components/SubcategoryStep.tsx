@@ -1,45 +1,39 @@
 import { OnboardingQuestionHeader } from "@/features/onboarding/components/OnboardingQuestionHeader";
 import { SelectableOption } from "@/features/onboarding/components/SelectableOption";
-import { subcategoryMap } from "@/features/onboarding/mocks/onboardingMockData";
-import type { Category } from "@/features/onboarding/types/onboarding";
-
-const MIN_SUBCATEGORY_SELECTION = 1;
-const MAX_SUBCATEGORY_SELECTION = 9;
+import { formatSelectionCounter } from "@/features/onboarding/lib/selectionCounter";
+import { groupSubcategoryOptions } from "@/features/onboarding/lib/subcategoryParentAdapter";
+import type { OnboardingQuestion } from "@/features/onboarding/types/onboarding";
 
 interface SubcategoryStepProps {
-  onToggleSubcategory: (id: string) => void;
-  selectedMainCategories: Category[];
-  subcategoryIds: string[];
+  onToggleOption: (optionId: number) => void;
+  question: OnboardingQuestion;
+  selectedOptionIds: number[];
 }
 
 export function SubcategoryStep({
-  onToggleSubcategory,
-  selectedMainCategories,
-  subcategoryIds,
+  onToggleOption,
+  question,
+  selectedOptionIds,
 }: SubcategoryStepProps) {
   return (
     <div className="flex flex-col gap-6">
       <OnboardingQuestionHeader
-        counter={`${subcategoryIds.length}개 선택 · 최소 ${MIN_SUBCATEGORY_SELECTION}개 · 최대 ${MAX_SUBCATEGORY_SELECTION}개`}
-        title={
-          <>
-            더 나은 맞춤 추천을 위해,
-            <br />
-            세부 카테고리를 선택해 주세요
-          </>
-        }
+        counter={formatSelectionCounter(selectedOptionIds.length, question)}
+        title={question.content}
       />
       <div className="flex flex-col gap-6">
-        {selectedMainCategories.map((category) => (
-          <div key={category.id}>
-            <h3 className="type-title text-text-primary">{category.label}</h3>
+        {groupSubcategoryOptions(question.options).map((group) => (
+          <div key={group.key}>
+            {group.label ? (
+              <h3 className="type-title text-text-primary">{group.label}</h3>
+            ) : null}
             <div className="mt-2.5 flex flex-wrap gap-2">
-              {(subcategoryMap[category.id] ?? []).map((subcategory) => (
+              {group.options.map((option) => (
                 <SelectableOption
-                  isSelected={subcategoryIds.includes(subcategory.id)}
-                  key={subcategory.id}
-                  label={subcategory.label}
-                  onSelect={() => onToggleSubcategory(subcategory.id)}
+                  isSelected={selectedOptionIds.includes(option.optionId)}
+                  key={option.optionId}
+                  label={option.content}
+                  onSelect={() => onToggleOption(option.optionId)}
                   variant="chip"
                 />
               ))}
