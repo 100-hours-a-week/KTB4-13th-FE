@@ -1,3 +1,5 @@
+import { createApiUrl } from "@/common/api/apiUrl";
+
 export interface AuthHandlers {
   clearAccessToken: () => void;
   getAccessToken: () => string | null;
@@ -9,18 +11,6 @@ export interface HttpClient {
   fetchWithAuth: (path: string, init?: RequestInit) => Promise<Response>;
 }
 
-const API_BASE_URL_ENV_KEY = "VITE_API_BASE_URL";
-
-function getApiBaseUrl() {
-  const value = import.meta.env.VITE_API_BASE_URL;
-
-  if (!value?.trim()) {
-    throw new Error(`${API_BASE_URL_ENV_KEY} 환경변수가 설정되지 않았습니다.`);
-  }
-
-  return value.trim();
-}
-
 // Injects auth capability so this client never imports auth feature code.
 export function createHttpClient(authHandlers: AuthHandlers): HttpClient {
   let reissuePromise: Promise<string | null> | null = null;
@@ -28,17 +18,15 @@ export function createHttpClient(authHandlers: AuthHandlers): HttpClient {
   function sendRequest(
     path: string,
     init: RequestInit,
-    overrideAccessToken?: string,
+    accessToken: string | null,
   ) {
-    const endpoint = new URL(path, getApiBaseUrl());
-    const accessToken = overrideAccessToken ?? authHandlers.getAccessToken();
     const headers = new Headers(init.headers);
 
     if (accessToken) {
       headers.set("Authorization", `Bearer ${accessToken}`);
     }
 
-    return fetch(endpoint, {
+    return fetch(createApiUrl(path), {
       ...init,
       credentials: "include",
       headers,
@@ -71,13 +59,19 @@ export function createHttpClient(authHandlers: AuthHandlers): HttpClient {
     path: string,
     init: RequestInit = {},
   ): Promise<Response> {
-    const response = await sendRequest(path, init);
+    const requestAccessToken = authHandlers.getAccessToken();
+    const response = await sendRequest(path, init, requestAccessToken);
 
     if (response.status !== 401) {
       return response;
     }
 
-    const newAccessToken = await reissueAccessTokenOnce();
+    // A concurrent request may have finished reissuing while this one was in flight.
+    const currentAccessToken = authHandlers.getAccessToken();
+    const newAccessToken =
+      currentAccessToken && currentAccessToken !== requestAccessToken
+        ? currentAccessToken
+        : await reissueAccessTokenOnce();
 
     if (!newAccessToken) {
       return response;

@@ -1,5 +1,4 @@
 interface AuthConfig {
-  apiBaseUrl: string;
   kakaoRedirectUri: string;
   kakaoRestApiKey: string;
 }
@@ -14,10 +13,6 @@ function requireEnvironmentValue(name: string, value: string | undefined) {
 
 export function getAuthConfig(): AuthConfig {
   return {
-    apiBaseUrl: requireEnvironmentValue(
-      "VITE_API_BASE_URL",
-      import.meta.env.VITE_API_BASE_URL,
-    ),
     kakaoRedirectUri: requireEnvironmentValue(
       "VITE_KAKAO_REDIRECT_URI",
       import.meta.env.VITE_KAKAO_REDIRECT_URI,

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
 
 import {
@@ -14,11 +14,7 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [accessToken, setAccessTokenState] = useState<string | null>(
-    getAccessToken,
-  );
-
-  useEffect(() => subscribeAccessToken(setAccessTokenState), []);
+  const accessToken = useSyncExternalStore(subscribeAccessToken, getAccessToken);
 
   return (
     <AuthContext.Provider

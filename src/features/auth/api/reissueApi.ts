@@ -1,4 +1,5 @@
-import { getAuthConfig } from "@/features/auth/config/authConfig";
+import { createApiUrl } from "@/common/api/apiUrl";
+import { readAccessToken } from "@/features/auth/api/accessTokenResponse";
 
 export type ReissueApiResult =
   | {
@@ -9,32 +10,12 @@ export type ReissueApiResult =
       ok: false;
     };
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-function extractAccessToken(payload: unknown) {
-  if (
-    !isRecord(payload) ||
-    payload.result !== "SUCCESS" ||
-    payload.error !== null ||
-    !isRecord(payload.data) ||
-    typeof payload.data.accessToken !== "string" ||
-    !payload.data.accessToken.trim()
-  ) {
-    return null;
-  }
-
-  return payload.data.accessToken;
-}
-
 // Uses fetch directly (not httpClient) so a 401 here can't re-trigger reissue.
 export async function reissueAccessToken(): Promise<ReissueApiResult> {
   let endpoint: URL;
 
   try {
-    const { apiBaseUrl } = getAuthConfig();
-    endpoint = new URL("/api/v1/auth/reissue", apiBaseUrl);
+    endpoint = createApiUrl("/api/v1/auth/reissue");
   } catch {
     return { ok: false };
   }
@@ -50,19 +31,11 @@ export async function reissueAccessToken(): Promise<ReissueApiResult> {
     return { ok: false };
   }
 
-  if (!response.ok) {
+  const accessToken = await readAccessToken(response);
+
+  if (!accessToken) {
     return { ok: false };
   }
 
-  try {
-    const accessToken = extractAccessToken(await response.json());
-
-    if (!accessToken) {
-      return { ok: false };
-    }
-
-    return { accessToken, ok: true };
-  } catch {
-    return { ok: false };
-  }
+  return { accessToken, ok: true };
 }
