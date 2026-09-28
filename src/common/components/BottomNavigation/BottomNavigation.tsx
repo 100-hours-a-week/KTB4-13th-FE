@@ -6,7 +6,7 @@ import {
   HomeIcon,
   SparkleIcon,
   UserIcon,
-} from "@/pages/home/components/HomeIcons";
+} from "@/common/components/AppIcons";
 
 type NavIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -20,13 +20,13 @@ const unavailableTabs: { icon: NavIcon; label: string }[] = [
 const tabClassName =
   "relative flex min-h-14 w-full flex-col items-center justify-center gap-0.5 type-caption transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary";
 
-interface HomeBottomNavigationProps {
+interface BottomNavigationProps {
   onUnavailableTabClick: () => void;
 }
 
-export function HomeBottomNavigation({
+export function BottomNavigation({
   onUnavailableTabClick,
-}: HomeBottomNavigationProps) {
+}: BottomNavigationProps) {
   return (
     <nav
       aria-label="주요 메뉴"

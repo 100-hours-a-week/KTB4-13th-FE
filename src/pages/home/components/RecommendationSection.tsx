@@ -1,4 +1,4 @@
-import { BookCover } from "@/pages/home/components/BookCover";
+import { BookCover } from "@/common/components/BookCover";
 import { HomeSectionHeader } from "@/pages/home/components/HomeSectionHeader";
 import { sampleRecommendedBooks } from "@/pages/home/mocks/sampleRecommendedBooks";
 

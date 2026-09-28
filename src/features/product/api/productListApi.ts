@@ -5,6 +5,12 @@ import type {
   ProductListPage,
 } from "@/features/product/types/product";
 
+export interface PopularProductQuery {
+  categoryId?: number;
+  cursor?: string;
+  limit: number;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -12,8 +18,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function isProductListItem(value: unknown): value is ProductListItem {
   return (
     isRecord(value) &&
+    typeof value.author === "string" &&
+    (value.discountedPrice === null ||
+      typeof value.discountedPrice === "number") &&
     typeof value.itemId === "number" &&
     typeof value.itemName === "string" &&
+    typeof value.salePrice === "number" &&
     (value.thumbnailUrl === null || typeof value.thumbnailUrl === "string")
   );
 }
@@ -29,16 +39,24 @@ function isProductListPage(data: unknown): data is ProductListPage {
 
 // GET /api/v1/items requires authentication under the current backend security config.
 export async function fetchPopularProducts(
-  limit: number,
+  query: PopularProductQuery,
 ): Promise<ProductListPage | null> {
-  const query = new URLSearchParams({
+  const searchParams = new URLSearchParams({
     sort: "POPULARITY",
-    limit: String(limit),
+    limit: String(query.limit),
   });
+
+  if (query.categoryId !== undefined) {
+    searchParams.set("categoryId", String(query.categoryId));
+  }
+
+  if (query.cursor !== undefined) {
+    searchParams.set("cursor", query.cursor);
+  }
 
   try {
     const result = await parseApiResponse(
-      await fetchWithAuth(`/api/v1/items?${query.toString()}`),
+      await fetchWithAuth(`/api/v1/items?${searchParams.toString()}`),
     );
 
     return result.ok && isProductListPage(result.data) ? result.data : null;

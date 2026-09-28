@@ -1,6 +1,6 @@
+import { BookCover } from "@/common/components/BookCover";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
-import { BookCover } from "@/pages/home/components/BookCover";
 import { HomeSectionHeader } from "@/pages/home/components/HomeSectionHeader";
 import { useBookRanking } from "@/pages/home/hooks/useBookRanking";
 
