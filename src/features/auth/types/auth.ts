@@ -19,3 +19,5 @@ export type LoginFeedback =
       kind: "server-error";
       message: "지금은 로그인할 수 없어요. 잠시 후 다시 시도해 주세요";
     };
+
+export type AuthStatus = "initializing" | "authenticated" | "unauthenticated";

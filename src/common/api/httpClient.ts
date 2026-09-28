@@ -9,6 +9,7 @@ export interface AuthHandlers {
 
 export interface HttpClient {
   fetchWithAuth: (path: string, init?: RequestInit) => Promise<Response>;
+  reissueAccessTokenOnce: () => Promise<string | null>;
 }
 
 // Injects auth capability so this client never imports auth feature code.
@@ -34,14 +35,29 @@ export function createHttpClient(authHandlers: AuthHandlers): HttpClient {
   }
 
   async function performReissue(): Promise<string | null> {
+    const accessTokenBeforeReissue = authHandlers.getAccessToken();
+    let reissuedAccessToken: string | null;
+
     try {
-      const accessToken = await authHandlers.reissue();
-      authHandlers.setAccessToken(accessToken);
-      return accessToken;
+      reissuedAccessToken = await authHandlers.reissue();
     } catch {
-      authHandlers.clearAccessToken();
-      return null;
+      reissuedAccessToken = null;
     }
+
+    // A login or logout that finished during this reissue is newer, so keep its result.
+    const currentAccessToken = authHandlers.getAccessToken();
+
+    if (currentAccessToken !== accessTokenBeforeReissue) {
+      return currentAccessToken;
+    }
+
+    if (reissuedAccessToken) {
+      authHandlers.setAccessToken(reissuedAccessToken);
+    } else {
+      authHandlers.clearAccessToken();
+    }
+
+    return reissuedAccessToken;
   }
 
   function reissueAccessTokenOnce(): Promise<string | null> {
@@ -80,5 +96,5 @@ export function createHttpClient(authHandlers: AuthHandlers): HttpClient {
     return sendRequest(path, init, newAccessToken);
   }
 
-  return { fetchWithAuth };
+  return { fetchWithAuth, reissueAccessTokenOnce };
 }
