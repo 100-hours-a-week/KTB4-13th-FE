@@ -23,4 +23,4 @@ const authHttpClient = createHttpClient({
   setAccessToken,
 });
 
-export const { fetchWithAuth } = authHttpClient;
+export const { fetchWithAuth, reissueAccessTokenOnce } = authHttpClient;

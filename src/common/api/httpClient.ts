@@ -9,6 +9,7 @@ export interface AuthHandlers {
 
 export interface HttpClient {
   fetchWithAuth: (path: string, init?: RequestInit) => Promise<Response>;
+  reissueAccessTokenOnce: () => Promise<string | null>;
 }
 
 // Injects auth capability so this client never imports auth feature code.
@@ -80,5 +81,5 @@ export function createHttpClient(authHandlers: AuthHandlers): HttpClient {
     return sendRequest(path, init, newAccessToken);
   }
 
-  return { fetchWithAuth };
+  return { fetchWithAuth, reissueAccessTokenOnce };
 }
