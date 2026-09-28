@@ -9,7 +9,7 @@ import { OnboardingActions } from "@/features/onboarding/components/OnboardingAc
 import { OnboardingHeader } from "@/features/onboarding/components/OnboardingHeader";
 import { OnboardingQuestionHeader } from "@/features/onboarding/components/OnboardingQuestionHeader";
 import { ReadingTimeStep } from "@/features/onboarding/components/ReadingTimeStep";
-import { RetryButton } from "@/features/onboarding/components/RetryButton";
+import { RetryButton } from "@/common/components/RetryButton";
 import { SubcategoryStep } from "@/features/onboarding/components/SubcategoryStep";
 import { useOnboardingFlow } from "@/features/onboarding/hooks/useOnboardingFlow";
 import { usePersonalizationConsent } from "@/features/onboarding/hooks/usePersonalizationConsent";
