@@ -1,28 +1,28 @@
 import { OnboardingQuestionHeader } from "@/features/onboarding/components/OnboardingQuestionHeader";
 import { SelectableOptionList } from "@/features/onboarding/components/SelectableOptionList";
-import { bookSelectionCriteria } from "@/features/onboarding/mocks/onboardingMockData";
-
-const MAX_CRITERIA_SELECTION = 3;
+import type { OnboardingQuestion } from "@/features/onboarding/types/onboarding";
 
 interface BookCriteriaStepProps {
-  criteriaIds: string[];
-  onToggleCriteria: (id: string) => void;
+  onToggleOption: (optionId: number) => void;
+  question: OnboardingQuestion;
+  selectedOptionIds: number[];
 }
 
 export function BookCriteriaStep({
-  criteriaIds,
-  onToggleCriteria,
+  onToggleOption,
+  question,
+  selectedOptionIds,
 }: BookCriteriaStepProps) {
   return (
     <div className="flex flex-col gap-6">
       <OnboardingQuestionHeader
-        counter={`${criteriaIds.length}/${MAX_CRITERIA_SELECTION}개 선택`}
-        title="어떤 기준으로 책을 고르시나요?"
+        counter={`${selectedOptionIds.length}/${question.maxSelection ?? question.options.length}개 선택`}
+        title={question.content}
       />
       <SelectableOptionList
-        onToggle={onToggleCriteria}
-        options={bookSelectionCriteria}
-        selectedIds={criteriaIds}
+        onToggle={onToggleOption}
+        options={question.options}
+        selectedIds={selectedOptionIds}
       />
     </div>
   );

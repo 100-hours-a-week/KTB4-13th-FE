@@ -1,39 +1,45 @@
 import { useEffect, useState } from "react";
 
 import {
-  mainCategories,
-  subcategoryMap,
-} from "@/features/onboarding/mocks/onboardingMockData";
-import type { OnboardingStep } from "@/features/onboarding/types/onboarding";
+  fetchOnboardingProgress,
+  fetchOnboardingQuestion,
+  saveOnboardingAnswers,
+} from "@/features/onboarding/api/onboardingApi";
+import {
+  QUESTION_ID_BY_STEP,
+  getResumeStep,
+  isQuestionStep,
+} from "@/features/onboarding/lib/onboardingSteps";
+import type {
+  OnboardingQuestion,
+  OnboardingStep,
+} from "@/features/onboarding/types/onboarding";
 
 const TOTAL_STEPS = 5;
-const MAX_READING_TIME_SELECTION = 5;
-const MAX_CRITERIA_SELECTION = 3;
-const MAX_MAIN_CATEGORY_SELECTION = 3;
-const MAX_SUBCATEGORY_SELECTION = 9;
 const LIMIT_NOTICE_DURATION_MS = 2_000;
 
-function toggleWithLimit(ids: string[], id: string, max: number) {
-  if (ids.includes(id)) {
-    return { ids: ids.filter((selectedId) => selectedId !== id), limitReached: false };
-  }
-
-  if (ids.length >= max) {
-    return { ids, limitReached: true };
-  }
-
-  return { ids: [...ids, id], limitReached: false };
-}
+type LoadStatus = "loading" | "error" | "ready";
 
 export function useOnboardingFlow() {
+  const [progressStatus, setProgressStatus] = useState<LoadStatus>("loading");
+  const [progressRequestKey, setProgressRequestKey] = useState(0);
+  const [isCompleted, setIsCompleted] = useState(false);
   const [step, setStep] = useState<OnboardingStep>(1);
-  const [hasAgreedToPrivacy, setHasAgreedToPrivacy] = useState(false);
-  const [readingTimeIds, setReadingTimeIds] = useState<string[]>([]);
-  const [criteriaIds, setCriteriaIds] = useState<string[]>([]);
-  const [mainCategoryIds, setMainCategoryIds] = useState<string[]>([]);
-  const [subcategoryIds, setSubcategoryIds] = useState<string[]>([]);
-  const [selectedBookIds, setSelectedBookIds] = useState<string[]>([]);
+  const [resumeStep, setResumeStep] = useState<OnboardingStep>(1);
+  const [selectedOptionIdsByQuestion, setSelectedOptionIdsByQuestion] =
+    useState<Record<number, number[]>>({});
+  const [question, setQuestion] = useState<OnboardingQuestion | null>(null);
+  const [questionStatus, setQuestionStatus] = useState<LoadStatus>("loading");
+  const [questionRequestKey, setQuestionRequestKey] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasSaveError, setHasSaveError] = useState(false);
   const [limitNotice, setLimitNotice] = useState<string | null>(null);
+  const [selectedBookIds, setSelectedBookIds] = useState<string[]>([]);
+
+  const questionId = isQuestionStep(step) ? QUESTION_ID_BY_STEP[step] : null;
+  const selectedOptionIds = question
+    ? (selectedOptionIdsByQuestion[question.questionId] ?? [])
+    : [];
 
   useEffect(() => {
     if (!limitNotice) {
@@ -47,73 +53,163 @@ export function useOnboardingFlow() {
     return () => window.clearTimeout(timeoutId);
   }, [limitNotice]);
 
-  const goToNextStep = () => {
-    setStep((current) =>
-      current < TOTAL_STEPS ? ((current + 1) as OnboardingStep) : current,
+  useEffect(() => {
+    let isActive = true;
+
+    void fetchOnboardingProgress().then((result) => {
+      if (!isActive) {
+        return;
+      }
+
+      if (result.kind === "error") {
+        setProgressStatus("error");
+        return;
+      }
+
+      if (result.kind === "found") {
+        setIsCompleted(result.progress.status === "COMPLETED");
+        setSelectedOptionIdsByQuestion(
+          Object.fromEntries(
+            result.progress.answers.map((answer) => [
+              answer.questionId,
+              answer.optionIds,
+            ]),
+          ),
+        );
+        setResumeStep(getResumeStep(result.progress.answers));
+      }
+
+      setProgressStatus("ready");
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, [progressRequestKey]);
+
+  useEffect(() => {
+    if (progressStatus !== "ready" || questionId === null) {
+      return undefined;
+    }
+
+    let isActive = true;
+
+    void fetchOnboardingQuestion(questionId).then((loadedQuestion) => {
+      if (!isActive) {
+        return;
+      }
+
+      if (!loadedQuestion) {
+        setQuestionStatus("error");
+        return;
+      }
+
+      // Drop selections the server no longer offers, e.g. Q4 options after Q3 changed.
+      const offeredOptionIds = new Set(
+        loadedQuestion.options.map((option) => option.optionId),
+      );
+
+      setSelectedOptionIdsByQuestion((current) => ({
+        ...current,
+        [questionId]: (current[questionId] ?? []).filter((optionId) =>
+          offeredOptionIds.has(optionId),
+        ),
+      }));
+      setQuestion(loadedQuestion);
+      setQuestionStatus("ready");
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, [progressStatus, questionId, questionRequestKey]);
+
+  const moveToStep = (nextStep: OnboardingStep) => {
+    setStep(nextStep);
+    setQuestion(null);
+    setQuestionStatus("loading");
+    setHasSaveError(false);
+    setLimitNotice(null);
+  };
+
+  const retryProgress = () => {
+    setProgressStatus("loading");
+    setProgressRequestKey((current) => current + 1);
+  };
+
+  const retryQuestion = () => {
+    setQuestionStatus("loading");
+    setQuestionRequestKey((current) => current + 1);
+  };
+
+  const toggleOption = (optionId: number) => {
+    if (!question) {
+      return;
+    }
+
+    const { maxSelection, questionId: currentQuestionId } = question;
+
+    if (selectedOptionIds.includes(optionId)) {
+      setSelectedOptionIdsByQuestion((current) => ({
+        ...current,
+        [currentQuestionId]: selectedOptionIds.filter((id) => id !== optionId),
+      }));
+      return;
+    }
+
+    if (maxSelection !== null && selectedOptionIds.length >= maxSelection) {
+      setLimitNotice(`최대 ${maxSelection}개까지 선택할 수 있어요`);
+      return;
+    }
+
+    setSelectedOptionIdsByQuestion((current) => ({
+      ...current,
+      [currentQuestionId]: [...selectedOptionIds, optionId],
+    }));
+  };
+
+  const isSelectionValid =
+    question !== null &&
+    selectedOptionIds.length >= question.minSelection &&
+    (question.maxSelection === null ||
+      selectedOptionIds.length <= question.maxSelection);
+
+  // Moves forward only after the answer is saved, so a failed save never skips a step.
+  const saveAnswersAndGoNext = async () => {
+    if (!question || !isSelectionValid || isSaving) {
+      return;
+    }
+
+    setIsSaving(true);
+    setHasSaveError(false);
+
+    const isSaved = await saveOnboardingAnswers(
+      question.questionId,
+      selectedOptionIds,
     );
+
+    setIsSaving(false);
+
+    if (!isSaved) {
+      setHasSaveError(true);
+      return;
+    }
+
+    // Consent is not stored server-side yet, so a returning user re-confirms it on Q1
+    // and then continues from the first question without a saved answer.
+    const nextStep =
+      step === 1 && resumeStep > 2
+        ? resumeStep
+        : (Math.min(step + 1, TOTAL_STEPS) as OnboardingStep);
+
+    setResumeStep(1);
+    moveToStep(nextStep);
   };
 
   const goToPreviousStep = () => {
-    setStep((current) => (current > 1 ? ((current - 1) as OnboardingStep) : current));
-  };
-
-  const toggleReadingTime = (id: string) => {
-    const result = toggleWithLimit(
-      readingTimeIds,
-      id,
-      MAX_READING_TIME_SELECTION,
-    );
-    setReadingTimeIds(result.ids);
-  };
-
-  const toggleCriteria = (id: string) => {
-    const result = toggleWithLimit(criteriaIds, id, MAX_CRITERIA_SELECTION);
-    setCriteriaIds(result.ids);
-  };
-
-  const toggleMainCategory = (id: string) => {
-    if (mainCategoryIds.includes(id)) {
-      const removedSubcategoryIds = new Set(
-        (subcategoryMap[id] ?? []).map((subcategory) => subcategory.id),
-      );
-
-      setMainCategoryIds((current) =>
-        current.filter((categoryId) => categoryId !== id),
-      );
-      // 대분류를 해제하면 그 대분류에 속한 세부 카테고리 선택값도 함께 제거한다.
-      setSubcategoryIds((current) =>
-        current.filter((subcategoryId) => !removedSubcategoryIds.has(subcategoryId)),
-      );
-      return;
+    if (step > 1) {
+      moveToStep((step - 1) as OnboardingStep);
     }
-
-    const result = toggleWithLimit(
-      mainCategoryIds,
-      id,
-      MAX_MAIN_CATEGORY_SELECTION,
-    );
-
-    if (result.limitReached) {
-      setLimitNotice("최대 3개까지 선택할 수 있어요");
-      return;
-    }
-
-    setMainCategoryIds(result.ids);
-  };
-
-  const toggleSubcategory = (id: string) => {
-    const result = toggleWithLimit(
-      subcategoryIds,
-      id,
-      MAX_SUBCATEGORY_SELECTION,
-    );
-
-    if (result.limitReached) {
-      setLimitNotice("태그는 최대 9개까지 선택할 수 있어요");
-      return;
-    }
-
-    setSubcategoryIds(result.ids);
   };
 
   const toggleBook = (id: string) => {
@@ -124,46 +220,24 @@ export function useOnboardingFlow() {
     );
   };
 
-  const selectedMainCategories = mainCategories.filter((category) =>
-    mainCategoryIds.includes(category.id),
-  );
-
-  const isCurrentStepValid = (() => {
-    switch (step) {
-      case 1:
-        return hasAgreedToPrivacy && readingTimeIds.length >= 1;
-      case 2:
-        return criteriaIds.length >= 1;
-      case 3:
-        return mainCategoryIds.length >= 1;
-      case 4:
-        return subcategoryIds.length >= 1;
-      case 5:
-        return true;
-      default:
-        return false;
-    }
-  })();
-
   return {
-    criteriaIds,
-    goToNextStep,
     goToPreviousStep,
-    hasAgreedToPrivacy,
-    isCurrentStepValid,
+    hasSaveError,
+    isCompleted,
+    isSaving,
+    isSelectionValid,
     limitNotice,
-    mainCategoryIds,
-    readingTimeIds,
+    progressStatus,
+    question,
+    questionStatus,
+    retryProgress,
+    retryQuestion,
+    saveAnswersAndGoNext,
     selectedBookIds,
-    selectedMainCategories,
-    setHasAgreedToPrivacy,
+    selectedOptionIds,
     step,
-    subcategoryIds,
     toggleBook,
-    toggleCriteria,
-    toggleMainCategory,
-    toggleReadingTime,
-    toggleSubcategory,
+    toggleOption,
     totalSteps: TOTAL_STEPS,
   };
 }
