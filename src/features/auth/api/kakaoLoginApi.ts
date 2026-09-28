@@ -1,4 +1,5 @@
-import { getAuthConfig } from "@/features/auth/config/authConfig";
+import { createApiUrl } from "@/common/api/apiUrl";
+import { readAccessToken } from "@/features/auth/api/accessTokenResponse";
 
 interface KakaoLoginRequest {
   authorizationCode: string;
@@ -16,33 +17,13 @@ export type KakaoLoginApiResult =
       reason: "network-error" | "server-error";
     };
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-function extractAccessToken(payload: unknown) {
-  if (
-    !isRecord(payload) ||
-    payload.result !== "SUCCESS" ||
-    payload.error !== null ||
-    !isRecord(payload.data) ||
-    typeof payload.data.accessToken !== "string" ||
-    !payload.data.accessToken.trim()
-  ) {
-    return null;
-  }
-
-  return payload.data.accessToken;
-}
-
 export async function loginWithKakao(
   request: KakaoLoginRequest,
 ): Promise<KakaoLoginApiResult> {
   let endpoint: URL;
 
   try {
-    const { apiBaseUrl } = getAuthConfig();
-    endpoint = new URL("/api/v1/auth/kakao/login", apiBaseUrl);
+    endpoint = createApiUrl("/api/v1/auth/kakao/login");
   } catch {
     return { ok: false, reason: "server-error" };
   }
@@ -62,19 +43,11 @@ export async function loginWithKakao(
     return { ok: false, reason: "network-error" };
   }
 
-  if (!response.ok) {
+  const accessToken = await readAccessToken(response);
+
+  if (!accessToken) {
     return { ok: false, reason: "server-error" };
   }
 
-  try {
-    const accessToken = extractAccessToken(await response.json());
-
-    if (!accessToken) {
-      return { ok: false, reason: "server-error" };
-    }
-
-    return { accessToken, ok: true };
-  } catch {
-    return { ok: false, reason: "server-error" };
-  }
+  return { accessToken, ok: true };
 }
