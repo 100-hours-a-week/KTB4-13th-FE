@@ -2,8 +2,10 @@ import { parseApiResponse } from "@/common/api/apiResponse";
 import type { ApiResult } from "@/common/api/apiResponse";
 import { fetchWithAuth } from "@/features/auth/lib/httpClient";
 import type {
+  BookCandidate,
   OnboardingProgress,
   OnboardingQuestion,
+  PersonalizationConsent,
 } from "@/features/onboarding/types/onboarding";
 
 // Backend ONBOARDING_NOT_FOUND is exposed only as this code, which other onboarding 404s share.
@@ -52,9 +54,41 @@ function isOnboardingQuestion(data: unknown): data is OnboardingQuestion {
       (option) =>
         isRecord(option) &&
         typeof option.optionId === "number" &&
+        (option.parentOptionId === null ||
+          typeof option.parentOptionId === "number") &&
         typeof option.code === "string" &&
         typeof option.content === "string",
     )
+  );
+}
+
+function isBookCandidate(data: unknown): data is BookCandidate {
+  return (
+    isRecord(data) &&
+    typeof data.bookId === "number" &&
+    typeof data.title === "string" &&
+    typeof data.author === "string" &&
+    (data.coverImageUrl === null || typeof data.coverImageUrl === "string")
+  );
+}
+
+function isBookCandidatesResponse(
+  data: unknown,
+): data is { candidates: BookCandidate[] } {
+  return (
+    isRecord(data) &&
+    Array.isArray(data.candidates) &&
+    data.candidates.every(isBookCandidate)
+  );
+}
+
+function isPersonalizationConsent(
+  data: unknown,
+): data is PersonalizationConsent {
+  return (
+    isRecord(data) &&
+    typeof data.consented === "boolean" &&
+    (data.agreedAt === null || typeof data.agreedAt === "string")
   );
 }
 
@@ -114,4 +148,48 @@ export async function saveOnboardingAnswers(
   );
 
   return result?.ok === true;
+}
+
+export async function fetchOnboardingBookCandidates(): Promise<
+  BookCandidate[] | null
+> {
+  const result = await requestOnboardingApi("/api/v1/onboarding/books");
+
+  return result?.ok && isBookCandidatesResponse(result.data)
+    ? result.data.candidates
+    : null;
+}
+
+export async function saveOnboardingBooks(bookIds: number[]) {
+  const result = await requestOnboardingApi("/api/v1/onboarding/books", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ bookIds }),
+  });
+
+  return result?.ok === true;
+}
+
+export async function fetchPersonalizationConsent(): Promise<
+  PersonalizationConsent | null
+> {
+  const result = await requestOnboardingApi("/api/v1/onboarding/consent");
+
+  return result?.ok && isPersonalizationConsent(result.data)
+    ? result.data
+    : null;
+}
+
+export async function savePersonalizationConsent(
+  consented: boolean,
+): Promise<PersonalizationConsent | null> {
+  const result = await requestOnboardingApi("/api/v1/onboarding/consent", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ consented }),
+  });
+
+  return result?.ok && isPersonalizationConsent(result.data)
+    ? result.data
+    : null;
 }

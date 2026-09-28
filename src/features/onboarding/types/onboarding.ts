@@ -21,6 +21,7 @@ export interface OnboardingOption {
   code: string;
   content: string;
   optionId: number;
+  parentOptionId: number | null;
 }
 
 export interface OnboardingQuestion {
@@ -34,6 +35,12 @@ export interface OnboardingQuestion {
 
 export interface BookCandidate {
   author: string;
-  id: string;
+  bookId: number;
+  coverImageUrl: string | null;
   title: string;
+}
+
+export interface PersonalizationConsent {
+  agreedAt: string | null;
+  consented: boolean;
 }

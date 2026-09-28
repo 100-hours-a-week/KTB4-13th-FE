@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 
 import { Button } from "@/common/components/Button";
@@ -14,28 +15,39 @@ import { SubcategoryStep } from "@/features/onboarding/components/SubcategorySte
 import { useOnboardingFlow } from "@/features/onboarding/hooks/useOnboardingFlow";
 import { usePersonalizationConsent } from "@/features/onboarding/hooks/usePersonalizationConsent";
 
-// TODO(KTB4-13th-BE#129): Save selections with PUT /api/v1/onboarding/books once candidates come
-// from the backend. Mock candidate ids are not books.id values, so saving (and completing
-// onboarding) stays disabled instead of sending fake ids or an empty list.
-const BOOK_SAVE_UNAVAILABLE_NOTICE = "도서 저장은 준비 중이에요";
-
 export function OnboardingPage() {
   const navigate = useNavigate();
-  const { hasAgreedToPersonalization, setHasAgreedToPersonalization } =
-    usePersonalizationConsent();
+  const consentActionRef = useRef(false);
+  const [consentAction, setConsentAction] = useState<
+    "personalized" | "without-personalization" | null
+  >(null);
   const {
+    consentStatus,
+    hasAgreedToPersonalization,
+    hasConsentSaveError,
+    isSavingConsent,
+    retryConsent,
+    saveConsent,
+    setHasAgreedToPersonalization,
+  } = usePersonalizationConsent();
+  const {
+    bookCandidates,
+    bookCandidatesStatus,
     goToPreviousStep,
     hasSaveError,
     isCompleted,
     isSaving,
     isSelectionValid,
     limitNotice,
+    optionLabelsById,
     progressStatus,
     question,
     questionStatus,
+    retryBookCandidates,
     retryProgress,
     retryQuestion,
     saveAnswersAndGoNext,
+    saveBooksAndComplete,
     selectedBookIds,
     selectedOptionIds,
     step,
@@ -58,18 +70,78 @@ export function OnboardingPage() {
     navigate("/login");
   };
 
-  const goHome = () => navigate("/");
+  const handleSaveAnswersAndGoNext = async () => {
+    if (step !== 1) {
+      await saveAnswersAndGoNext();
+      return;
+    }
+
+    if (consentActionRef.current) {
+      return;
+    }
+
+    consentActionRef.current = true;
+    setConsentAction("personalized");
+    const isConsentSaved = await saveConsent(true);
+
+    if (isConsentSaved) {
+      await saveAnswersAndGoNext();
+    }
+
+    consentActionRef.current = false;
+    setConsentAction(null);
+  };
+
+  const handleGoHomeWithoutPersonalization = async () => {
+    if (consentActionRef.current) {
+      return;
+    }
+
+    consentActionRef.current = true;
+    setConsentAction("without-personalization");
+    const isConsentSaved = await saveConsent(false);
+
+    if (isConsentSaved) {
+      consentActionRef.current = false;
+      navigate("/");
+      return;
+    }
+
+    consentActionRef.current = false;
+    setConsentAction(null);
+  };
+
+  const handleCompleteOnboarding = async () => {
+    const isSaved = await saveBooksAndComplete();
+
+    if (isSaved) {
+      navigate("/");
+    }
+  };
+
+  const retryEntry = () => {
+    if (progressStatus === "error") {
+      retryProgress();
+    }
+
+    if (consentStatus === "error") {
+      retryConsent();
+    }
+  };
 
   if (isCompleted) {
     return <Navigate replace to="/" />;
   }
 
-  if (progressStatus !== "ready") {
+  if (progressStatus !== "ready" || consentStatus !== "ready") {
+    const hasEntryError =
+      progressStatus === "error" || consentStatus === "error";
+
     return (
       <main className="flex min-h-dvh items-center justify-center bg-surface px-5 py-10">
         <div className="w-full max-w-sm">
-          {progressStatus === "error" ? (
-            <Toast action={<RetryButton onClick={retryProgress} />} variant="error">
+          {hasEntryError ? (
+            <Toast action={<RetryButton onClick={retryEntry} />} variant="error">
               온보딩 정보를 불러오지 못했어요
             </Toast>
           ) : (
@@ -88,6 +160,7 @@ export function OnboardingPage() {
 
   const canGoNext =
     isSelectionValid && (step !== 1 || hasAgreedToPersonalization);
+  const isConsentBusy = consentAction !== null || isSavingConsent;
 
   return (
     <main className="flex h-dvh flex-col overflow-hidden bg-surface">
@@ -95,11 +168,13 @@ export function OnboardingPage() {
         action={
           step === 5 ? (
             <button
-              className="type-body-small font-semibold text-text-secondary transition-colors hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              onClick={goHome}
+              aria-busy={isSaving || undefined}
+              className="type-body-small font-semibold text-text-secondary transition-colors hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:text-text-disabled"
+              disabled={bookCandidatesStatus !== "ready" || isSaving}
+              onClick={handleCompleteOnboarding}
               type="button"
             >
-              홈으로 이동
+              {isSaving ? "저장 중" : "홈으로 이동"}
             </button>
           ) : undefined
         }
@@ -165,41 +240,90 @@ export function OnboardingPage() {
         {step === 4 && question ? (
           <SubcategoryStep
             onToggleOption={toggleOption}
+            optionLabelsById={optionLabelsById}
             question={question}
             selectedOptionIds={selectedOptionIds}
           />
         ) : null}
         {step === 5 ? (
-          <BookPickStep onToggleBook={toggleBook} selectedBookIds={selectedBookIds} />
+          bookCandidatesStatus === "loading" ? (
+            <p
+              aria-live="polite"
+              className="type-body text-text-secondary"
+              role="status"
+            >
+              추천 도서를 불러오는 중이에요
+            </p>
+          ) : bookCandidatesStatus === "error" ? (
+            <Toast
+              action={<RetryButton onClick={retryBookCandidates} />}
+              variant="error"
+            >
+              추천 도서를 불러오지 못했어요
+            </Toast>
+          ) : bookCandidates.length === 0 ? (
+            <div className="rounded-panel border border-border bg-muted px-4 py-6 text-center">
+              <p className="type-body font-medium text-text-primary">
+                선택할 수 있는 책이 아직 없어요
+              </p>
+              <p className="mt-1 type-caption text-text-secondary">
+                상단의 홈으로 이동을 눌러 온보딩을 완료해 주세요.
+              </p>
+            </div>
+          ) : (
+            <BookPickStep
+              books={bookCandidates}
+              onToggleBook={toggleBook}
+              selectedBookIds={selectedBookIds}
+            />
+          )
         ) : null}
       </div>
 
-      <OnboardingActions
-        feedback={
-          limitNotice ?? (step === 5 ? BOOK_SAVE_UNAVAILABLE_NOTICE : undefined)
-        }
-      >
+      <OnboardingActions feedback={limitNotice ?? undefined}>
         {hasSaveError ? (
           <Toast variant="error">
-            답변을 저장하지 못했어요. 다시 시도해 주세요
+            {step === 5
+              ? "선택한 책을 저장하지 못했어요. 다시 시도해 주세요"
+              : "답변을 저장하지 못했어요. 다시 시도해 주세요"}
+          </Toast>
+        ) : null}
+        {hasConsentSaveError ? (
+          <Toast variant="error">
+            동의 상태를 저장하지 못했어요. 다시 시도해 주세요
           </Toast>
         ) : null}
         {step < 5 ? (
           <Button
             className="w-full"
-            disabled={!canGoNext}
-            isLoading={isSaving}
-            onClick={saveAnswersAndGoNext}
+            disabled={!canGoNext || isConsentBusy}
+            isLoading={
+              step === 1 ? consentAction === "personalized" : isSaving
+            }
+            onClick={handleSaveAnswersAndGoNext}
           >
             {step === 1 ? "동의하고 다음" : "다음"}
           </Button>
         ) : (
-          <Button className="w-full" disabled>
+          <Button
+            className="w-full"
+            disabled={
+              bookCandidatesStatus !== "ready" || selectedBookIds.length === 0
+            }
+            isLoading={isSaving}
+            onClick={handleCompleteOnboarding}
+          >
             내 서재에 담고 취향 확인하기
           </Button>
         )}
         {step === 1 ? (
-          <Button className="w-full" onClick={goHome} variant="secondary">
+          <Button
+            className="w-full"
+            disabled={isConsentBusy}
+            isLoading={consentAction === "without-personalization"}
+            onClick={handleGoHomeWithoutPersonalization}
+            variant="secondary"
+          >
             개인화 없이 홈으로 이동
           </Button>
         ) : null}
