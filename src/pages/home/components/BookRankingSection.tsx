@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import { BookCover } from "@/common/components/BookCover";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
@@ -11,6 +13,7 @@ const RANK_CARD_CLASS_NAME = "relative w-[36%] shrink-0";
 
 interface BookRankingSectionProps {
   onMoreClick: () => void;
+  onProductClick: () => void;
 }
 
 function RankBadge({ rank }: { rank: number }) {
@@ -30,7 +33,10 @@ function RankBadge({ rank }: { rank: number }) {
   );
 }
 
-export function BookRankingSection({ onMoreClick }: BookRankingSectionProps) {
+export function BookRankingSection({
+  onMoreClick,
+  onProductClick,
+}: BookRankingSectionProps) {
   const { ranking, retry } = useBookRanking();
 
   return (
@@ -79,8 +85,15 @@ export function BookRankingSection({ onMoreClick }: BookRankingSectionProps) {
           <ol className="flex gap-3">
             {ranking.items.map((item, index) => (
               <li className={RANK_CARD_CLASS_NAME} key={item.itemId}>
-                <BookCover alt={item.itemName} thumbnailUrl={item.thumbnailUrl} />
-                <RankBadge rank={index + 1} />
+                <Link
+                  aria-label={`${item.itemName} 상세 보기`}
+                  className="block rounded-control focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  onClick={onProductClick}
+                  to={`/products/${item.itemId}`}
+                >
+                  <BookCover alt="" thumbnailUrl={item.thumbnailUrl} />
+                  <RankBadge rank={index + 1} />
+                </Link>
               </li>
             ))}
           </ol>

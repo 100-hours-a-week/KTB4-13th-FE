@@ -10,3 +10,16 @@ export interface ProductListPage {
   items: ProductListItem[];
   nextCursor: string | null;
 }
+
+export interface ProductDetail {
+  author: string;
+  description: string | null;
+  discountedPrice: number;
+  itemName: string;
+  productId: number;
+  publishedAt: string;
+  publisher: string;
+  salePrice: number;
+  stockQuantity: number;
+  thumbnailUrl: string | null;
+}
