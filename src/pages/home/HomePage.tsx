@@ -27,7 +27,6 @@ export function HomePage() {
     }
   }, [homeScrollTop]);
 
-  // Search, cart, and other tabs have no destination screen yet.
   const showUnavailableNotice = () => showNotice(UNAVAILABLE_NOTICE);
   const rememberHomeScroll = () => {
     navigate(
@@ -46,7 +45,7 @@ export function HomePage() {
   return (
     <div className="relative flex h-dvh flex-col bg-surface">
       <HomeHeader
-        onCartClick={showUnavailableNotice}
+        onCartClick={() => navigate("/cart")}
         onSearchSubmit={showUnavailableNotice}
       />
 

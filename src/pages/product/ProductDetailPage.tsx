@@ -106,7 +106,7 @@ export function ProductDetailPage() {
     <div className="relative flex h-dvh w-full min-w-0 flex-col overflow-x-hidden bg-surface">
       <ProductHeader
         onBack={handleBack}
-        onCartClick={() => showNotice("장바구니 화면을 준비하고 있어요")}
+        onCartClick={() => navigate("/cart")}
       />
 
       <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
