@@ -10,7 +10,6 @@ import {
 
 type NavIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
-// TODO: Link these tabs once the AI recommendation, notification, and my page routes exist.
 const unavailableTabs: { icon: NavIcon; label: string }[] = [
   { icon: SparkleIcon, label: "AI 추천" },
   { icon: BellIcon, label: "알림" },
@@ -30,7 +29,7 @@ export function BottomNavigation({
   return (
     <nav
       aria-label="주요 메뉴"
-      className="shrink-0 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]"
+      className="w-full min-w-0 shrink-0 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]"
     >
       <ul className="grid grid-cols-4">
         <li>

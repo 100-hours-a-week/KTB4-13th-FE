@@ -7,6 +7,7 @@ import { CatalogPage } from "@/pages/catalog/CatalogPage";
 import { HomePage } from "@/pages/home/HomePage";
 import { LoginPage } from "@/pages/login/LoginPage";
 import { OnboardingPage } from "@/pages/onboarding/OnboardingPage";
+import { ProductDetailPage } from "@/pages/product/ProductDetailPage";
 
 export function Router() {
   return (
@@ -17,6 +18,7 @@ export function Router() {
           <Route path="/login" element={<LoginPage />} />
         </Route>
         <Route path="/" element={<HomePage />} />
+        <Route path="/products/:productId" element={<ProductDetailPage />} />
         <Route element={<RequireAuth />}>
           <Route
             path="/catalog/ranking"

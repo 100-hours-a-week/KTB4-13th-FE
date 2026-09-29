@@ -14,6 +14,19 @@ export interface ProductListPage {
   nextCursor: string | null;
 }
 
+export interface ProductDetail {
+  author: string;
+  description: string | null;
+  discountedPrice: number;
+  itemName: string;
+  productId: number;
+  publishedAt: string;
+  publisher: string;
+  salePrice: number;
+  stockQuantity: number;
+  thumbnailUrl: string | null;
+}
+
 export interface ProductCategory {
   id: number;
   name: string;

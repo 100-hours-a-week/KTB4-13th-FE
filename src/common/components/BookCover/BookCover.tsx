@@ -19,7 +19,6 @@ export function BookCover({ alt, thumbnailUrl }: BookCoverProps) {
     );
   }
 
-  // Backend allows a missing thumbnail; show the title so the cover keeps its meaning.
   return alt ? (
     <div
       aria-label={alt}

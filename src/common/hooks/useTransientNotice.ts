@@ -10,7 +10,10 @@ export function useTransientNotice() {
       return undefined;
     }
 
-    const timeoutId = window.setTimeout(() => setNotice(null), NOTICE_DURATION_MS);
+    const timeoutId = window.setTimeout(
+      () => setNotice(null),
+      NOTICE_DURATION_MS,
+    );
 
     return () => window.clearTimeout(timeoutId);
   }, [notice]);

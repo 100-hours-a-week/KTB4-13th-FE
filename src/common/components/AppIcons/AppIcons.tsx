@@ -18,11 +18,19 @@ function Icon({ children, ...props }: SVGProps<SVGSVGElement>) {
   );
 }
 
-export function SearchIcon(props: SVGProps<SVGSVGElement>) {
+export function ArrowLeftIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>
-      <circle cx="11" cy="11" r="6.5" />
-      <path d="m16 16 4 4" />
+      <path d="m15 18-6-6 6-6" />
+    </Icon>
+  );
+}
+
+export function BellIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z" />
+      <path d="M10 20.5a2.2 2.2 0 0 0 4 0" />
     </Icon>
   );
 }
@@ -45,19 +53,19 @@ export function HomeIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-export function SparkleIcon(props: SVGProps<SVGSVGElement>) {
+export function SearchIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>
-      <path d="M12 3.5 13.9 10l6.6 2-6.6 2L12 20.5 10.1 14l-6.6-2z" />
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="m16 16 4 4" />
     </Icon>
   );
 }
 
-export function BellIcon(props: SVGProps<SVGSVGElement>) {
+export function SparkleIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>
-      <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z" />
-      <path d="M10 20.5a2.2 2.2 0 0 0 4 0" />
+      <path d="M12 3.5 13.9 10l6.6 2-6.6 2L12 20.5 10.1 14l-6.6-2 6.6-2z" />
     </Icon>
   );
 }
