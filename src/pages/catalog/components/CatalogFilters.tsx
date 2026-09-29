@@ -15,13 +15,7 @@ const RECOMMENDATION_SORT_OPTIONS: {
   { label: "낮은가격순", value: "price_asc" },
 ];
 
-// Year presets count back from the current year; publishedTo stays open so new books are included.
-const PUBLICATION_YEAR_OPTIONS: { label: string; yearsAgo: number | null }[] = [
-  { label: "출간일 전체", yearsAgo: null },
-  { label: "최근 1년", yearsAgo: 1 },
-  { label: "최근 3년", yearsAgo: 3 },
-  { label: "최근 5년", yearsAgo: 5 },
-];
+const OLDEST_PUBLICATION_YEAR = 2000;
 
 const MATCH_SCORE_OPTIONS: { label: string; value: number | null }[] = [
   { label: "매칭도 전체", value: null },
@@ -56,21 +50,21 @@ export function CatalogFilters({
     categoryState.kind === "ready" ? categoryState.categories : [];
 
   const currentYear = new Date().getFullYear();
-  const publicationYearValue =
-    filters.publicationYearFrom === null
-      ? "all"
-      : String(currentYear - filters.publicationYearFrom);
+  const publicationYears = Array.from(
+    { length: currentYear - OLDEST_PUBLICATION_YEAR + 1 },
+    (_, index) => currentYear - index,
+  );
 
   const handleCategoryChange = (value: string) => {
     onFilterChange({ categoryId: value === "all" ? null : Number(value) });
   };
 
-  const handlePublicationYearChange = (value: string) => {
-    onFilterChange({
-      publicationYearFrom:
-        value === "all" ? null : currentYear - Number(value),
-      publicationYearTo: null,
-    });
+  const handlePublicationYearFromChange = (value: string) => {
+    onFilterChange({ publicationYearFrom: value === "all" ? null : Number(value) });
+  };
+
+  const handlePublicationYearToChange = (value: string) => {
+    onFilterChange({ publicationYearTo: value === "all" ? null : Number(value) });
   };
 
   const handleMatchScoreChange = (value: string) => {
@@ -104,23 +98,60 @@ export function CatalogFilters({
           </select>
         </label>
 
-        <label className="shrink-0">
-          <span className="sr-only">출간일</span>
-          <select
-            className={selectClassName}
-            onChange={(event) => handlePublicationYearChange(event.target.value)}
-            value={publicationYearValue}
-          >
-            {PUBLICATION_YEAR_OPTIONS.map((option) => (
-              <option
-                key={option.label}
-                value={option.yearsAgo === null ? "all" : option.yearsAgo}
-              >
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <fieldset className="flex shrink-0 items-center gap-1">
+          <legend className="sr-only">출간연도 범위</legend>
+          <label>
+            <span className="sr-only">출간연도 시작</span>
+            <select
+              className={selectClassName}
+              onChange={(event) =>
+                handlePublicationYearFromChange(event.target.value)
+              }
+              value={filters.publicationYearFrom ?? "all"}
+            >
+              <option value="all">출간연도 전체</option>
+              {publicationYears.map((year) => (
+                <option
+                  disabled={
+                    filters.publicationYearTo !== null &&
+                    year > filters.publicationYearTo
+                  }
+                  key={year}
+                  value={year}
+                >
+                  {year}년
+                </option>
+              ))}
+            </select>
+          </label>
+          <span aria-hidden="true" className="type-caption text-text-tertiary">
+            ~
+          </span>
+          <label>
+            <span className="sr-only">출간연도 끝</span>
+            <select
+              className={selectClassName}
+              onChange={(event) =>
+                handlePublicationYearToChange(event.target.value)
+              }
+              value={filters.publicationYearTo ?? "all"}
+            >
+              <option value="all">전체</option>
+              {publicationYears.map((year) => (
+                <option
+                  disabled={
+                    filters.publicationYearFrom !== null &&
+                    year < filters.publicationYearFrom
+                  }
+                  key={year}
+                  value={year}
+                >
+                  {year}년
+                </option>
+              ))}
+            </select>
+          </label>
+        </fieldset>
 
         {mode === "recommendation" ? (
           <label className="shrink-0">
