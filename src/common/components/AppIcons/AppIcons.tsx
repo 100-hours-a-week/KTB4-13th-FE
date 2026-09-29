@@ -48,7 +48,7 @@ export function HomeIcon(props: SVGProps<SVGSVGElement>) {
 export function SparkleIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>
-      <path d="M12 3.5 13.9 10l6.6 2-6.6 2L12 20.5 10.1 14l-6.6-2 6.6-2z" />
+      <path d="M12 3.5 13.9 10l6.6 2-6.6 2L12 20.5 10.1 14l-6.6-2z" />
     </Icon>
   );
 }
