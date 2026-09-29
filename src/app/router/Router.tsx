@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { RedirectAuthenticatedUser } from "@/app/router/RedirectAuthenticatedUser";
 import { RequireAuth } from "@/app/router/RequireAuth";
 import { KakaoCallbackPage } from "@/pages/auth/KakaoCallbackPage";
+import { CartPage } from "@/pages/cart/CartPage";
 import { CatalogPage } from "@/pages/catalog/CatalogPage";
 import { HomePage } from "@/pages/home/HomePage";
 import { LoginPage } from "@/pages/login/LoginPage";
@@ -20,6 +21,7 @@ export function Router() {
         <Route path="/" element={<HomePage />} />
         <Route path="/products/:productId" element={<ProductDetailPage />} />
         <Route element={<RequireAuth />}>
+          <Route path="/cart" element={<CartPage />} />
           <Route
             path="/catalog/ranking"
             element={<CatalogPage mode="ranking" />}
