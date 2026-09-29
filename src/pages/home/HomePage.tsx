@@ -1,11 +1,11 @@
 import { Toast } from "@/common/components/Toast";
+import { BottomNavigation } from "@/common/components/BottomNavigation";
+import { useTransientNotice } from "@/common/hooks/useTransientNotice";
 import { LoginRequired } from "@/features/auth/components/LoginRequired";
 import { useAuth } from "@/features/auth/context/useAuth";
 import { BookRankingSection } from "@/pages/home/components/BookRankingSection";
-import { HomeBottomNavigation } from "@/pages/home/components/HomeBottomNavigation";
 import { HomeHeader } from "@/pages/home/components/HomeHeader";
 import { RecommendationSection } from "@/pages/home/components/RecommendationSection";
-import { useTransientNotice } from "@/pages/home/hooks/useTransientNotice";
 
 const UNAVAILABLE_NOTICE = "아직 준비 중인 기능이에요";
 
@@ -44,7 +44,7 @@ export function HomePage() {
         </div>
       ) : null}
 
-      <HomeBottomNavigation onUnavailableTabClick={showUnavailableNotice} />
+      <BottomNavigation onUnavailableTabClick={showUnavailableNotice} />
     </div>
   );
 }

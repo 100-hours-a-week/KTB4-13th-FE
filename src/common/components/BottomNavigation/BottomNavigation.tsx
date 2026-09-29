@@ -6,11 +6,10 @@ import {
   HomeIcon,
   SparkleIcon,
   UserIcon,
-} from "@/pages/home/components/HomeIcons";
+} from "@/common/components/AppIcons";
 
 type NavIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
-// TODO: Link these tabs once the AI recommendation, notification, and my page routes exist.
 const unavailableTabs: { icon: NavIcon; label: string }[] = [
   { icon: SparkleIcon, label: "AI 추천" },
   { icon: BellIcon, label: "알림" },
@@ -20,17 +19,17 @@ const unavailableTabs: { icon: NavIcon; label: string }[] = [
 const tabClassName =
   "relative flex min-h-14 w-full flex-col items-center justify-center gap-0.5 type-caption transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary";
 
-interface HomeBottomNavigationProps {
+interface BottomNavigationProps {
   onUnavailableTabClick: () => void;
 }
 
-export function HomeBottomNavigation({
+export function BottomNavigation({
   onUnavailableTabClick,
-}: HomeBottomNavigationProps) {
+}: BottomNavigationProps) {
   return (
     <nav
       aria-label="주요 메뉴"
-      className="shrink-0 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]"
+      className="w-full min-w-0 shrink-0 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]"
     >
       <ul className="grid grid-cols-4">
         <li>

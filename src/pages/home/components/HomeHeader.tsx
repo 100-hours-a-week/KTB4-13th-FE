@@ -1,6 +1,6 @@
 import type { FormEvent } from "react";
 
-import { CartIcon, SearchIcon } from "@/pages/home/components/HomeIcons";
+import { CartIcon, SearchIcon } from "@/common/components/AppIcons";
 
 interface HomeHeaderProps {
   onCartClick: () => void;
