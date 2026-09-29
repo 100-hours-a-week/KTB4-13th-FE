@@ -42,8 +42,8 @@ export function CatalogPage({ mode }: { mode: CatalogMode }) {
   );
   const catalogBooks = useCatalogBooks(requestModel);
 
-  const handleCategoryChange = (categoryId: number | null) => {
-    setFilters((current) => ({ ...current, categoryId }));
+  const handleFilterChange = (changes: Partial<CatalogFilterState>) => {
+    setFilters((current) => ({ ...current, ...changes }));
   };
 
   return (
@@ -56,7 +56,7 @@ export function CatalogPage({ mode }: { mode: CatalogMode }) {
             categoryState={categoryState}
             filters={filters}
             mode={mode}
-            onCategoryChange={handleCategoryChange}
+            onFilterChange={handleFilterChange}
             onRetryCategories={retryCategories}
             onSortChange={setSort}
             sort={sort}

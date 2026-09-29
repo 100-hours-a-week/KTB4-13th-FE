@@ -21,7 +21,7 @@ export function toRecommendationRequestModel(
   return { ...filters, mode: "recommendation", sort };
 }
 
-// Publication years stay in RankingRequestModel until BE #154 defines its query names.
+// GET /api/v1/items filters by publication date, so years become their first and last days.
 export function toRankingQuery(
   request: RankingRequestModel,
   cursor?: string,
@@ -29,6 +29,12 @@ export function toRankingQuery(
   return {
     ...(request.categoryId === null ? {} : { categoryId: request.categoryId }),
     ...(cursor === undefined ? {} : { cursor }),
+    ...(request.publicationYearFrom === null
+      ? {}
+      : { publishedFrom: `${request.publicationYearFrom}-01-01` }),
+    ...(request.publicationYearTo === null
+      ? {}
+      : { publishedTo: `${request.publicationYearTo}-12-31` }),
     limit: CATALOG_PAGE_LIMIT,
   };
 }

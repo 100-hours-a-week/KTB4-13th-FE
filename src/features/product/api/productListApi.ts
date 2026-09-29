@@ -9,6 +9,8 @@ export interface PopularProductQuery {
   categoryId?: number;
   cursor?: string;
   limit: number;
+  publishedFrom?: string;
+  publishedTo?: string;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -52,6 +54,14 @@ export async function fetchPopularProducts(
 
   if (query.cursor !== undefined) {
     searchParams.set("cursor", query.cursor);
+  }
+
+  if (query.publishedFrom !== undefined) {
+    searchParams.set("publishedFrom", query.publishedFrom);
+  }
+
+  if (query.publishedTo !== undefined) {
+    searchParams.set("publishedTo", query.publishedTo);
   }
 
   try {

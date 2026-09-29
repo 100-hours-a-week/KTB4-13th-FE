@@ -15,17 +15,29 @@ const RECOMMENDATION_SORT_OPTIONS: {
   { label: "낮은가격순", value: "price_asc" },
 ];
 
+// Year presets count back from the current year; publishedTo stays open so new books are included.
+const PUBLICATION_YEAR_OPTIONS: { label: string; yearsAgo: number | null }[] = [
+  { label: "출간일 전체", yearsAgo: null },
+  { label: "최근 1년", yearsAgo: 1 },
+  { label: "최근 3년", yearsAgo: 3 },
+  { label: "최근 5년", yearsAgo: 5 },
+];
+
+const MATCH_SCORE_OPTIONS: { label: string; value: number | null }[] = [
+  { label: "매칭도 전체", value: null },
+  { label: "60점 이상", value: 60 },
+  { label: "70점 이상", value: 70 },
+  { label: "80점 이상", value: 80 },
+];
+
 const selectClassName =
   "min-h-11 rounded-full border border-border bg-surface px-3 type-caption text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:text-text-tertiary";
-
-const pendingFilterClassName =
-  "inline-flex min-h-11 items-center rounded-full border border-border bg-muted px-3 type-caption text-text-secondary";
 
 interface CatalogFiltersProps {
   categoryState: CategoryState;
   filters: CatalogFilterState;
   mode: CatalogMode;
-  onCategoryChange: (categoryId: number | null) => void;
+  onFilterChange: (changes: Partial<CatalogFilterState>) => void;
   onRetryCategories: () => void;
   onSortChange: (sort: RecommendationSort) => void;
   sort: RecommendationSort;
@@ -35,7 +47,7 @@ export function CatalogFilters({
   categoryState,
   filters,
   mode,
-  onCategoryChange,
+  onFilterChange,
   onRetryCategories,
   onSortChange,
   sort,
@@ -43,8 +55,26 @@ export function CatalogFilters({
   const categories =
     categoryState.kind === "ready" ? categoryState.categories : [];
 
+  const currentYear = new Date().getFullYear();
+  const publicationYearValue =
+    filters.publicationYearFrom === null
+      ? "all"
+      : String(currentYear - filters.publicationYearFrom);
+
   const handleCategoryChange = (value: string) => {
-    onCategoryChange(value === "all" ? null : Number(value));
+    onFilterChange({ categoryId: value === "all" ? null : Number(value) });
+  };
+
+  const handlePublicationYearChange = (value: string) => {
+    onFilterChange({
+      publicationYearFrom:
+        value === "all" ? null : currentYear - Number(value),
+      publicationYearTo: null,
+    });
+  };
+
+  const handleMatchScoreChange = (value: string) => {
+    onFilterChange({ matchScoreMin: value === "all" ? null : Number(value) });
   };
 
   return (
@@ -74,20 +104,39 @@ export function CatalogFilters({
           </select>
         </label>
 
-        <span
-          aria-label="출간일 필터: 전체, 현재 전체 조건만 선택할 수 있습니다"
-          className={`${pendingFilterClassName} shrink-0`}
-        >
-          출간일 전체
-        </span>
+        <label className="shrink-0">
+          <span className="sr-only">출간일</span>
+          <select
+            className={selectClassName}
+            onChange={(event) => handlePublicationYearChange(event.target.value)}
+            value={publicationYearValue}
+          >
+            {PUBLICATION_YEAR_OPTIONS.map((option) => (
+              <option
+                key={option.label}
+                value={option.yearsAgo === null ? "all" : option.yearsAgo}
+              >
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
 
         {mode === "recommendation" ? (
-          <span
-            aria-label="매칭도 필터: 전체, 현재 전체 조건만 선택할 수 있습니다"
-            className={`${pendingFilterClassName} shrink-0`}
-          >
-            매칭도 전체
-          </span>
+          <label className="shrink-0">
+            <span className="sr-only">매칭도</span>
+            <select
+              className={selectClassName}
+              onChange={(event) => handleMatchScoreChange(event.target.value)}
+              value={filters.matchScoreMin ?? "all"}
+            >
+              {MATCH_SCORE_OPTIONS.map((option) => (
+                <option key={option.label} value={option.value ?? "all"}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
         ) : null}
       </div>
 
