@@ -19,7 +19,7 @@ export function useBookRanking() {
   useEffect(() => {
     let isActive = true;
 
-    void fetchPopularProducts(RANKING_LIMIT).then((page) => {
+    void fetchPopularProducts({ limit: RANKING_LIMIT }).then((page) => {
       if (isActive) {
         setState(page ? { kind: "ready", items: page.items } : { kind: "error" });
       }

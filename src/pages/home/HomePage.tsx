@@ -27,7 +27,7 @@ export function HomePage() {
     }
   }, [homeScrollTop]);
 
-  // Search, cart, "더보기", and other tabs have no destination screen yet.
+  // Search, cart, and other tabs have no destination screen yet.
   const showUnavailableNotice = () => showNotice(UNAVAILABLE_NOTICE);
   const rememberHomeScroll = () => {
     navigate(
@@ -55,10 +55,12 @@ export function HomePage() {
         {status === "authenticated" ? (
           <div className="flex flex-col gap-8 py-6">
             <BookRankingSection
-              onMoreClick={showUnavailableNotice}
+              onMoreClick={() => navigate("/catalog/ranking")}
               onProductClick={rememberHomeScroll}
             />
-            <RecommendationSection onMoreClick={showUnavailableNotice} />
+            <RecommendationSection
+              onMoreClick={() => navigate("/catalog/recommendations")}
+            />
           </div>
         ) : null}
         {status === "unauthenticated" ? (

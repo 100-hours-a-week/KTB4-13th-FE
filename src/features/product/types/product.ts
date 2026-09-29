@@ -1,8 +1,11 @@
 // Mirrors backend ProductListResponse and ProductItemResponse, limited to fields the frontend reads.
-// thumbnailUrl is nullable because products.thumbnail_url allows NULL.
+// thumbnailUrl and discountedPrice are nullable in the product contract.
 export interface ProductListItem {
+  author: string;
+  discountedPrice: number | null;
   itemId: number;
   itemName: string;
+  salePrice: number;
   thumbnailUrl: string | null;
 }
 
@@ -22,4 +25,10 @@ export interface ProductDetail {
   salePrice: number;
   stockQuantity: number;
   thumbnailUrl: string | null;
+}
+
+export interface ProductCategory {
+  id: number;
+  name: string;
+  path: string;
 }
