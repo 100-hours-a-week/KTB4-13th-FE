@@ -5,7 +5,7 @@ export function LoginBrand() {
         alt="북적북적 로고 심볼"
         className="size-16 object-contain"
         height="64"
-        src="/assets/bookjeok-logo-mark.png"
+        src={`${import.meta.env.BASE_URL}assets/bookjeok-logo-mark.png`}
         width="64"
       />
       <h1 className="mt-5 type-heading">북적북적</h1>
