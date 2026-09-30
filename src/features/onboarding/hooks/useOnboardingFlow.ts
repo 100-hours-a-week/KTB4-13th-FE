@@ -26,7 +26,6 @@ type LoadStatus = "loading" | "error" | "ready";
 export function useOnboardingFlow() {
   const [progressStatus, setProgressStatus] = useState<LoadStatus>("loading");
   const [progressRequestKey, setProgressRequestKey] = useState(0);
-  const [isCompleted, setIsCompleted] = useState(false);
   const [step, setStep] = useState<OnboardingStep>(1);
   const [resumeStep, setResumeStep] = useState<OnboardingStep>(1);
   const [selectedOptionIdsByQuestion, setSelectedOptionIdsByQuestion] =
@@ -78,7 +77,6 @@ export function useOnboardingFlow() {
       }
 
       if (result.kind === "found") {
-        setIsCompleted(result.progress.status === "COMPLETED");
         setSelectedOptionIdsByQuestion(
           Object.fromEntries(
             result.progress.answers.map((answer) => [
@@ -313,7 +311,6 @@ export function useOnboardingFlow() {
     bookCandidatesStatus,
     goToPreviousStep,
     hasSaveError,
-    isCompleted,
     isSaving,
     isSelectionValid,
     limitNotice,
