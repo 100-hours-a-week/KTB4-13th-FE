@@ -4,14 +4,17 @@ import { CartIcon, SearchIcon } from "@/common/components/AppIcons";
 
 interface HomeHeaderProps {
   onCartClick: () => void;
-  onSearchSubmit: () => void;
+  onSearchSubmit: (query: string) => void;
 }
 
 export function HomeHeader({ onCartClick, onSearchSubmit }: HomeHeaderProps) {
-  // TODO: Connect book search once the search results screen and API are defined.
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    onSearchSubmit();
+    const query = new FormData(event.currentTarget).get("query");
+
+    if (typeof query === "string" && query.trim()) {
+      onSearchSubmit(query.trim());
+    }
   };
 
   return (
@@ -32,7 +35,10 @@ export function HomeHeader({ onCartClick, onSearchSubmit }: HomeHeaderProps) {
           <SearchIcon className="size-5 shrink-0 text-text-tertiary" />
           <span className="sr-only">도서 검색</span>
           <input
+            autoComplete="off"
             className="min-w-0 flex-1 bg-transparent py-2 type-body-small text-text-primary outline-none placeholder:text-text-tertiary"
+            maxLength={200}
+            name="query"
             placeholder="궁금한 책을 검색해보세요"
             type="search"
           />

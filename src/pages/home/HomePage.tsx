@@ -1,5 +1,9 @@
 import { useLayoutEffect, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import {
+  createSearchParams,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 
 import { BottomNavigation } from "@/common/components/BottomNavigation";
 import { Toast } from "@/common/components/Toast";
@@ -28,6 +32,12 @@ export function HomePage() {
   }, [homeScrollTop]);
 
   const showUnavailableNotice = () => showNotice(UNAVAILABLE_NOTICE);
+  const handleSearchSubmit = (query: string) => {
+    navigate({
+      pathname: "/search",
+      search: createSearchParams({ q: query, sort: "popular" }).toString(),
+    });
+  };
   const rememberHomeScroll = () => {
     navigate(
       {
@@ -46,7 +56,7 @@ export function HomePage() {
     <div className="relative flex h-dvh flex-col bg-surface">
       <HomeHeader
         onCartClick={() => navigate("/cart")}
-        onSearchSubmit={showUnavailableNotice}
+        onSearchSubmit={handleSearchSubmit}
       />
 
       {/* Content APIs require a token, so nothing loads until the session is known. */}

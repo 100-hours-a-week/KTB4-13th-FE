@@ -11,6 +11,7 @@ import { OnboardingPage } from "@/pages/onboarding/OnboardingPage";
 import { OrderCompletePage } from "@/pages/order-complete/OrderCompletePage";
 import { OrderPage } from "@/pages/order/OrderPage";
 import { ProductDetailPage } from "@/pages/product/ProductDetailPage";
+import { SearchResultsPage } from "@/pages/search/SearchResultsPage";
 
 export function Router() {
   return (
@@ -32,6 +33,7 @@ export function Router() {
             path="/catalog/recommendations"
             element={<CatalogPage mode="recommendation" />}
           />
+          <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/order" element={<OrderPage />} />
           <Route path="/order/complete" element={<OrderCompletePage />} />
