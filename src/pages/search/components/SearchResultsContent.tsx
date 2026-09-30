@@ -1,66 +1,43 @@
 import { useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
-import type {
-  SearchRequestModel,
-  SearchResultItem,
-  SearchResultState,
-} from "@/pages/search/types/search";
+import type { BookSearchItem } from "@/features/search/types/bookSearch";
+import type { SearchResultState } from "@/pages/search/types/search";
 
 const priceFormatter = new Intl.NumberFormat("ko-KR");
 const SKELETON_COUNT = 12;
 
-function SearchResultPrice({ item }: { item: SearchResultItem }) {
-  const hasDiscount =
-    item.discountedPrice !== null && item.discountedPrice !== item.salePrice;
-  const price = item.discountedPrice ?? item.salePrice;
-
+// Search returns bookId only; product detail needs productId, so cards are not links yet.
+function SearchResultCard({ item }: { item: BookSearchItem }) {
   return (
-    <div className="flex flex-wrap items-baseline gap-x-1">
-      <span className="type-body-small font-bold text-text-primary">
-        {priceFormatter.format(price)}원
-      </span>
-      {hasDiscount ? (
-        <span className="type-caption text-text-tertiary line-through">
-          {priceFormatter.format(item.salePrice)}원
-        </span>
-      ) : null}
-    </div>
-  );
-}
-
-function SearchResultCard({ item }: { item: SearchResultItem }) {
-  return (
-    <Link
-      className="flex min-w-0 flex-col gap-1.5 rounded-control focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-      to={`/products/${item.productId}`}
-    >
-      <BookCover alt="" thumbnailUrl={item.thumbnailUrl} />
-      <span className="line-clamp-2 min-h-10 type-body-small font-semibold text-text-primary">
-        {item.itemName}
-      </span>
-      <span className="truncate type-caption text-text-tertiary">
+    <article className="flex min-w-0 flex-col gap-1.5">
+      <BookCover alt="" thumbnailUrl={item.coverUrl} />
+      <h2 className="line-clamp-2 min-h-10 type-body-small font-semibold text-text-primary">
+        {item.title}
+      </h2>
+      <p className="truncate type-caption text-text-tertiary">
         {item.author ?? "저자 정보 없음"}
-      </span>
-      <SearchResultPrice item={item} />
-    </Link>
+      </p>
+      {item.price !== null ? (
+        <p className="type-body-small font-bold text-text-primary">
+          {priceFormatter.format(item.price)}원
+        </p>
+      ) : null}
+    </article>
   );
 }
 
 interface SearchResultsContentProps {
   onLoadMore: () => void;
   onRetry: () => void;
-  request: SearchRequestModel;
   state: SearchResultState;
 }
 
 export function SearchResultsContent({
   onLoadMore,
   onRetry,
-  request,
   state,
 }: SearchResultsContentProps) {
   const loadMoreButtonRef = useRef<HTMLButtonElement>(null);
@@ -94,22 +71,6 @@ export function SearchResultsContent({
         </h2>
         <p className="type-body-small text-text-secondary">
           책 제목이나 저자를 입력하면 검색 결과를 확인할 수 있어요
-        </p>
-      </section>
-    );
-  }
-
-  if (state.kind === "unavailable") {
-    return (
-      <section
-        aria-live="polite"
-        className="page-content flex min-h-64 flex-col items-center justify-center gap-2 py-12 text-center"
-      >
-        <h2 className="type-title text-text-primary">
-          검색 결과를 준비하고 있어요
-        </h2>
-        <p className="max-w-full break-words type-body-small text-text-secondary">
-          “{request.query}” 검색 기능을 곧 이용할 수 있도록 준비 중이에요
         </p>
       </section>
     );
@@ -153,7 +114,8 @@ export function SearchResultsContent({
       >
         <h2 className="type-title text-text-primary">검색 결과가 없어요</h2>
         <p className="type-body-small text-text-secondary">
-          조건에 맞는 책을 찾지 못했어요. 다른 표현으로 검색해 주세요!
+          {state.fallbackMessage ??
+            "조건에 맞는 책을 찾지 못했어요. 다른 표현으로 검색해 주세요!"}
         </p>
       </section>
     );
@@ -166,7 +128,7 @@ export function SearchResultsContent({
         className="grid grid-cols-3 gap-x-3 gap-y-6"
       >
         {state.items.map((item) => (
-          <li className="min-w-0" key={item.productId}>
+          <li className="min-w-0" key={item.bookId}>
             <SearchResultCard item={item} />
           </li>
         ))}

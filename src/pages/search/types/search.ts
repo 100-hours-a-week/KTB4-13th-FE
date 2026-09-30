@@ -1,7 +1,9 @@
-export type SearchResultSort = "popular" | "newest" | "price_asc";
+import type {
+  BookSearchItem,
+  BookSearchSort,
+} from "@/features/search/types/bookSearch";
 
 export interface SearchFilters {
-  categoryId: number | null;
   priceMax: number | null;
   priceMin: number | null;
   pubYearFrom: number | null;
@@ -9,30 +11,17 @@ export interface SearchFilters {
 }
 
 export interface SearchRequestModel extends SearchFilters {
-  cursor: string | null;
   query: string;
-  size: 12;
-  sort: SearchResultSort;
-}
-
-// Presentation model only. The Backend search response contract is pending in #162.
-export interface SearchResultItem {
-  author: string | null;
-  discountedPrice: number | null;
-  itemName: string;
-  productId: number;
-  salePrice: number;
-  thumbnailUrl: string | null;
+  sort: BookSearchSort;
 }
 
 export type SearchResultState =
   | { kind: "idle" }
-  | { kind: "unavailable" }
   | { kind: "loading" }
   | { kind: "error" }
-  | { kind: "empty" }
+  | { fallbackMessage: string | null; kind: "empty" }
   | {
-      items: SearchResultItem[];
+      items: BookSearchItem[];
       kind: "ready";
       nextCursor: string | null;
       paginationStatus: "idle" | "loadingMore" | "error";

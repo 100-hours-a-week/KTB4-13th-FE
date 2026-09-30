@@ -7,16 +7,13 @@ import { SearchFilters } from "@/pages/search/components/SearchFilters";
 import { SearchHeader } from "@/pages/search/components/SearchHeader";
 import { SearchResultToolbar } from "@/pages/search/components/SearchResultToolbar";
 import { SearchResultsContent } from "@/pages/search/components/SearchResultsContent";
-import { useSearchCategories } from "@/pages/search/hooks/useSearchCategories";
 import { useSearchResults } from "@/pages/search/hooks/useSearchResults";
 import {
   readSearchRequest,
   updateSearchParams,
 } from "@/pages/search/lib/searchParams";
-import type {
-  SearchFilters as SearchFilterValues,
-  SearchResultSort,
-} from "@/pages/search/types/search";
+import type { BookSearchSort } from "@/features/search/types/bookSearch";
+import type { SearchFilters as SearchFilterValues } from "@/pages/search/types/search";
 
 const UNAVAILABLE_NOTICE = "아직 준비 중인 기능이에요";
 
@@ -24,12 +21,10 @@ export function SearchResultsPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { categoryState, retryCategories } = useSearchCategories();
   const { notice, showNotice } = useTransientNotice();
   const request = readSearchRequest(searchParams);
   const searchResults = useSearchResults(request);
   const filters: SearchFilterValues = {
-    categoryId: request.categoryId,
     priceMax: request.priceMax,
     priceMin: request.priceMin,
     pubYearFrom: request.pubYearFrom,
@@ -53,7 +48,7 @@ export function SearchResultsPage() {
     setSearchParams((current) => updateSearchParams(current, nextFilters));
   };
 
-  const handleSortChange = (sort: SearchResultSort) => {
+  const handleSortChange = (sort: BookSearchSort) => {
     setSearchParams((current) => updateSearchParams(current, { sort }));
   };
 
@@ -65,23 +60,16 @@ export function SearchResultsPage() {
         onSubmit={handleSubmit}
         submittedQuery={request.query}
       />
-      <SearchFilters
-        categoryState={categoryState}
-        filters={filters}
-        onChange={handleFiltersChange}
-        onRetryCategories={retryCategories}
-      />
+      <SearchFilters filters={filters} onChange={handleFiltersChange} />
 
       <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
         <SearchResultToolbar
           onSortChange={handleSortChange}
           sort={request.sort}
-          state={searchResults.state}
         />
         <SearchResultsContent
           onLoadMore={searchResults.loadMore}
           onRetry={searchResults.retry}
-          request={request}
           state={searchResults.state}
         />
       </main>
