@@ -7,6 +7,7 @@ import { Button } from "@/common/components/Button";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
 import { useTransientNotice } from "@/common/hooks/useTransientNotice";
+import type { OrderNavigationState } from "@/features/order/types/order";
 import { CartItemRow } from "@/pages/cart/components/CartItemRow";
 import { CartSummary } from "@/pages/cart/components/CartSummary";
 import { DeleteCartItemsDialog } from "@/pages/cart/components/DeleteCartItemsDialog";
@@ -146,10 +147,24 @@ export function CartPage() {
   };
 
   const handleOrder = () => {
-    if (selection.selectedCount === 0) {
+    const orderItems = items.filter(
+      (item) => item.isPurchasable && selection.selectedIds.has(item.cartItemId),
+    );
+
+    if (orderItems.length === 0) {
       return;
     }
-    showNotice("주문 화면을 준비하고 있어요");
+
+    const orderState: OrderNavigationState = {
+      items: orderItems.map((item) => ({
+        discountedPrice: item.unitPrice,
+        itemName: item.itemName,
+        productId: item.productId,
+        quantity: item.quantity,
+        thumbnailUrl: item.thumbnailUrl,
+      })),
+    };
+    navigate("/order", { state: orderState });
   };
 
   return (

@@ -12,6 +12,7 @@ import { Toast } from "@/common/components/Toast";
 import { useTransientNotice } from "@/common/hooks/useTransientNotice";
 import { addCartItem } from "@/features/cart/api/cartApi";
 import { useAuth } from "@/features/auth/context/useAuth";
+import type { OrderNavigationState } from "@/features/order/types/order";
 import { ProductDetailContent, ProductDetailSkeleton } from "@/pages/product/components/ProductDetailContent";
 import { ProductHeader } from "@/pages/product/components/ProductHeader";
 import { PurchaseBar } from "@/pages/product/components/PurchaseBar";
@@ -94,12 +95,26 @@ export function ProductDetailPage() {
   };
 
   const handleBuyNow = () => {
+    if (!product) {
+      return;
+    }
     if (authStatus !== "authenticated") {
       goToLogin();
       return;
     }
 
-    showNotice("바로 구매 기능을 준비하고 있어요");
+    const orderState: OrderNavigationState = {
+      items: [
+        {
+          discountedPrice: product.discountedPrice,
+          itemName: product.itemName,
+          productId: product.productId,
+          quantity: 1,
+          thumbnailUrl: product.thumbnailUrl,
+        },
+      ],
+    };
+    navigate("/order", { state: orderState });
   };
 
   return (
