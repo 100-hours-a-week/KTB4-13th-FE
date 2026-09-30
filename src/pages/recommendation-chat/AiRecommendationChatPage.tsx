@@ -1,0 +1,63 @@
+import { useNavigate } from "react-router-dom";
+
+import { Toast } from "@/common/components/Toast";
+import { useTransientNotice } from "@/common/hooks/useTransientNotice";
+import { ChatBottomNavigation } from "@/pages/recommendation-chat/components/ChatBottomNavigation";
+import { ChatComposer } from "@/pages/recommendation-chat/components/ChatComposer";
+import { ChatHeader } from "@/pages/recommendation-chat/components/ChatHeader";
+import { ChatMessageList } from "@/pages/recommendation-chat/components/ChatMessageList";
+import { useChatPresentation } from "@/pages/recommendation-chat/hooks/useChatPresentation";
+
+export function AiRecommendationChatPage() {
+  const navigate = useNavigate();
+  const { notice, showNotice } = useTransientNotice();
+  const { addUserMessage, messages, status } = useChatPresentation();
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+
+    navigate("/");
+  };
+
+  return (
+    <div className="relative flex h-dvh min-w-0 flex-col overflow-hidden bg-surface">
+      <ChatHeader
+        onBack={handleBack}
+        onCartClick={() => navigate("/cart")}
+      />
+
+      <div className="page-content shrink-0 py-2">
+        <button
+          className="inline-flex min-h-10 items-center gap-2 rounded-control border border-border bg-muted px-3 type-caption text-text-secondary disabled:cursor-not-allowed disabled:opacity-70"
+          disabled
+          type="button"
+        >
+          <span aria-hidden="true">≡</span>
+          대화 목록
+        </button>
+      </div>
+
+      <main className="min-h-0 flex-1 overflow-y-auto">
+        <ChatMessageList messages={messages} status={status} />
+      </main>
+
+      {notice ? (
+        <div className="page-content pointer-events-none absolute inset-x-0 bottom-36 z-10">
+          <Toast>{notice}</Toast>
+        </div>
+      ) : null}
+
+      <ChatComposer
+        onAttachClick={() =>
+          showNotice("이미지 첨부 기능을 준비하고 있어요")
+        }
+        onSend={addUserMessage}
+        status={status}
+      />
+      <ChatBottomNavigation />
+    </div>
+  );
+}
