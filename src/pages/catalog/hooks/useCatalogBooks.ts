@@ -1,19 +1,33 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { fetchPopularProducts } from "@/features/product/api/productListApi";
-import type { ProductListItem } from "@/features/product/types/product";
-import { toRankingQuery } from "@/pages/catalog/lib/catalogRequest";
-import type { CatalogRequestModel } from "@/pages/catalog/types/catalog";
+import { fetchRecommendationFeed } from "@/features/recommendation/api/recommendationFeedApi";
+import {
+  toRankingBookItem,
+  toRecommendationBookItem,
+} from "@/pages/catalog/lib/catalogBookItem";
+import {
+  toRankingQuery,
+  toRecommendationQuery,
+} from "@/pages/catalog/lib/catalogRequest";
+import type {
+  CatalogBookItem,
+  CatalogRequestModel,
+} from "@/pages/catalog/types/catalog";
 
 export type CatalogListStatus = "loading" | "ready" | "error" | "loadingMore";
 
 interface CatalogBooksState {
   hasLoadMoreError: boolean;
-  items: ProductListItem[];
+  items: CatalogBookItem[];
   nextCursor: string | null;
   requestId: string;
   status: CatalogListStatus;
 }
+
+type CatalogPageResult =
+  | { items: CatalogBookItem[]; nextCursor: string | null; ok: true }
+  | { ok: false; reason: "cursor-expired" | "error" };
 
 const INITIAL_STATE: CatalogBooksState = {
   hasLoadMoreError: false,
@@ -23,13 +37,34 @@ const INITIAL_STATE: CatalogBooksState = {
   status: "loading",
 };
 
-const RECOMMENDATION_EMPTY_STATE: CatalogBooksState = {
-  hasLoadMoreError: false,
-  items: [],
-  nextCursor: null,
-  requestId: "recommendation",
-  status: "ready",
-};
+async function fetchCatalogPage(
+  request: CatalogRequestModel,
+  cursor?: string,
+): Promise<CatalogPageResult> {
+  if (request.mode === "ranking") {
+    const page = await fetchPopularProducts(toRankingQuery(request, cursor));
+
+    return page
+      ? {
+          items: page.items.map(toRankingBookItem),
+          nextCursor: page.nextCursor,
+          ok: true,
+        }
+      : { ok: false, reason: "error" };
+  }
+
+  const result = await fetchRecommendationFeed(
+    toRecommendationQuery(request, cursor),
+  );
+
+  return result.ok
+    ? {
+        items: result.data.items.map(toRecommendationBookItem),
+        nextCursor: result.data.nextCursor,
+        ok: true,
+      }
+    : result;
+}
 
 export function useCatalogBooks(request: CatalogRequestModel) {
   const [state, setState] = useState<CatalogBooksState>(INITIAL_STATE);
@@ -58,18 +93,13 @@ export function useCatalogBooks(request: CatalogRequestModel) {
     requestVersionRef.current += 1;
     const requestVersion = requestVersionRef.current;
 
-    if (request.mode === "recommendation") {
-      // BE #155 has not defined recommend_more yet. Keep this as a deliberate empty state.
-      return;
-    }
-
-    void fetchPopularProducts(toRankingQuery(request)).then((page) => {
+    void fetchCatalogPage(request).then((page) => {
       if (requestVersionRef.current !== requestVersion) {
         return;
       }
 
       setState(
-        page
+        page.ok
           ? {
               hasLoadMoreError: false,
               items: page.items,
@@ -91,16 +121,10 @@ export function useCatalogBooks(request: CatalogRequestModel) {
     sort,
   ]);
 
-  const visibleState =
-    mode === "recommendation"
-      ? RECOMMENDATION_EMPTY_STATE
-      : state.requestId === requestId
-        ? state
-        : INITIAL_STATE;
+  const visibleState = state.requestId === requestId ? state : INITIAL_STATE;
 
   const loadMore = useCallback(() => {
     if (
-      request.mode !== "ranking" ||
       visibleState.nextCursor === null ||
       visibleState.status === "loadingMore"
     ) {
@@ -116,30 +140,34 @@ export function useCatalogBooks(request: CatalogRequestModel) {
       status: "loadingMore",
     }));
 
-    void fetchPopularProducts(toRankingQuery(request, currentCursor)).then(
-      (page) => {
-        if (requestVersionRef.current !== requestVersion) {
-          return;
-        }
+    void fetchCatalogPage(request, currentCursor).then((page) => {
+      if (requestVersionRef.current !== requestVersion) {
+        return;
+      }
 
-        setState((current) =>
-          page
-            ? {
-                hasLoadMoreError: false,
-                items: [...current.items, ...page.items],
-                nextCursor:
-                  page.nextCursor === currentCursor ? null : page.nextCursor,
-                requestId,
-                status: "ready",
-              }
-            : {
-                ...current,
-                hasLoadMoreError: true,
-                status: "ready",
-              },
-        );
-      },
-    );
+      // An expired recommendation cursor cannot be resumed, so the list restarts from the first page.
+      if (!page.ok && page.reason === "cursor-expired") {
+        setRequestKey((current) => current + 1);
+        return;
+      }
+
+      setState((current) =>
+        page.ok
+          ? {
+              hasLoadMoreError: false,
+              items: [...current.items, ...page.items],
+              nextCursor:
+                page.nextCursor === currentCursor ? null : page.nextCursor,
+              requestId,
+              status: "ready",
+            }
+          : {
+              ...current,
+              hasLoadMoreError: true,
+              status: "ready",
+            },
+      );
+    });
   }, [request, requestId, visibleState.nextCursor, visibleState.status]);
 
   const retry = () => {

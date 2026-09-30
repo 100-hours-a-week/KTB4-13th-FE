@@ -1,6 +1,18 @@
+import type { RecommendationFeedSort } from "@/features/recommendation/types/recommendationFeed";
+
 export type CatalogMode = "ranking" | "recommendation";
 
-export type RecommendationSort = "match" | "newest" | "price_asc";
+export type RecommendationSort = RecommendationFeedSort;
+
+// Ranking rows come from products and recommendation rows from books, so ids stay source-specific.
+export interface CatalogBookItem {
+  author: string | null;
+  key: string;
+  originalPrice: number | null;
+  price: number | null;
+  thumbnailUrl: string | null;
+  title: string;
+}
 
 export interface CatalogFilterState {
   categoryId: number | null;

@@ -3,16 +3,18 @@ import { useEffect, useRef } from "react";
 import { BookCover } from "@/common/components/BookCover";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
-import type { ProductListItem } from "@/features/product/types/product";
 import type { CatalogListStatus } from "@/pages/catalog/hooks/useCatalogBooks";
-import type { CatalogMode } from "@/pages/catalog/types/catalog";
+import type {
+  CatalogBookItem,
+  CatalogMode,
+} from "@/pages/catalog/types/catalog";
 
 const priceFormatter = new Intl.NumberFormat("ko-KR");
 const SKELETON_COUNT = 5;
 
 interface CatalogBookListProps {
   hasLoadMoreError: boolean;
-  items: ProductListItem[];
+  items: CatalogBookItem[];
   mode: CatalogMode;
   nextCursor: string | null;
   onLoadMore: () => void;
@@ -20,22 +22,15 @@ interface CatalogBookListProps {
   status: CatalogListStatus;
 }
 
-function BookPrice({ book }: { book: ProductListItem }) {
-  const hasDiscount =
-    book.discountedPrice !== null && book.discountedPrice !== book.salePrice;
-  const price =
-    book.discountedPrice !== null && book.discountedPrice !== book.salePrice
-      ? book.discountedPrice
-      : book.salePrice;
-
+function BookPrice({ price, originalPrice }: { originalPrice: number | null; price: number }) {
   return (
     <div className="flex flex-wrap items-baseline gap-x-2">
       <p className="type-body-small font-bold text-text-primary">
         {priceFormatter.format(price)}원
       </p>
-      {hasDiscount ? (
+      {originalPrice !== null ? (
         <p className="type-caption text-text-tertiary line-through">
-          {priceFormatter.format(book.salePrice)}원
+          {priceFormatter.format(originalPrice)}원
         </p>
       ) : null}
     </div>
@@ -46,7 +41,7 @@ function CatalogBookRow({
   book,
   rank,
 }: {
-  book: ProductListItem;
+  book: CatalogBookItem;
   rank?: number;
 }) {
   return (
@@ -68,14 +63,16 @@ function CatalogBookRow({
       </div>
       <div className="min-w-0 flex-1 self-center">
         <h2 className="line-clamp-2 type-title text-text-primary">
-          {book.itemName}
+          {book.title}
         </h2>
         <p className="mt-1 truncate type-body-small text-text-secondary">
-          {book.author}
+          {book.author ?? "저자 정보 없음"}
         </p>
-        <div className="mt-2">
-          <BookPrice book={book} />
-        </div>
+        {book.price !== null ? (
+          <div className="mt-2">
+            <BookPrice originalPrice={book.originalPrice} price={book.price} />
+          </div>
+        ) : null}
       </div>
     </article>
   );
@@ -165,7 +162,7 @@ export function CatalogBookList({
     <div className="page-content pb-6">
       <ol aria-label={mode === "ranking" ? "책 랭킹 목록" : "추천 도서 목록"}>
         {items.map((book, index) => (
-          <li className="border-b border-border last:border-b-0" key={book.itemId}>
+          <li className="border-b border-border last:border-b-0" key={book.key}>
             <CatalogBookRow
               book={book}
               rank={mode === "ranking" ? index + 1 : undefined}
