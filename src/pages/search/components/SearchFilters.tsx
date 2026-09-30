@@ -1,13 +1,13 @@
 import { useState, type FormEvent } from "react";
 
-import { RetryButton } from "@/common/components/RetryButton";
-import type { SearchCategoryState } from "@/pages/search/hooks/useSearchCategories";
 import type { SearchFilters as SearchFilterValues } from "@/pages/search/types/search";
 
 type RangeKind = "price" | "year";
 
 const controlClassName =
   "min-h-11 shrink-0 rounded-full border border-border bg-surface px-3 type-caption text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:text-text-tertiary";
+const pendingFilterClassName =
+  "inline-flex min-h-11 shrink-0 items-center rounded-full border border-border bg-muted px-3 type-caption text-text-secondary";
 const priceFormatter = new Intl.NumberFormat("ko-KR");
 
 function parseOptionalInteger(value: string) {
@@ -166,21 +166,12 @@ function formatYearRange(from: number | null, to: number | null) {
 }
 
 interface SearchFiltersProps {
-  categoryState: SearchCategoryState;
   filters: SearchFilterValues;
   onChange: (filters: SearchFilterValues) => void;
-  onRetryCategories: () => void;
 }
 
-export function SearchFilters({
-  categoryState,
-  filters,
-  onChange,
-  onRetryCategories,
-}: SearchFiltersProps) {
+export function SearchFilters({ filters, onChange }: SearchFiltersProps) {
   const [openRange, setOpenRange] = useState<RangeKind | null>(null);
-  const categories =
-    categoryState.kind === "ready" ? categoryState.categories : [];
 
   return (
     <section
@@ -188,33 +179,13 @@ export function SearchFilters({
       className="shrink-0 border-b border-border bg-surface px-5 py-3"
     >
       <div className="flex max-w-full gap-2 overflow-x-auto pb-1">
-        <label className="shrink-0">
-          <span className="sr-only">카테고리</span>
-          <select
-            className={controlClassName}
-            disabled={categoryState.kind !== "ready"}
-            onChange={(event) =>
-              onChange({
-                ...filters,
-                categoryId: event.target.value
-                  ? Number(event.target.value)
-                  : null,
-              })
-            }
-            value={filters.categoryId ?? ""}
-          >
-            <option value="">
-              {categoryState.kind === "loading"
-                ? "카테고리 불러오는 중"
-                : "카테고리"}
-            </option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        {/* Search accepts onboarding category labels, not /api/v1/categories values, so it stays unfiltered. */}
+        <span
+          aria-label="카테고리 필터: 전체, 현재 전체 조건만 선택할 수 있습니다"
+          className={pendingFilterClassName}
+        >
+          카테고리 전체
+        </span>
 
         <button
           aria-controls="search-price-filter"
@@ -248,21 +219,6 @@ export function SearchFilters({
           {formatYearRange(filters.pubYearFrom, filters.pubYearTo)}
         </button>
       </div>
-
-      {categoryState.kind === "error" ? (
-        <p
-          className="mt-2 flex flex-wrap items-center gap-x-2 type-caption text-error"
-          role="status"
-        >
-          카테고리를 불러오지 못했어요
-          <RetryButton onClick={onRetryCategories} />
-        </p>
-      ) : null}
-      {categoryState.kind === "ready" && categories.length === 0 ? (
-        <p className="mt-2 type-caption text-text-secondary" role="status">
-          선택할 수 있는 카테고리가 없어요
-        </p>
-      ) : null}
 
       {openRange === "price" ? (
         <RangeFilterPanel
