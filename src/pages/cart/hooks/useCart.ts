@@ -47,12 +47,9 @@ export function useCart() {
         return;
       }
 
-      const viewModelResult = toCartItemViewModels(result.data);
       setStored({
         requestKey,
-        state: viewModelResult.ok
-          ? { items: viewModelResult.items, kind: "ready" }
-          : { kind: "error" },
+        state: { items: toCartItemViewModels(result.data), kind: "ready" },
       });
     });
 
