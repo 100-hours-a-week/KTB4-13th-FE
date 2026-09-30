@@ -1,4 +1,5 @@
 import type { PopularProductQuery } from "@/features/product/api/productListApi";
+import type { RecommendationFeedQuery } from "@/features/recommendation/types/recommendationFeed";
 import type {
   CatalogFilterState,
   RankingRequestModel,
@@ -36,5 +37,21 @@ export function toRankingQuery(
       ? {}
       : { publishedTo: `${request.publicationYearTo}-12-31` }),
     limit: CATALOG_PAGE_LIMIT,
+  };
+}
+
+// categoryId is not sent: the feed accepts onboarding category labels, not /api/v1/categories ids.
+export function toRecommendationQuery(
+  request: RecommendationRequestModel,
+  cursor?: string,
+): RecommendationFeedQuery {
+  return {
+    cursor: cursor ?? null,
+    matchScoreMin: request.matchScoreMin,
+    pubYearFrom: request.publicationYearFrom,
+    pubYearTo: request.publicationYearTo,
+    size: CATALOG_PAGE_LIMIT,
+    sort: request.sort,
+    surface: "recommend_more",
   };
 }

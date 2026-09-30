@@ -24,6 +24,9 @@ const MATCH_SCORE_OPTIONS: { label: string; value: number | null }[] = [
   { label: "80점 이상", value: 80 },
 ];
 
+const pendingFilterClassName =
+  "inline-flex min-h-11 items-center rounded-full border border-border bg-muted px-3 type-caption text-text-secondary";
+
 const selectClassName =
   "min-h-11 rounded-full border border-border bg-surface px-3 type-caption text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:text-text-tertiary";
 
@@ -77,26 +80,36 @@ export function CatalogFilters({
       className="border-b border-border bg-surface px-5 py-3"
     >
       <div className="flex gap-2 overflow-x-auto pb-1">
-        <label className="shrink-0">
-          <span className="sr-only">도서종류</span>
-          <select
-            className={selectClassName}
-            disabled={categoryState.kind === "loading"}
-            onChange={(event) => handleCategoryChange(event.target.value)}
-            value={filters.categoryId ?? "all"}
+        {/* The recommendation feed accepts onboarding category labels, not /api/v1/categories ids. */}
+        {mode === "recommendation" ? (
+          <span
+            aria-label="도서종류 필터: 전체, 현재 전체 조건만 선택할 수 있습니다"
+            className={`${pendingFilterClassName} shrink-0`}
           >
-            <option value="all">
-              {categoryState.kind === "loading"
-                ? "도서종류 불러오는 중"
-                : "도서종류 전체"}
-            </option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
+            도서종류 전체
+          </span>
+        ) : (
+          <label className="shrink-0">
+            <span className="sr-only">도서종류</span>
+            <select
+              className={selectClassName}
+              disabled={categoryState.kind === "loading"}
+              onChange={(event) => handleCategoryChange(event.target.value)}
+              value={filters.categoryId ?? "all"}
+            >
+              <option value="all">
+                {categoryState.kind === "loading"
+                  ? "도서종류 불러오는 중"
+                  : "도서종류 전체"}
               </option>
-            ))}
-          </select>
-        </label>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
 
         <fieldset className="flex shrink-0 items-center gap-1">
           <legend className="sr-only">출간연도 범위</legend>
@@ -173,13 +186,15 @@ export function CatalogFilters({
 
       <div className="mt-2 flex min-h-11 items-center justify-between gap-3">
         <div className="min-w-0 type-caption text-text-secondary">
-          {categoryState.kind === "error" ? (
+          {mode === "ranking" && categoryState.kind === "error" ? (
             <p className="flex flex-wrap items-center gap-x-2" role="status">
               도서종류를 불러오지 못했어요
               <RetryButton onClick={onRetryCategories} />
             </p>
           ) : null}
-          {categoryState.kind === "ready" && categories.length === 0 ? (
+          {mode === "ranking" &&
+          categoryState.kind === "ready" &&
+          categories.length === 0 ? (
             <p role="status">선택할 수 있는 도서종류가 없어요</p>
           ) : null}
         </div>
