@@ -22,12 +22,13 @@ const TOTAL_STEPS = 5;
 const LIMIT_NOTICE_DURATION_MS = 2_000;
 
 type LoadStatus = "loading" | "error" | "ready";
+type ProgressStatus = LoadStatus | "completed";
 
 export function useOnboardingFlow() {
-  const [progressStatus, setProgressStatus] = useState<LoadStatus>("loading");
+  const [progressStatus, setProgressStatus] =
+    useState<ProgressStatus>("loading");
   const [progressRequestKey, setProgressRequestKey] = useState(0);
   const [step, setStep] = useState<OnboardingStep>(1);
-  const [resumeStep, setResumeStep] = useState<OnboardingStep>(1);
   const [selectedOptionIdsByQuestion, setSelectedOptionIdsByQuestion] =
     useState<Record<number, number[]>>({});
   const [question, setQuestion] = useState<OnboardingQuestion | null>(null);
@@ -77,6 +78,11 @@ export function useOnboardingFlow() {
       }
 
       if (result.kind === "found") {
+        if (result.progress.status === "COMPLETED") {
+          setProgressStatus("completed");
+          return;
+        }
+
         setSelectedOptionIdsByQuestion(
           Object.fromEntries(
             result.progress.answers.map((answer) => [
@@ -86,7 +92,7 @@ export function useOnboardingFlow() {
           ),
         );
         setSelectedBookIds(result.progress.bookIds);
-        setResumeStep(getResumeStep(result.progress.answers));
+        setStep(getResumeStep(result.progress.answers));
       }
 
       setProgressStatus("ready");
@@ -260,13 +266,7 @@ export function useOnboardingFlow() {
       return;
     }
 
-    // A returning user confirms Q1 before continuing from the first unsaved answer.
-    const nextStep =
-      step === 1 && resumeStep > 2
-        ? resumeStep
-        : (Math.min(step + 1, TOTAL_STEPS) as OnboardingStep);
-
-    setResumeStep(1);
+    const nextStep = Math.min(step + 1, TOTAL_STEPS) as OnboardingStep;
     moveToStep(nextStep);
   };
 
