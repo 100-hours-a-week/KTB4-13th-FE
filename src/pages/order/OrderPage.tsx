@@ -5,7 +5,11 @@ import { ArrowLeftIcon } from "@/common/components/AppIcons";
 import { Button } from "@/common/components/Button";
 import { Toast } from "@/common/components/Toast";
 import { useTransientNotice } from "@/common/hooks/useTransientNotice";
-import { readOrderNavigationState } from "@/features/order/lib/orderNavigation";
+import { createOrder } from "@/features/order/api/orderApi";
+import {
+  readOrderNavigationState,
+  toCreateOrderItems,
+} from "@/features/order/lib/orderNavigation";
 import { AddressSection } from "@/pages/order/components/AddressSection";
 import { OrderItemsSection } from "@/pages/order/components/OrderItemsSection";
 import {
@@ -31,6 +35,8 @@ import {
 
 const ORDER_UNAVAILABLE_NOTICE =
   "현재 주문을 진행할 수 없어요. 잠시 후 다시 시도해 주세요";
+const ORDER_STOCK_NOTICE = "재고가 부족한 상품이 있어 주문하지 못했어요";
+const ORDER_FAILURE_NOTICE = "주문하지 못했어요. 다시 시도해 주세요";
 const POSTCODE_ERROR_NOTICE =
   "주소 검색을 불러오지 못했어요. 다시 시도해 주세요.";
 
@@ -53,6 +59,7 @@ export function OrderPage() {
     EMPTY_DELIVERY_FORM,
   );
   const [formErrors, setFormErrors] = useState<DeliveryFormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const effectiveValues = getEffectiveDeliveryValues(
     mode,
     formValues,
@@ -62,6 +69,7 @@ export function OrderPage() {
   const isAddressReady = addressesState.kind === "ready";
   const canSubmit =
     isAddressReady &&
+    !isSubmitting &&
     items.length > 0 &&
     Object.keys(currentErrors).length === 0;
 
@@ -102,15 +110,33 @@ export function OrderPage() {
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const errors = validateDeliveryForm(effectiveValues);
     setFormErrors(errors);
 
-    if (items.length === 0 || Object.keys(errors).length > 0) {
+    if (isSubmitting || items.length === 0 || Object.keys(errors).length > 0) {
       return;
     }
 
-    showNotice(ORDER_UNAVAILABLE_NOTICE);
+    // POST /api/v1/orders needs a saved addressId; a new address cannot be registered and identified yet.
+    if (mode !== "default" || !defaultAddress) {
+      showNotice(ORDER_UNAVAILABLE_NOTICE);
+      return;
+    }
+
+    setIsSubmitting(true);
+    const result = await createOrder({
+      addressId: defaultAddress.addressId,
+      items: toCreateOrderItems(items),
+    });
+    setIsSubmitting(false);
+
+    if (result.ok) {
+      navigate("/order/complete", { replace: true });
+      return;
+    }
+
+    showNotice(result.reason === "stock" ? ORDER_STOCK_NOTICE : ORDER_FAILURE_NOTICE);
   };
 
   return (
@@ -158,7 +184,9 @@ export function OrderPage() {
         <Button
           className="min-h-12 w-full"
           disabled={!canSubmit}
-          onClick={handleSubmit}
+          onClick={() => {
+            void handleSubmit();
+          }}
         >
           {formatWon(totals.total)} 결제하기
         </Button>
