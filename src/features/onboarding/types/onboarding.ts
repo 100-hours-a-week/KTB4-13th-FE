@@ -39,8 +39,3 @@ export interface BookCandidate {
   coverImageUrl: string | null;
   title: string;
 }
-
-export interface PersonalizationConsent {
-  agreedAt: string | null;
-  consented: boolean;
-}

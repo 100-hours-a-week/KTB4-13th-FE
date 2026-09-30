@@ -18,17 +18,13 @@ import { usePersonalizationConsent } from "@/features/onboarding/hooks/usePerson
 export function OnboardingPage() {
   const navigate = useNavigate();
   const consentActionRef = useRef(false);
-  const [consentAction, setConsentAction] = useState<
-    "personalized" | "without-personalization" | null
-  >(null);
+  const [isSubmittingConsent, setIsSubmittingConsent] = useState(false);
   const {
-    consentStatus,
     hasAgreedToPersonalization,
     hasConsentSaveError,
     isSavingConsent,
-    retryConsent,
-    saveConsent,
     setHasAgreedToPersonalization,
+    submitConsentSelection,
   } = usePersonalizationConsent();
   const {
     bookCandidates,
@@ -80,34 +76,24 @@ export function OnboardingPage() {
     }
 
     consentActionRef.current = true;
-    setConsentAction("personalized");
-    const isConsentSaved = await saveConsent(true);
+    setIsSubmittingConsent(true);
+    const isConsentSaved = await submitConsentSelection();
 
     if (isConsentSaved) {
       await saveAnswersAndGoNext();
     }
 
     consentActionRef.current = false;
-    setConsentAction(null);
+    setIsSubmittingConsent(false);
   };
 
-  const handleGoHomeWithoutPersonalization = async () => {
+  // No agreement is recorded; the backend has no API to store a declined consent.
+  const handleGoHomeWithoutPersonalization = () => {
     if (consentActionRef.current) {
       return;
     }
 
-    consentActionRef.current = true;
-    setConsentAction("without-personalization");
-    const isConsentSaved = await saveConsent(false);
-
-    if (isConsentSaved) {
-      consentActionRef.current = false;
-      navigate("/");
-      return;
-    }
-
-    consentActionRef.current = false;
-    setConsentAction(null);
+    navigate("/");
   };
 
   const handleCompleteOnboarding = async () => {
@@ -118,25 +104,14 @@ export function OnboardingPage() {
     }
   };
 
-  const retryEntry = () => {
-    if (progressStatus === "error") {
-      retryProgress();
-    }
-
-    if (consentStatus === "error") {
-      retryConsent();
-    }
-  };
-
-  if (progressStatus !== "ready" || consentStatus !== "ready") {
-    const hasEntryError =
-      progressStatus === "error" || consentStatus === "error";
+  if (progressStatus !== "ready") {
+    const hasEntryError = progressStatus === "error";
 
     return (
       <main className="flex min-h-dvh items-center justify-center bg-surface px-5 py-10">
         <div className="w-full max-w-sm">
           {hasEntryError ? (
-            <Toast action={<RetryButton onClick={retryEntry} />} variant="error">
+            <Toast action={<RetryButton onClick={retryProgress} />} variant="error">
               온보딩 정보를 불러오지 못했어요
             </Toast>
           ) : (
@@ -155,7 +130,7 @@ export function OnboardingPage() {
 
   const canGoNext =
     isSelectionValid && (step !== 1 || hasAgreedToPersonalization);
-  const isConsentBusy = consentAction !== null || isSavingConsent;
+  const isConsentBusy = isSubmittingConsent || isSavingConsent;
 
   return (
     <main className="flex h-dvh flex-col overflow-hidden bg-surface">
@@ -293,7 +268,7 @@ export function OnboardingPage() {
             className="w-full"
             disabled={!canGoNext || isConsentBusy}
             isLoading={
-              step === 1 ? consentAction === "personalized" : isSaving
+              step === 1 ? isSubmittingConsent : isSaving
             }
             onClick={handleSaveAnswersAndGoNext}
           >
@@ -315,7 +290,6 @@ export function OnboardingPage() {
           <Button
             className="w-full"
             disabled={isConsentBusy}
-            isLoading={consentAction === "without-personalization"}
             onClick={handleGoHomeWithoutPersonalization}
             variant="secondary"
           >
