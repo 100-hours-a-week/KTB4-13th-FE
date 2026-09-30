@@ -5,7 +5,6 @@ import type {
   BookCandidate,
   OnboardingProgress,
   OnboardingQuestion,
-  PersonalizationConsent,
 } from "@/features/onboarding/types/onboarding";
 
 // Backend ONBOARDING_NOT_FOUND is exposed only as this code, which other onboarding 404s share.
@@ -79,16 +78,6 @@ function isBookCandidatesResponse(
     isRecord(data) &&
     Array.isArray(data.candidates) &&
     data.candidates.every(isBookCandidate)
-  );
-}
-
-function isPersonalizationConsent(
-  data: unknown,
-): data is PersonalizationConsent {
-  return (
-    isRecord(data) &&
-    typeof data.consented === "boolean" &&
-    (data.agreedAt === null || typeof data.agreedAt === "string")
   );
 }
 
@@ -170,26 +159,11 @@ export async function saveOnboardingBooks(bookIds: number[]) {
   return result?.ok === true;
 }
 
-export async function fetchPersonalizationConsent(): Promise<
-  PersonalizationConsent | null
-> {
-  const result = await requestOnboardingApi("/api/v1/onboarding/consent");
+export async function recordPersonalizationAgreement() {
+  const result = await requestOnboardingApi(
+    "/api/v1/onboarding/personalization-agreement",
+    { method: "POST" },
+  );
 
-  return result?.ok && isPersonalizationConsent(result.data)
-    ? result.data
-    : null;
-}
-
-export async function savePersonalizationConsent(
-  consented: boolean,
-): Promise<PersonalizationConsent | null> {
-  const result = await requestOnboardingApi("/api/v1/onboarding/consent", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ consented }),
-  });
-
-  return result?.ok && isPersonalizationConsent(result.data)
-    ? result.data
-    : null;
+  return result?.ok === true;
 }
