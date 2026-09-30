@@ -19,6 +19,7 @@ import { PurchaseBar } from "@/pages/product/components/PurchaseBar";
 import { useProductDetail } from "@/pages/product/hooks/useProductDetail";
 
 const UNAVAILABLE_NOTICE = "아직 준비 중인 기능이에요";
+const PURCHASE_QUANTITY = 1;
 
 function parseProductId(value: string | undefined) {
   if (!value) {
@@ -46,7 +47,9 @@ export function ProductDetailPage() {
   const { status: authStatus } = useAuth();
   const { notice, showNotice } = useTransientNotice();
   const { retry, state } = useProductDetail(productId, authStatus);
-  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [pendingPurchaseAction, setPendingPurchaseAction] = useState<
+    "cart" | "buy-now" | null
+  >(null);
   const recommendationReason = readRecommendationReason(location.state);
   const product = state.kind === "ready" ? state.data : null;
 
@@ -65,41 +68,55 @@ export function ProductDetailPage() {
     navigate(-1);
   };
 
-  const handleAddToCart = async () => {
-    if (!product || isAddingToCart) {
-      return;
-    }
-    if (authStatus !== "authenticated") {
-      goToLogin();
-      return;
-    }
-
-    setIsAddingToCart(true);
-    const result = await addCartItem(product.productId, 1);
-    setIsAddingToCart(false);
+  const addProductToCart = async (
+    productId: number,
+    action: "cart" | "buy-now",
+  ) => {
+    setPendingPurchaseAction(action);
+    const result = await addCartItem(productId, PURCHASE_QUANTITY);
+    setPendingPurchaseAction(null);
 
     if (result.ok) {
-      showNotice("장바구니에 담았어요.");
-      return;
+      return true;
     }
     if (result.reason === "unauthorized") {
       goToLogin();
-      return;
+      return false;
     }
     if (result.reason === "stock") {
       showNotice("재고가 부족해 장바구니에 담지 못했어요");
       retry();
-      return;
+      return false;
     }
     showNotice("장바구니에 담지 못했어요. 다시 시도해 주세요");
+    return false;
   };
 
-  const handleBuyNow = () => {
-    if (!product) {
+  const handleAddToCart = async () => {
+    if (!product || pendingPurchaseAction) {
       return;
     }
     if (authStatus !== "authenticated") {
       goToLogin();
+      return;
+    }
+
+    if (await addProductToCart(product.productId, "cart")) {
+      showNotice("장바구니에 담았어요.");
+    }
+  };
+
+  // Orders accept only products already in the cart, so buy-now adds the product first.
+  const handleBuyNow = async () => {
+    if (!product || pendingPurchaseAction) {
+      return;
+    }
+    if (authStatus !== "authenticated") {
+      goToLogin();
+      return;
+    }
+
+    if (!(await addProductToCart(product.productId, "buy-now"))) {
       return;
     }
 
@@ -109,7 +126,7 @@ export function ProductDetailPage() {
           discountedPrice: product.discountedPrice,
           itemName: product.itemName,
           productId: product.productId,
-          quantity: 1,
+          quantity: PURCHASE_QUANTITY,
           thumbnailUrl: product.thumbnailUrl,
         },
       ],
@@ -188,7 +205,8 @@ export function ProductDetailPage() {
 
       {product ? (
         <PurchaseBar
-          isAddingToCart={isAddingToCart}
+          isAddingToCart={pendingPurchaseAction === "cart"}
+          isBuyingNow={pendingPurchaseAction === "buy-now"}
           isSoldOut={product.stockQuantity <= 0}
           onAddToCart={handleAddToCart}
           onBuyNow={handleBuyNow}
