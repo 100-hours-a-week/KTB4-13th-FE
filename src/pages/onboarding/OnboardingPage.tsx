@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/common/components/Button";
 import { Toast } from "@/common/components/Toast";
@@ -35,7 +35,6 @@ export function OnboardingPage() {
     bookCandidatesStatus,
     goToPreviousStep,
     hasSaveError,
-    isCompleted,
     isSaving,
     isSelectionValid,
     limitNotice,
@@ -128,10 +127,6 @@ export function OnboardingPage() {
       retryConsent();
     }
   };
-
-  if (isCompleted) {
-    return <Navigate replace to="/" />;
-  }
 
   if (progressStatus !== "ready" || consentStatus !== "ready") {
     const hasEntryError =
