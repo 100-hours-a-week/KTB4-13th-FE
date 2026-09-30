@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 
 import { Button } from "@/common/components/Button";
 import { Toast } from "@/common/components/Toast";
@@ -103,6 +103,10 @@ export function OnboardingPage() {
       navigate("/");
     }
   };
+
+  if (progressStatus === "completed") {
+    return <Navigate replace to="/" />;
+  }
 
   if (progressStatus !== "ready") {
     const hasEntryError = progressStatus === "error";

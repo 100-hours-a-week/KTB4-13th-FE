@@ -1,6 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
-import { RedirectAuthenticatedUser } from "@/app/router/RedirectAuthenticatedUser";
+import { OnboardingEntryGuard } from "@/app/router/OnboardingEntryGuard";
 import { RequireAuth } from "@/app/router/RequireAuth";
 import { KakaoCallbackPage } from "@/pages/auth/KakaoCallbackPage";
 import { CartPage } from "@/pages/cart/CartPage";
@@ -18,25 +18,27 @@ export function Router() {
     <BrowserRouter>
       <Routes>
         <Route path="/auth/kakao/callback" element={<KakaoCallbackPage />} />
-        <Route element={<RedirectAuthenticatedUser />}>
+        <Route element={<OnboardingEntryGuard />}>
           <Route path="/login" element={<LoginPage />} />
-        </Route>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/products/:productId" element={<ProductDetailPage />} />
-        <Route
-          path="/catalog/ranking"
-          element={<CatalogPage mode="ranking" />}
-        />
-        <Route path="/search" element={<SearchResultsPage />} />
-        <Route element={<RequireAuth />}>
-          <Route path="/cart" element={<CartPage />} />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/products/:productId" element={<ProductDetailPage />} />
           <Route
-            path="/catalog/recommendations"
-            element={<CatalogPage mode="recommendation" />}
+            path="/catalog/ranking"
+            element={<CatalogPage mode="ranking" />}
           />
+          <Route path="/search" element={<SearchResultsPage />} />
+          <Route element={<RequireAuth />}>
+            <Route path="/cart" element={<CartPage />} />
+            <Route
+              path="/catalog/recommendations"
+              element={<CatalogPage mode="recommendation" />}
+            />
+            <Route path="/order" element={<OrderPage />} />
+            <Route path="/order/complete" element={<OrderCompletePage />} />
+          </Route>
+        </Route>
+        <Route element={<RequireAuth />}>
           <Route path="/onboarding" element={<OnboardingPage />} />
-          <Route path="/order" element={<OrderPage />} />
-          <Route path="/order/complete" element={<OrderCompletePage />} />
         </Route>
         <Route path="*" element={<Navigate replace to="/login" />} />
       </Routes>

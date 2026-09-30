@@ -1,12 +1,12 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 
 import { useAuth } from "@/features/auth/context/useAuth";
 import { OnboardingEntryError } from "@/features/onboarding/components/OnboardingEntryError";
 import { useOnboardingEntryPath } from "@/features/onboarding/hooks/useOnboardingEntryPath";
 
-// Sends an already signed-in user away from public entry pages based on onboarding progress.
-export function RedirectAuthenticatedUser() {
+export function OnboardingEntryGuard() {
   const { status } = useAuth();
+  const location = useLocation();
   const { entry, retry } = useOnboardingEntryPath(status === "authenticated");
 
   if (status === "unauthenticated") {
@@ -14,7 +14,11 @@ export function RedirectAuthenticatedUser() {
   }
 
   if (status === "authenticated" && entry.kind === "ready") {
-    return <Navigate replace to={entry.path} />;
+    if (entry.path === "/onboarding" || location.pathname === "/login") {
+      return <Navigate replace to={entry.path} />;
+    }
+
+    return <Outlet />;
   }
 
   if (status === "authenticated" && entry.kind === "error") {
