@@ -1,5 +1,5 @@
 import { parseApiResponse } from "@/common/api/apiResponse";
-import { fetchWithAuth } from "@/features/auth/lib/httpClient";
+import { fetchPublic } from "@/common/api/httpClient";
 import type {
   BookSearchItem,
   BookSearchPage,
@@ -97,7 +97,7 @@ export async function fetchBookSearchResults(
 ): Promise<BookSearchResult> {
   try {
     const result = await parseApiResponse(
-      await fetchWithAuth(`/api/v1/search?${toSearchParams(query).toString()}`, {
+      await fetchPublic(`/api/v1/search?${toSearchParams(query).toString()}`, {
         signal,
       }),
     );

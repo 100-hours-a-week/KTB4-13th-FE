@@ -55,28 +55,30 @@ export function HomePage() {
   return (
     <div className="relative flex h-dvh flex-col bg-surface">
       <HomeHeader
-        onCartClick={() => navigate("/cart")}
+        onCartClick={() =>
+          navigate(status === "unauthenticated" ? "/login" : "/cart")
+        }
         onSearchSubmit={handleSearchSubmit}
       />
 
-      {/* Content APIs require a token, so nothing loads until the session is known. */}
       <main className="min-h-0 flex-1 overflow-y-auto" ref={mainRef}>
-        {status === "authenticated" ? (
-          <div className="flex flex-col gap-8 py-6">
-            <BookRankingSection
-              onMoreClick={() => navigate("/catalog/ranking")}
-              onProductClick={rememberHomeScroll}
-            />
+        <div className="flex flex-col gap-8 py-6">
+          <BookRankingSection
+            onMoreClick={() => navigate("/catalog/ranking")}
+            onProductClick={rememberHomeScroll}
+          />
+          {/* The feed requires a token, so guests never mount the section or request it. */}
+          {status === "authenticated" ? (
             <RecommendationSection
               onMoreClick={() => navigate("/catalog/recommendations")}
             />
-          </div>
-        ) : null}
-        {status === "unauthenticated" ? (
-          <div className="page-content">
-            <LoginRequired description="로그인 후 맞춤 도서와 책 랭킹을 확인할 수 있어요" />
-          </div>
-        ) : null}
+          ) : null}
+          {status === "unauthenticated" ? (
+            <div className="page-content">
+              <LoginRequired description="로그인하고 취향에 맞는 도서를 추천받아 보세요" />
+            </div>
+          ) : null}
+        </div>
       </main>
 
       {notice ? (

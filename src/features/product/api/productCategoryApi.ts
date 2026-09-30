@@ -1,5 +1,5 @@
 import { parseApiResponse } from "@/common/api/apiResponse";
-import { fetchWithAuth } from "@/features/auth/lib/httpClient";
+import { fetchPublic } from "@/common/api/httpClient";
 import type { ProductCategory } from "@/features/product/types/product";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -28,7 +28,7 @@ function isProductCategoryList(
 export async function fetchProductCategories(): Promise<ProductCategory[] | null> {
   try {
     const result = await parseApiResponse(
-      await fetchWithAuth("/api/v1/categories"),
+      await fetchPublic("/api/v1/categories"),
     );
 
     return result.ok && isProductCategoryList(result.data)

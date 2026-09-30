@@ -11,7 +11,6 @@ type BookRankingState =
   | { kind: "ready"; items: ProductListItem[] }
   | { kind: "error" };
 
-// Callers mount this only for authenticated users because GET /api/v1/items requires a token.
 export function useBookRanking() {
   const [state, setState] = useState<BookRankingState>({ kind: "loading" });
   const [requestKey, setRequestKey] = useState(0);

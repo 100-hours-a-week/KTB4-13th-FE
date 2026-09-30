@@ -46,7 +46,7 @@ export function ProductDetailPage() {
   const navigate = useNavigate();
   const { status: authStatus } = useAuth();
   const { notice, showNotice } = useTransientNotice();
-  const { retry, state } = useProductDetail(productId, authStatus);
+  const { retry, state } = useProductDetail(productId);
   const [pendingPurchaseAction, setPendingPurchaseAction] = useState<
     "cart" | "buy-now" | null
   >(null);
@@ -138,7 +138,9 @@ export function ProductDetailPage() {
     <div className="relative flex h-dvh w-full min-w-0 flex-col overflow-x-hidden bg-surface">
       <ProductHeader
         onBack={handleBack}
-        onCartClick={() => navigate("/cart")}
+        onCartClick={() =>
+          authStatus === "unauthenticated" ? goToLogin() : navigate("/cart")
+        }
       />
 
       <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
@@ -157,22 +159,6 @@ export function ProductDetailPage() {
               to="/"
             >
               홈으로 이동
-            </Link>
-          </section>
-        ) : null}
-
-        {state.kind === "authentication-required" ? (
-          <section className="page-content flex min-h-64 flex-col items-center justify-center gap-2 py-12 text-center">
-            <h2 className="type-title text-text-primary">로그인이 필요합니다</h2>
-            <p className="type-body-small text-text-secondary">
-              로그인 후 도서 상세 정보를 확인할 수 있어요
-            </p>
-            <Link
-              className="mt-3 inline-flex min-h-11 items-center rounded-control bg-primary px-5 type-body-small font-semibold text-white hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              state={{ returnTo: location.pathname }}
-              to="/login"
-            >
-              로그인하기
             </Link>
           </section>
         ) : null}
