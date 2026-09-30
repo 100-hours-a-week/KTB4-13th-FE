@@ -98,3 +98,8 @@ export function createHttpClient(authHandlers: AuthHandlers): HttpClient {
 
   return { fetchWithAuth, reissueAccessTokenOnce };
 }
+
+// For APIs the backend serves without login: no Authorization header and no reissue on 401.
+export function fetchPublic(path: string, init: RequestInit = {}): Promise<Response> {
+  return fetch(createApiUrl(path), init);
+}

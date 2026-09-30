@@ -23,17 +23,17 @@ export function Router() {
         </Route>
         <Route path="/" element={<HomePage />} />
         <Route path="/products/:productId" element={<ProductDetailPage />} />
+        <Route
+          path="/catalog/ranking"
+          element={<CatalogPage mode="ranking" />}
+        />
+        <Route path="/search" element={<SearchResultsPage />} />
         <Route element={<RequireAuth />}>
           <Route path="/cart" element={<CartPage />} />
-          <Route
-            path="/catalog/ranking"
-            element={<CatalogPage mode="ranking" />}
-          />
           <Route
             path="/catalog/recommendations"
             element={<CatalogPage mode="recommendation" />}
           />
-          <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/order" element={<OrderPage />} />
           <Route path="/order/complete" element={<OrderCompletePage />} />

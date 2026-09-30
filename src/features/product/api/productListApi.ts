@@ -1,5 +1,5 @@
 import { parseApiResponse } from "@/common/api/apiResponse";
-import { fetchWithAuth } from "@/features/auth/lib/httpClient";
+import { fetchPublic } from "@/common/api/httpClient";
 import type {
   ProductListItem,
   ProductListPage,
@@ -39,7 +39,6 @@ function isProductListPage(data: unknown): data is ProductListPage {
   );
 }
 
-// GET /api/v1/items requires authentication under the current backend security config.
 export async function fetchPopularProducts(
   query: PopularProductQuery,
 ): Promise<ProductListPage | null> {
@@ -66,7 +65,7 @@ export async function fetchPopularProducts(
 
   try {
     const result = await parseApiResponse(
-      await fetchWithAuth(`/api/v1/items?${searchParams.toString()}`),
+      await fetchPublic(`/api/v1/items?${searchParams.toString()}`),
     );
 
     return result.ok && isProductListPage(result.data) ? result.data : null;

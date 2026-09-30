@@ -2,13 +2,11 @@ import { useEffect, useState } from "react";
 
 import { fetchProductDetail } from "@/features/product/api/productDetailApi";
 import type { ProductDetail } from "@/features/product/types/product";
-import type { AuthStatus } from "@/features/auth/types/auth";
 
 export type ProductDetailState =
   | { kind: "loading" }
   | { data: ProductDetail; kind: "ready" }
   | { kind: "not-found" }
-  | { kind: "authentication-required" }
   | { kind: "error" };
 
 interface StoredRequestState {
@@ -16,10 +14,7 @@ interface StoredRequestState {
   state: ProductDetailState;
 }
 
-export function useProductDetail(
-  productId: number | null,
-  authStatus: AuthStatus,
-) {
+export function useProductDetail(productId: number | null) {
   const [retryCount, setRetryCount] = useState(0);
   const [stored, setStored] = useState<StoredRequestState>({
     requestKey: "",
@@ -28,7 +23,7 @@ export function useProductDetail(
   const requestKey = `${productId ?? "invalid"}:${retryCount}`;
 
   useEffect(() => {
-    if (productId === null || authStatus === "initializing") {
+    if (productId === null) {
       return undefined;
     }
 
@@ -48,26 +43,23 @@ export function useProductDetail(
         return;
       }
 
-      const kind =
-        result.reason === "not-found"
-          ? "not-found"
-          : result.reason === "unauthorized"
-            ? "authentication-required"
-            : "error";
-      setStored({ requestKey, state: { kind } });
+      setStored({
+        requestKey,
+        state: { kind: result.reason === "not-found" ? "not-found" : "error" },
+      });
     });
 
     return () => {
       isActive = false;
       controller.abort();
     };
-  }, [authStatus, productId, requestKey]);
+  }, [productId, requestKey]);
 
   let state: ProductDetailState;
 
   if (productId === null) {
     state = { kind: "not-found" };
-  } else if (authStatus === "initializing" || stored.requestKey !== requestKey) {
+  } else if (stored.requestKey !== requestKey) {
     state = { kind: "loading" };
   } else {
     state = stored.state;

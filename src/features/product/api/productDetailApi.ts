@@ -1,10 +1,10 @@
 import { parseApiResponse } from "@/common/api/apiResponse";
-import { fetchWithAuth } from "@/features/auth/lib/httpClient";
+import { fetchPublic } from "@/common/api/httpClient";
 import type { ProductDetail } from "@/features/product/types/product";
 
 export type ProductDetailFetchResult =
   | { data: ProductDetail; ok: true }
-  | { ok: false; reason: "not-found" | "unauthorized" | "error" };
+  | { ok: false; reason: "not-found" | "error" };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -60,15 +60,12 @@ export async function fetchProductDetail(
 ): Promise<ProductDetailFetchResult> {
   try {
     const result = await parseApiResponse(
-      await fetchWithAuth(`/api/v1/products/${productId}`, { signal }),
+      await fetchPublic(`/api/v1/products/${productId}`, { signal }),
     );
 
     if (!result.ok) {
       if (result.status === 404) {
         return { ok: false, reason: "not-found" };
-      }
-      if (result.status === 401) {
-        return { ok: false, reason: "unauthorized" };
       }
       return { ok: false, reason: "error" };
     }
