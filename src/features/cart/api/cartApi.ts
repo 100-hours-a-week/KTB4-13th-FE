@@ -25,6 +25,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
+function isNullableString(value: unknown): value is string | null {
+  return value === null || typeof value === "string";
+}
+
+function isNullableNumber(value: unknown): value is number | null {
+  return value === null || typeof value === "number";
+}
+
 function parseCartItem(data: unknown): CartItemResponseDto | null {
   if (
     !isRecord(data) ||
@@ -37,15 +45,25 @@ function parseCartItem(data: unknown): CartItemResponseDto | null {
     typeof data.quantity !== "number" ||
     !Number.isInteger(data.quantity) ||
     data.quantity < 1 ||
-    data.quantity > 500
+    data.quantity > 500 ||
+    !isNullableString(data.itemName) ||
+    !isNullableString(data.thumbnailUrl) ||
+    !isNullableNumber(data.salePrice) ||
+    !isNullableNumber(data.discountedPrice) ||
+    typeof data.isAvailableForPurchase !== "boolean"
   ) {
     return null;
   }
 
   return {
     cartItemId: data.cartItemId,
+    discountedPrice: data.discountedPrice,
+    isAvailableForPurchase: data.isAvailableForPurchase,
+    itemName: data.itemName,
     productId: data.productId,
     quantity: data.quantity,
+    salePrice: data.salePrice,
+    thumbnailUrl: data.thumbnailUrl,
   };
 }
 
