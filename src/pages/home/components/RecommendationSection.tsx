@@ -1,19 +1,74 @@
+import { Link } from "react-router-dom";
+
 import { BookCover } from "@/common/components/BookCover";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
+import type { RecommendationFeedItem } from "@/features/recommendation/types/recommendationFeed";
 import { HomeSectionHeader } from "@/pages/home/components/HomeSectionHeader";
 import { useHomeRecommendations } from "@/pages/home/hooks/useHomeRecommendations";
 
 interface RecommendationSectionProps {
   onMoreClick: () => void;
+  onProductClick: () => void;
 }
 
 const priceFormatter = new Intl.NumberFormat("ko-KR");
 const SKELETON_COUNT = 3;
-const RECOMMENDATION_CARD_CLASS_NAME = "flex w-[30%] shrink-0 flex-col gap-1.5";
+const RECOMMENDATION_CARD_CLASS_NAME = "w-[30%] shrink-0";
+const RECOMMENDATION_CARD_CONTENT_CLASS_NAME = "flex flex-col gap-1.5";
 
-// Feed items carry bookId only; product detail needs productId, so cards are not links yet.
-export function RecommendationSection({ onMoreClick }: RecommendationSectionProps) {
+function RecommendationCard({
+  book,
+  onProductClick,
+}: {
+  book: RecommendationFeedItem;
+  onProductClick: () => void;
+}) {
+  const card = (
+    <>
+      <BookCover
+        alt=""
+        fallbackTitle={book.title}
+        thumbnailUrl={book.coverUrl}
+      />
+      <p className="line-clamp-2 type-body-small font-semibold text-text-primary">
+        {book.title}
+      </p>
+      <p className="truncate type-caption text-text-tertiary">
+        {book.author ?? "저자 정보 없음"}
+      </p>
+      {book.price !== null ? (
+        <p className="type-body-small font-bold text-text-primary">
+          {priceFormatter.format(book.price)}원
+        </p>
+      ) : null}
+    </>
+  );
+
+  if (book.productId === null) {
+    return (
+      <article className={RECOMMENDATION_CARD_CONTENT_CLASS_NAME}>
+        {card}
+      </article>
+    );
+  }
+
+  return (
+    <Link
+      aria-label={`${book.title} 상세 보기`}
+      className={`${RECOMMENDATION_CARD_CONTENT_CLASS_NAME} rounded-control focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary`}
+      onClick={onProductClick}
+      to={`/products/${book.productId}`}
+    >
+      {card}
+    </Link>
+  );
+}
+
+export function RecommendationSection({
+  onMoreClick,
+  onProductClick,
+}: RecommendationSectionProps) {
   const { recommendations, retry } = useHomeRecommendations();
 
   return (
@@ -64,22 +119,10 @@ export function RecommendationSection({ onMoreClick }: RecommendationSectionProp
           <ul className="flex gap-3">
             {recommendations.items.map((book) => (
               <li className={RECOMMENDATION_CARD_CLASS_NAME} key={book.bookId}>
-                <BookCover
-                  alt=""
-                  fallbackTitle={book.title}
-                  thumbnailUrl={book.coverUrl}
+                <RecommendationCard
+                  book={book}
+                  onProductClick={onProductClick}
                 />
-                <p className="line-clamp-2 type-body-small font-semibold text-text-primary">
-                  {book.title}
-                </p>
-                <p className="truncate type-caption text-text-tertiary">
-                  {book.author ?? "저자 정보 없음"}
-                </p>
-                {book.price !== null ? (
-                  <p className="type-body-small font-bold text-text-primary">
-                    {priceFormatter.format(book.price)}원
-                  </p>
-                ) : null}
               </li>
             ))}
           </ul>

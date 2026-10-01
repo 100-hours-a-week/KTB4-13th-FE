@@ -71,6 +71,7 @@ export function HomePage() {
           {status === "authenticated" ? (
             <RecommendationSection
               onMoreClick={() => navigate("/catalog/recommendations")}
+              onProductClick={rememberHomeScroll}
             />
           ) : null}
           {status === "unauthenticated" ? (

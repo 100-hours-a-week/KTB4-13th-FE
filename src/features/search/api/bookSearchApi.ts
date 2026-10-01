@@ -22,6 +22,7 @@ function parseBookSearchItem(value: unknown): BookSearchItem | null {
   if (
     !isRecord(value) ||
     typeof value.bookId !== "number" ||
+    (value.productId !== null && typeof value.productId !== "number") ||
     typeof value.title !== "string" ||
     typeof value.inStock !== "boolean" ||
     !isNullableString(value.author) ||
@@ -40,6 +41,7 @@ function parseBookSearchItem(value: unknown): BookSearchItem | null {
     coverUrl: value.coverUrl ?? null,
     inStock: value.inStock,
     price: value.price ?? null,
+    productId: value.productId,
     publisher: value.publisher ?? null,
     title: value.title,
   };

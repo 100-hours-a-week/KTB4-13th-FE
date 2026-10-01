@@ -21,6 +21,7 @@ export interface RecommendationFeedItem {
   inStock: boolean;
   matchScore: number;
   price: number | null;
+  productId: number | null;
   title: string;
 }
 

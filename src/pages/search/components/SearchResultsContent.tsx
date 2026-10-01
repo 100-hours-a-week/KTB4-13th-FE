@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
 import { RetryButton } from "@/common/components/RetryButton";
@@ -9,9 +10,8 @@ import type { SearchResultState } from "@/pages/search/types/search";
 const priceFormatter = new Intl.NumberFormat("ko-KR");
 const SKELETON_COUNT = 12;
 
-// Search returns bookId only; product detail needs productId, so cards are not links yet.
 function SearchResultCard({ item }: { item: BookSearchItem }) {
-  return (
+  const card = (
     <article className="flex min-w-0 flex-col gap-1.5">
       <BookCover
         alt=""
@@ -30,6 +30,20 @@ function SearchResultCard({ item }: { item: BookSearchItem }) {
         </p>
       ) : null}
     </article>
+  );
+
+  if (item.productId === null) {
+    return card;
+  }
+
+  return (
+    <Link
+      aria-label={`${item.title} 상세 보기`}
+      className="block rounded-control focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      to={`/products/${item.productId}`}
+    >
+      {card}
+    </Link>
   );
 }
 

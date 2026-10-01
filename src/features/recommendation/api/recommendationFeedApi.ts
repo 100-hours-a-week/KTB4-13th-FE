@@ -24,6 +24,7 @@ function parseRecommendationFeedItem(
   if (
     !isRecord(value) ||
     typeof value.bookId !== "number" ||
+    (value.productId !== null && typeof value.productId !== "number") ||
     typeof value.title !== "string" ||
     typeof value.inStock !== "boolean" ||
     typeof value.matchScore !== "number" ||
@@ -43,6 +44,7 @@ function parseRecommendationFeedItem(
     inStock: value.inStock,
     matchScore: value.matchScore,
     price: value.price ?? null,
+    productId: value.productId,
     title: value.title,
   };
 }
