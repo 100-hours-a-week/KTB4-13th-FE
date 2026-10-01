@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { ChangeEvent } from "react";
 
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
@@ -9,6 +10,10 @@ import {
 } from "@/features/address/lib/kakaoPostcode";
 import type { UserAddress } from "@/features/address/types/address";
 import type { AddressesState } from "@/pages/order/hooks/useAddresses";
+import {
+  formatPhoneNumber,
+  MAX_PHONE_NUMBER_LENGTH,
+} from "@/pages/order/lib/orderForm";
 import type {
   DeliveryFormErrors,
   DeliveryFormField,
@@ -37,7 +42,6 @@ interface FieldProps {
   onFieldBlur: (field: DeliveryFormField) => void;
   readOnly?: boolean;
   required?: boolean;
-  type?: "text" | "tel";
   value: string;
 }
 
@@ -52,7 +56,6 @@ function AddressField({
   onFieldBlur,
   readOnly = false,
   required = false,
-  type = "text",
   value,
 }: FieldProps) {
   const inputId = `delivery-${field}`;
@@ -62,23 +65,98 @@ function AddressField({
     <div>
       <label className="type-caption font-medium text-text-secondary" htmlFor={inputId}>
         {label}
-        {required ? <span className="ml-1 text-error">필수</span> : null}
       </label>
       <input
         aria-describedby={error ? errorId : undefined}
         aria-invalid={error ? true : undefined}
         className={`${inputClassName} mt-1.5 ${readOnly ? "bg-muted" : ""}`}
         id={inputId}
-        inputMode={type === "tel" ? "tel" : undefined}
         onChange={(event) => onChange(field, event.target.value)}
         onBlur={() => onFieldBlur(field)}
         readOnly={readOnly}
         required={required}
-        type={type}
         value={value}
       />
       {error ? (
         <p className="mt-1 type-caption text-error" id={errorId}>
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+interface PhoneNumberFieldProps {
+  error?: string;
+  onChange: (field: DeliveryFormField, value: string) => void;
+  onFieldBlur: (field: DeliveryFormField) => void;
+  value: string;
+}
+
+function PhoneNumberField({
+  error,
+  onChange,
+  onFieldBlur,
+  value,
+}: PhoneNumberFieldProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { selectionStart, value: rawValue } = event.target;
+    const digitsBeforeCaret = rawValue
+      .slice(0, selectionStart ?? rawValue.length)
+      .replace(/\D/g, "").length;
+    const formattedValue = formatPhoneNumber(rawValue);
+
+    onChange("phoneNumber", formattedValue);
+    window.requestAnimationFrame(() => {
+      const input = inputRef.current;
+
+      if (!input || document.activeElement !== input) {
+        return;
+      }
+
+      let caret = 0;
+      let digitCount = 0;
+      while (caret < formattedValue.length && digitCount < digitsBeforeCaret) {
+        if (/\d/.test(formattedValue[caret])) {
+          digitCount += 1;
+        }
+        caret += 1;
+      }
+      input.setSelectionRange(caret, caret);
+    });
+  };
+
+  return (
+    <div>
+      <label
+        className="type-caption font-medium text-text-secondary"
+        htmlFor="delivery-phoneNumber"
+      >
+        휴대폰
+      </label>
+      <input
+        aria-describedby={error ? "delivery-phoneNumber-error" : undefined}
+        aria-invalid={error ? true : undefined}
+        autoComplete="tel"
+        className={`${inputClassName} mt-1.5`}
+        id="delivery-phoneNumber"
+        inputMode="numeric"
+        maxLength={MAX_PHONE_NUMBER_LENGTH}
+        onBlur={() => onFieldBlur("phoneNumber")}
+        onChange={handleChange}
+        placeholder="010-0000-0000"
+        ref={inputRef}
+        required
+        type="tel"
+        value={value}
+      />
+      {error ? (
+        <p
+          className="mt-1 type-caption text-error"
+          id="delivery-phoneNumber-error"
+        >
           {error}
         </p>
       ) : null}
@@ -142,7 +220,7 @@ function NewAddressFields({
           className="type-caption font-medium text-text-secondary"
           htmlFor="delivery-postalCode"
         >
-          우편번호<span className="ml-1 text-error">필수</span>
+          우편번호
         </label>
         <div className="mt-1.5 flex gap-2">
           <input
@@ -249,16 +327,8 @@ export function AddressSection({
         <>
           <div aria-label="배송지 선택" className="flex flex-wrap gap-2">
             <button
-              aria-describedby="recent-address-unavailable"
-              className="min-h-11 rounded-full border border-border bg-muted px-4 type-body-small text-text-disabled"
-              disabled
-              type="button"
-            >
-              최근배송지
-            </button>
-            <button
               aria-pressed={isDefaultMode}
-              className={`min-h-11 rounded-full border px-4 type-body-small font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+              className={`min-h-11 rounded-full border px-4 type-body-small font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:text-text-disabled ${
                 isDefaultMode
                   ? "border-accent bg-accent-soft text-text-primary"
                   : "border-border bg-surface text-text-secondary"
@@ -273,18 +343,15 @@ export function AddressSection({
               aria-pressed={mode === "new"}
               className={`min-h-11 rounded-full border px-4 type-body-small font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                 mode === "new"
-                  ? "border-accent bg-accent text-white"
+                  ? "border-accent bg-accent-soft text-text-primary"
                   : "border-border bg-surface text-text-secondary"
               }`}
               onClick={() => onModeChange("new")}
               type="button"
             >
-              새로입력
+              직접 입력
             </button>
           </div>
-          <p className="sr-only" id="recent-address-unavailable">
-            최근 배송지 정보가 없어 선택할 수 없습니다
-          </p>
 
           {!defaultAddress ? (
             <p className="rounded-control bg-muted px-4 py-3 type-body-small text-text-secondary">
@@ -292,64 +359,47 @@ export function AddressSection({
             </p>
           ) : null}
 
-          {isDefaultMode ? (
-            <div className="rounded-panel border border-border bg-muted p-4">
-              <div className="flex items-center gap-2">
-                <p className="type-body-small font-semibold text-text-primary">
+          <div className="space-y-3">
+            {isDefaultMode ? (
+              <div className="rounded-panel bg-muted px-4 py-3">
+                <p className="break-words type-body-small font-semibold text-text-primary">
                   {defaultAddress.label}
                 </p>
-                <span className="rounded-full bg-surface px-2 py-0.5 type-caption text-text-secondary">
-                  기본배송지
-                </span>
+                <p className="mt-1 break-words type-body-small text-text-secondary">
+                  ({defaultAddress.postalCode}) {defaultAddress.address}
+                </p>
+                {defaultAddress.detailAddress ? (
+                  <p className="break-words type-body-small text-text-secondary">
+                    {defaultAddress.detailAddress}
+                  </p>
+                ) : null}
               </div>
-              <p className="mt-2 type-body-small text-text-secondary">
-                ({defaultAddress.postalCode}) {defaultAddress.address}
-                {defaultAddress.detailAddress
-                  ? ` ${defaultAddress.detailAddress}`
-                  : ""}
-              </p>
-            </div>
-          ) : null}
-
-          <div className="space-y-3">
-            <AddressField
-              error={errors.recipientName}
-              field="recipientName"
-              label="받는 분"
-              onChange={onChange}
-              onFieldBlur={onFieldBlur}
-              required
-              value={values.recipientName}
-            />
-
-            {!isDefaultMode ? (
-              <NewAddressFields
-                errors={errors}
-                onChange={onChange}
-                onFieldBlur={onFieldBlur}
-                onPostcodeError={onPostcodeError}
-                values={values}
-              />
-            ) : null}
-
-            <AddressField
-              error={errors.phoneNumber}
-              field="phoneNumber"
-              label="휴대폰"
-              onChange={onChange}
-              onFieldBlur={onFieldBlur}
-              required
-              type="tel"
-              value={values.phoneNumber}
-            />
-            <AddressField
-              field="additionalPhoneNumber"
-              label="일반전화"
-              onChange={onChange}
-              onFieldBlur={onFieldBlur}
-              type="tel"
-              value={values.additionalPhoneNumber}
-            />
+            ) : (
+              <>
+                <AddressField
+                  error={errors.recipientName}
+                  field="recipientName"
+                  label="받는 분"
+                  onChange={onChange}
+                  onFieldBlur={onFieldBlur}
+                  required
+                  value={values.recipientName}
+                />
+                <PhoneNumberField
+                  error={errors.phoneNumber}
+                  onChange={onChange}
+                  onFieldBlur={onFieldBlur}
+                  value={values.phoneNumber}
+                />
+                <NewAddressFields
+                  errors={errors}
+                  onChange={onChange}
+                  onFieldBlur={onFieldBlur}
+                  onPostcodeError={onPostcodeError}
+                  values={values}
+                />
+              </>
+            )}
 
             <div>
               <label

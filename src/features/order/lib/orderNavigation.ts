@@ -27,6 +27,13 @@ function isOrderItemViewModel(value: unknown): value is OrderItemViewModel {
   );
 }
 
+function isCartItemIds(value: unknown): value is number[] {
+  return (
+    Array.isArray(value) &&
+    value.every((cartItemId) => Number.isSafeInteger(cartItemId) && cartItemId > 0)
+  );
+}
+
 export function readOrderNavigationState(
   value: unknown,
 ): OrderNavigationState | null {
@@ -39,7 +46,10 @@ export function readOrderNavigationState(
     return null;
   }
 
-  return { items: value.items };
+  return {
+    cartItemIds: isCartItemIds(value.cartItemIds) ? value.cartItemIds : [],
+    items: value.items,
+  };
 }
 
 export function toCreateOrderItems(items: OrderItemViewModel[]) {
