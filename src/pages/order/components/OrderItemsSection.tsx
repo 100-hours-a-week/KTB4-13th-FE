@@ -57,7 +57,11 @@ export function OrderItemsSection({ items }: OrderItemsSectionProps) {
           {items.map((item) => (
             <li className="flex gap-3 p-4" key={item.productId}>
               <div className="w-16 shrink-0">
-                <BookCover alt="" thumbnailUrl={item.thumbnailUrl} />
+                <BookCover
+                  alt=""
+                  fallbackTitle={item.itemName}
+                  thumbnailUrl={item.thumbnailUrl}
+                />
               </div>
               <div className="min-w-0 flex-1 self-center">
                 <p className="line-clamp-2 type-body-small font-semibold text-text-primary">

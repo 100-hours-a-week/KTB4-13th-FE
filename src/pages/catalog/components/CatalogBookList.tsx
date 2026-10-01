@@ -48,7 +48,11 @@ function CatalogBookRow({
   const row = (
     <article className="flex gap-4 py-3">
       <div className="relative w-[4.5rem] shrink-0">
-        <BookCover alt="" thumbnailUrl={book.thumbnailUrl} />
+        <BookCover
+          alt=""
+          fallbackTitle={book.title}
+          thumbnailUrl={book.thumbnailUrl}
+        />
         {rank !== undefined ? (
           <span
             className={`absolute left-1 top-1 flex min-h-6 min-w-6 items-center justify-center rounded-control px-1 text-xs font-bold ${

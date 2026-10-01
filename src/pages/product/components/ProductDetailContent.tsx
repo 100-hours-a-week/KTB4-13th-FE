@@ -89,6 +89,7 @@ export function ProductDetailContent({
         <div className="w-28 shrink-0">
           <BookCover
             alt={`${product.itemName} 표지`}
+            fallbackTitle={product.itemName}
             thumbnailUrl={product.thumbnailUrl}
           />
         </div>

@@ -28,6 +28,7 @@ function RecommendationCard({
     <article className="flex h-full flex-col rounded-panel border border-border bg-surface p-2.5">
       <BookCover
         alt={`${recommendation.title} 표지`}
+        fallbackTitle={recommendation.title}
         thumbnailUrl={recommendation.coverImageUrl}
       />
       <h3 className="mt-2 line-clamp-2 type-body-small font-semibold text-text-primary">
