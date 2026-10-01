@@ -11,6 +11,7 @@ import { OnboardingPage } from "@/pages/onboarding/OnboardingPage";
 import { OrderCompletePage } from "@/pages/order-complete/OrderCompletePage";
 import { OrderPage } from "@/pages/order/OrderPage";
 import { ProductDetailPage } from "@/pages/product/ProductDetailPage";
+import { AiRecommendationChatPage } from "@/pages/recommendation-chat/AiRecommendationChatPage";
 import { SearchResultsPage } from "@/pages/search/SearchResultsPage";
 
 export function Router() {
@@ -35,6 +36,10 @@ export function Router() {
             />
             <Route path="/order" element={<OrderPage />} />
             <Route path="/order/complete" element={<OrderCompletePage />} />
+            <Route
+              path="/recommendations/chat"
+              element={<AiRecommendationChatPage />}
+            />
           </Route>
         </Route>
         <Route element={<RequireAuth />}>
