@@ -10,6 +10,7 @@ export interface CatalogBookItem {
   key: string;
   originalPrice: number | null;
   price: number | null;
+  productId: number | null;
   thumbnailUrl: string | null;
   title: string;
 }
