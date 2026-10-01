@@ -11,12 +11,12 @@ type OnboardingEntryState =
 function getOnboardingEntryPath(
   result: Exclude<OnboardingProgressResult, { kind: "error" }>,
 ) {
-  return result.kind === "found" && result.progress.status === "IN_PROGRESS"
-    ? "/onboarding"
-    : "/";
+  return result.kind === "found" && result.progress.status === "COMPLETED"
+    ? "/"
+    : "/onboarding";
 }
 
-// Only an active onboarding redirects the user away from the regular app entry.
+// Every user who has not completed onboarding, including one who never started it, is sent to onboarding.
 export function useOnboardingEntryPath(isEnabled: boolean) {
   const [state, setState] = useState<OnboardingEntryState>({
     kind: "loading",
