@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { BottomNavigation } from "@/common/components/BottomNavigation";
 import { Button } from "@/common/components/Button";
@@ -6,7 +7,6 @@ import { Toast } from "@/common/components/Toast";
 import { useTransientNotice } from "@/common/hooks/useTransientNotice";
 import { useLogout } from "@/features/auth/hooks/useLogout";
 
-const ADDRESS_UNAVAILABLE_NOTICE = "배송지 관리 기능을 준비하고 있어요";
 const NAVIGATION_UNAVAILABLE_NOTICE = "아직 준비 중인 기능이에요";
 
 export function MyPage() {
@@ -32,16 +32,15 @@ export function MyPage() {
       </header>
 
       <main className="page-content min-h-0 flex-1 overflow-y-auto py-6">
-        <button
+        <Link
           className="flex min-h-14 w-full items-center justify-between border-b border-border text-left text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          onClick={() => showNotice(ADDRESS_UNAVAILABLE_NOTICE)}
-          type="button"
+          to="/my/addresses"
         >
           <span className="type-title">배송지 관리</span>
           <span aria-hidden="true" className="type-heading text-text-tertiary">
             ›
           </span>
-        </button>
+        </Link>
 
         <Button
           className="mt-6 w-full"

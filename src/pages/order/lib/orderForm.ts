@@ -1,4 +1,4 @@
-import type { UserAddress } from "@/features/order/types/order";
+import type { UserAddress } from "@/features/address/types/address";
 
 export type DeliveryMode = "default" | "new";
 

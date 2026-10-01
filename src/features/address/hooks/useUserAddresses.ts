@@ -3,19 +3,21 @@ import { useEffect, useState } from "react";
 import { fetchUserAddresses } from "@/features/address/api/addressApi";
 import type { UserAddress } from "@/features/address/types/address";
 
-export type AddressesState =
+export type UserAddressesState =
   | { kind: "loading" }
   | { addresses: UserAddress[]; kind: "ready" }
   | { kind: "error" };
 
-interface StoredAddressesState {
+interface StoredUserAddressesState {
   requestKey: number;
-  state: AddressesState;
+  state: UserAddressesState;
 }
 
-export function useAddresses() {
-  const [retryCount, setRetryCount] = useState(0);
-  const [stored, setStored] = useState<StoredAddressesState>({
+export const MAX_USER_ADDRESS_COUNT = 3;
+
+export function useUserAddresses() {
+  const [requestKey, setRequestKey] = useState(0);
+  const [stored, setStored] = useState<StoredUserAddressesState>({
     requestKey: -1,
     state: { kind: "loading" },
   });
@@ -30,7 +32,7 @@ export function useAddresses() {
       }
 
       setStored({
-        requestKey: retryCount,
+        requestKey,
         state: result.ok
           ? { addresses: result.addresses, kind: "ready" }
           : { kind: "error" },
@@ -41,11 +43,16 @@ export function useAddresses() {
       isActive = false;
       controller.abort();
     };
-  }, [retryCount]);
+  }, [requestKey]);
 
-  const retry = () => setRetryCount((current) => current + 1);
+  // Re-reads the server list so default flags always reflect the backend's own policy.
+  const reload = () => setRequestKey((current) => current + 1);
+  const isReloading = stored.requestKey !== requestKey;
+  // Keeps the last list on screen while a reload is in flight instead of flashing a loading state.
   const state =
-    stored.requestKey === retryCount ? stored.state : { kind: "loading" as const };
+    !isReloading || stored.state.kind === "ready"
+      ? stored.state
+      : { kind: "loading" as const };
 
-  return { retry, state };
+  return { isReloading, reload, state };
 }
