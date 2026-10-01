@@ -36,6 +36,30 @@ jobs:
       - name: Build production bundle
         run: npm run build
 
+  notify-dev-deployment:
+    name: Notify Cloud repository for Dev deployment
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.quality.result == 'success'
+    needs: quality
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Dispatch Dev deployment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.CLOUD_REPO_DISPATCH_TOKEN }}
+          script: |
+            await github.rest.repos.createDispatchEvent({
+              owner: '100-hours-a-week',
+              repo: 'KTB4-13th-Cloud',
+              event_type: 'dev-deploy',
+              client_payload: {
+                service: 'frontend',
+                sha: context.sha,
+                repository: context.repo.repo,
+              },
+            });
+
   notify-failure:
     name: Notify CI failure
     if: ${{ always() && needs.quality.result == 'failure' }}
