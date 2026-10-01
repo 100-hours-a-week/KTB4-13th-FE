@@ -6,8 +6,8 @@ import {
   getPostcodeAddress,
   loadKakaoPostcode,
   openKakaoPostcode,
-} from "@/features/order/lib/kakaoPostcode";
-import type { UserAddress } from "@/features/order/types/order";
+} from "@/features/address/lib/kakaoPostcode";
+import type { UserAddress } from "@/features/address/types/address";
 import type { AddressesState } from "@/pages/order/hooks/useAddresses";
 import type {
   DeliveryFormErrors,

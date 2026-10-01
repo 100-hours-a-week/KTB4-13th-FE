@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { fetchUserAddresses } from "@/features/order/api/addressApi";
-import type { UserAddress } from "@/features/order/types/order";
+import { fetchUserAddresses } from "@/features/address/api/addressApi";
+import type { UserAddress } from "@/features/address/types/address";
 
 export type AddressesState =
   | { kind: "loading" }

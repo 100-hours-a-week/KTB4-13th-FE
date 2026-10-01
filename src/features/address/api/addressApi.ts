@@ -4,7 +4,7 @@ import type {
   AddressListResponseDto,
   AddressResponseDto,
   UserAddress,
-} from "@/features/order/types/order";
+} from "@/features/address/types/address";
 
 export type AddressListResult =
   | { addresses: UserAddress[]; ok: true }
