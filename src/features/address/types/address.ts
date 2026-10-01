@@ -20,3 +20,16 @@ export interface UserAddress {
   label: string;
   postalCode: string;
 }
+
+// Mirrors backend UpdateAddressRequest; detailAddress must always be sent, null when empty.
+export interface UpdateAddressRequestDto {
+  address: string;
+  detailAddress: string | null;
+  label: string;
+  postalCode: string;
+}
+
+// Mirrors backend RegisterAddressRequest; the first address becomes the default regardless of isDefault.
+export interface RegisterAddressRequestDto extends UpdateAddressRequestDto {
+  isDefault: boolean;
+}
