@@ -3,11 +3,18 @@ import type { FormEvent } from "react";
 import { CartIcon, SearchIcon } from "@/common/components/AppIcons";
 
 interface HomeHeaderProps {
+  isGuest: boolean;
   onCartClick: () => void;
+  onLoginClick: () => void;
   onSearchSubmit: (query: string) => void;
 }
 
-export function HomeHeader({ onCartClick, onSearchSubmit }: HomeHeaderProps) {
+export function HomeHeader({
+  isGuest,
+  onCartClick,
+  onLoginClick,
+  onSearchSubmit,
+}: HomeHeaderProps) {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const query = new FormData(event.currentTarget).get("query");
@@ -21,14 +28,25 @@ export function HomeHeader({ onCartClick, onSearchSubmit }: HomeHeaderProps) {
     <header className="page-content shrink-0 border-b border-border pb-3 pt-3">
       <div className="flex items-center justify-between">
         <h1 className="type-title font-bold text-text-primary">북적북적</h1>
-        <button
-          aria-label="장바구니"
-          className="-mr-2 inline-flex size-11 items-center justify-center text-text-secondary transition-colors hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          onClick={onCartClick}
-          type="button"
-        >
-          <CartIcon className="size-6" />
-        </button>
+        <div className="-mr-2 flex items-center">
+          {isGuest ? (
+            <button
+              className="inline-flex min-h-11 items-center px-2 type-body-small font-semibold text-text-primary transition-colors hover:text-text-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              onClick={onLoginClick}
+              type="button"
+            >
+              로그인
+            </button>
+          ) : null}
+          <button
+            aria-label="장바구니"
+            className="inline-flex size-11 items-center justify-center text-text-secondary transition-colors hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            onClick={onCartClick}
+            type="button"
+          >
+            <CartIcon className="size-6" />
+          </button>
+        </div>
       </div>
       <form className="mt-2" onSubmit={handleSubmit} role="search">
         <label className="flex min-h-11 items-center gap-2 rounded-control border border-border bg-muted px-3 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary">

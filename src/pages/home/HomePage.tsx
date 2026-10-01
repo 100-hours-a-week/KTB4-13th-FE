@@ -7,18 +7,36 @@ import {
 
 import { BottomNavigation } from "@/common/components/BottomNavigation";
 import { LoginRequiredDialog } from "@/features/auth/components/LoginRequiredDialog";
-import { LoginRequired } from "@/features/auth/components/LoginRequired";
 import { useAuth } from "@/features/auth/context/useAuth";
 import { BookRankingSection } from "@/pages/home/components/BookRankingSection";
+import { GuestRecommendationBanner } from "@/pages/home/components/GuestRecommendationBanner";
 import { HomeHeader } from "@/pages/home/components/HomeHeader";
 import { RecommendationSection } from "@/pages/home/components/RecommendationSection";
+
+type HomeLoginPrompt = "cart" | "recommendation";
+
+const LOGIN_PROMPT_CONTENT: Record<
+  HomeLoginPrompt,
+  { description: string; returnTo: string; title: string }
+> = {
+  cart: {
+    description: "로그인하면 장바구니에 담은 책을 확인할 수 있어요.",
+    returnTo: "/cart",
+    title: "장바구니를 이용하려면 로그인이 필요해요",
+  },
+  recommendation: {
+    description: "로그인하면 취향에 맞는 책을 추천받을 수 있어요.",
+    returnTo: "/",
+    title: "로그인하고 맞춤 추천을 받아보세요",
+  },
+};
 
 export function HomePage() {
   const { status } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const mainRef = useRef<HTMLElement>(null);
-  const [isCartLoginDialogOpen, setIsCartLoginDialogOpen] = useState(false);
+  const [loginPrompt, setLoginPrompt] = useState<HomeLoginPrompt | null>(null);
   const homeScrollTop = (location.state as { homeScrollTop?: unknown } | null)
     ?.homeScrollTop;
 
@@ -51,13 +69,15 @@ export function HomePage() {
   return (
     <div className="relative flex h-dvh flex-col bg-surface">
       <HomeHeader
+        isGuest={status === "unauthenticated"}
         onCartClick={() => {
           if (status === "unauthenticated") {
-            setIsCartLoginDialogOpen(true);
+            setLoginPrompt("cart");
             return;
           }
           navigate("/cart");
         }}
+        onLoginClick={() => navigate("/login", { state: { returnTo: "/" } })}
         onSearchSubmit={handleSearchSubmit}
       />
 
@@ -75,24 +95,20 @@ export function HomePage() {
             />
           ) : null}
           {status === "unauthenticated" ? (
-            <div className="page-content">
-              <LoginRequired
-                actionLabel="로그인하고 추천받기"
-                description="로그인하면 나만의 추천을 받을 수 있어요"
-                title="취향에 맞는 책을 찾아드릴게요"
-              />
-            </div>
+            <GuestRecommendationBanner
+              onLoginClick={() => setLoginPrompt("recommendation")}
+            />
           ) : null}
         </div>
       </main>
 
       <BottomNavigation />
       <LoginRequiredDialog
-        description="로그인하면 장바구니에 담은 책을 확인할 수 있어요."
-        isOpen={isCartLoginDialogOpen}
-        onClose={() => setIsCartLoginDialogOpen(false)}
-        returnTo="/cart"
-        title="장바구니를 이용하려면 로그인이 필요해요"
+        description={LOGIN_PROMPT_CONTENT[loginPrompt ?? "cart"].description}
+        isOpen={loginPrompt !== null}
+        onClose={() => setLoginPrompt(null)}
+        returnTo={LOGIN_PROMPT_CONTENT[loginPrompt ?? "cart"].returnTo}
+        title={LOGIN_PROMPT_CONTENT[loginPrompt ?? "cart"].title}
       />
     </div>
   );
