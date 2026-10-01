@@ -33,6 +33,7 @@ function parseProductDetail(data: unknown): ProductDetail | null {
     typeof data.author !== "string" ||
     typeof data.publisher !== "string" ||
     typeof data.publishedAt !== "string" ||
+    typeof data.category !== "string" ||
     typeof data.salePrice !== "number" ||
     typeof data.discountedPrice !== "number" ||
     typeof data.stockQuantity !== "number"
@@ -42,6 +43,7 @@ function parseProductDetail(data: unknown): ProductDetail | null {
 
   return {
     author: data.author,
+    category: data.category,
     description,
     discountedPrice: data.discountedPrice,
     itemName: data.itemName,
