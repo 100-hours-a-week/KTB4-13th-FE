@@ -26,7 +26,7 @@ export function toRecommendationBookItem(
     key: `book-${book.bookId}`,
     originalPrice: null,
     price: book.price,
-    productId: null,
+    productId: book.productId,
     thumbnailUrl: book.coverUrl,
     title: book.title,
   };

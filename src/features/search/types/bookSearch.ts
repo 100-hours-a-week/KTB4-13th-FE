@@ -18,6 +18,7 @@ export interface BookSearchItem {
   coverUrl: string | null;
   inStock: boolean;
   price: number | null;
+  productId: number | null;
   publisher: string | null;
   title: string;
 }
