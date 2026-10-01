@@ -1,17 +1,20 @@
 import { useNavigate } from "react-router-dom";
 
+import { BottomNavigation } from "@/common/components/BottomNavigation";
 import { Toast } from "@/common/components/Toast";
 import { useTransientNotice } from "@/common/hooks/useTransientNotice";
-import { ChatBottomNavigation } from "@/pages/recommendation-chat/components/ChatBottomNavigation";
 import { ChatComposer } from "@/pages/recommendation-chat/components/ChatComposer";
 import { ChatHeader } from "@/pages/recommendation-chat/components/ChatHeader";
 import { ChatMessageList } from "@/pages/recommendation-chat/components/ChatMessageList";
-import { useChatPresentation } from "@/pages/recommendation-chat/hooks/useChatPresentation";
+import { useRecommendationChat } from "@/pages/recommendation-chat/hooks/useRecommendationChat";
+
+const UNAVAILABLE_NOTICE = "아직 준비 중인 기능이에요";
 
 export function AiRecommendationChatPage() {
   const navigate = useNavigate();
   const { notice, showNotice } = useTransientNotice();
-  const { addUserMessage, messages, status } = useChatPresentation();
+  const { errorReason, messages, retry, sendMessage, status } =
+    useRecommendationChat();
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -41,7 +44,12 @@ export function AiRecommendationChatPage() {
       </div>
 
       <main className="min-h-0 flex-1 overflow-y-auto">
-        <ChatMessageList messages={messages} status={status} />
+        <ChatMessageList
+          errorReason={errorReason}
+          messages={messages}
+          onRetry={retry}
+          status={status}
+        />
       </main>
 
       {notice ? (
@@ -54,10 +62,12 @@ export function AiRecommendationChatPage() {
         onAttachClick={() =>
           showNotice("이미지 첨부 기능을 준비하고 있어요")
         }
-        onSend={addUserMessage}
+        onSend={sendMessage}
         status={status}
       />
-      <ChatBottomNavigation />
+      <BottomNavigation
+        onUnavailableTabClick={() => showNotice(UNAVAILABLE_NOTICE)}
+      />
     </div>
   );
 }
