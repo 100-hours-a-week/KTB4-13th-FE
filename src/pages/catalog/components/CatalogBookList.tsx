@@ -74,6 +74,11 @@ function CatalogBookRow({
         <p className="mt-1 truncate type-body-small text-text-secondary">
           {book.author ?? "저자 정보 없음"}
         </p>
+        {book.matchScore !== null ? (
+          <p className="mt-1 type-caption font-semibold text-accent">
+            취향 매칭 {book.matchScore}%
+          </p>
+        ) : null}
         {book.price !== null ? (
           <div className="mt-2">
             <BookPrice originalPrice={book.originalPrice} price={book.price} />
