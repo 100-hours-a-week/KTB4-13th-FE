@@ -13,7 +13,7 @@ import { GuestRecommendationBanner } from "@/pages/home/components/GuestRecommen
 import { HomeHeader } from "@/pages/home/components/HomeHeader";
 import { RecommendationSection } from "@/pages/home/components/RecommendationSection";
 
-type HomeLoginPrompt = "cart" | "recommendation";
+type HomeLoginPrompt = "cart" | "login" | "recommendation";
 
 const LOGIN_PROMPT_CONTENT: Record<
   HomeLoginPrompt,
@@ -24,10 +24,15 @@ const LOGIN_PROMPT_CONTENT: Record<
     returnTo: "/cart",
     title: "장바구니를 이용하려면 로그인이 필요해요",
   },
-  recommendation: {
-    description: "로그인하면 취향에 맞는 책을 추천받을 수 있어요.",
+  login: {
+    description: "취향에 맞는 책을 찾고 필요한 기능을 이어갈 수 있어요.",
     returnTo: "/",
-    title: "로그인하고 맞춤 추천을 받아보세요",
+    title: "로그인하고 북적북적을 이용해보세요",
+  },
+  recommendation: {
+    description: "로그인하면 나만의 추천 도서를 볼 수 있어요.",
+    returnTo: "/",
+    title: "취향에 맞는 추천을 준비해드릴게요",
   },
 };
 
@@ -77,7 +82,7 @@ export function HomePage() {
           }
           navigate("/cart");
         }}
-        onLoginClick={() => navigate("/login", { state: { returnTo: "/" } })}
+        onLoginClick={() => setLoginPrompt("login")}
         onSearchSubmit={handleSearchSubmit}
       />
 

@@ -13,7 +13,7 @@ interface KakaoLoginButtonProps extends Omit<
 export function KakaoLoginButton({
   isLoading,
   className,
-  label = "카카오로 시작하기",
+  label = "카카오로 계속하기",
   ...props
 }: KakaoLoginButtonProps) {
   return (

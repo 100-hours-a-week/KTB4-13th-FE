@@ -28,10 +28,10 @@ export function HomeHeader({
     <header className="page-content shrink-0 border-b border-border pb-3 pt-3">
       <div className="flex items-center justify-between">
         <h1 className="type-title font-bold text-text-primary">북적북적</h1>
-        <div className="-mr-2 flex items-center">
+        <div className="-mr-2 flex items-center gap-1">
           {isGuest ? (
             <button
-              className="inline-flex min-h-11 items-center px-2 type-body-small font-semibold text-text-primary transition-colors hover:text-text-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="inline-flex min-h-11 items-center px-2 type-body-small font-medium text-text-secondary transition-colors hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               onClick={onLoginClick}
               type="button"
             >

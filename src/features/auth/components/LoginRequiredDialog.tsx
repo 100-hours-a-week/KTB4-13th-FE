@@ -1,6 +1,5 @@
 import { useEffect, useId, useRef } from "react";
 
-import { Button } from "@/common/components/Button";
 import { KakaoLoginButton } from "@/features/auth/components/KakaoLoginButton";
 import { useLogin } from "@/features/auth/hooks/useLogin";
 
@@ -50,7 +49,7 @@ export function LoginRequiredDialog({
       aria-describedby={descriptionId}
       aria-labelledby={titleId}
       aria-modal="true"
-      className="m-auto w-[calc(100%-2.5rem)] max-w-sm rounded-panel border border-border bg-surface p-0 text-text-primary backdrop:bg-black/40"
+      className="fixed inset-x-0 bottom-0 top-auto m-0 w-full max-w-none rounded-t-panel border-x-0 border-b-0 border-t border-border bg-surface p-0 text-text-primary backdrop:bg-black/40 lg:left-1/2 lg:right-auto lg:w-[calc(100dvh*9/19.5)] lg:-translate-x-1/2"
       onCancel={(event) => {
         event.preventDefault();
         if (!isLoading) {
@@ -62,15 +61,49 @@ export function LoginRequiredDialog({
           onClose();
         }
       }}
+      onKeyDown={(event) => {
+        if (event.key !== "Tab") {
+          return;
+        }
+
+        const focusableButtons = Array.from(
+          event.currentTarget.querySelectorAll<HTMLButtonElement>(
+            "button:not(:disabled)",
+          ),
+        );
+        const firstButton = focusableButtons.at(0);
+        const lastButton = focusableButtons.at(-1);
+
+        if (event.shiftKey && document.activeElement === firstButton) {
+          event.preventDefault();
+          lastButton?.focus();
+        } else if (!event.shiftKey && document.activeElement === lastButton) {
+          event.preventDefault();
+          firstButton?.focus();
+        }
+      }}
       ref={dialogRef}
       role="dialog"
     >
-      <div className="p-6 text-center">
-        <h2 className="type-heading" id={titleId}>
-          {title}
-        </h2>
+      <div className="safe-area-bottom px-5 pt-5">
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="type-title pt-1 text-text-primary" id={titleId}>
+            {title}
+          </h2>
+          <button
+            aria-label="로그인 안내 닫기"
+            className="-mr-2 -mt-2 inline-flex size-11 shrink-0 items-center justify-center text-text-secondary transition-colors hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            disabled={isLoading}
+            onClick={onClose}
+            type="button"
+          >
+            <span aria-hidden="true" className="text-2xl leading-none">
+              ×
+            </span>
+          </button>
+        </div>
         <p
-          className="mt-2 type-body-small text-text-secondary"
+          className="mt-1 type-body-small text-text-secondary"
           id={descriptionId}
         >
           {description}
@@ -80,13 +113,10 @@ export function LoginRequiredDialog({
             {feedback.message}
           </p>
         ) : null}
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <Button disabled={isLoading} onClick={onClose} variant="secondary">
-            취소
-          </Button>
+        <div className="mt-5">
           <KakaoLoginButton
             isLoading={isLoading}
-            label="로그인"
+            label="카카오로 계속하기"
             onClick={() => beginLogin(returnTo)}
           />
         </div>
