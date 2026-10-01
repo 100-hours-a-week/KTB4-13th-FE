@@ -87,15 +87,6 @@ export function OnboardingPage() {
     setIsSubmittingConsent(false);
   };
 
-  // No agreement is recorded; the backend has no API to store a declined consent.
-  const handleGoHomeWithoutPersonalization = () => {
-    if (consentActionRef.current) {
-      return;
-    }
-
-    navigate("/");
-  };
-
   const handleCompleteOnboarding = async () => {
     const isSaved = await saveBooksAndComplete();
 
@@ -290,16 +281,6 @@ export function OnboardingPage() {
             내 서재에 담고 취향 확인하기
           </Button>
         )}
-        {step === 1 ? (
-          <Button
-            className="w-full"
-            disabled={isConsentBusy}
-            onClick={handleGoHomeWithoutPersonalization}
-            variant="secondary"
-          >
-            개인화 없이 홈으로 이동
-          </Button>
-        ) : null}
       </OnboardingActions>
     </main>
   );
