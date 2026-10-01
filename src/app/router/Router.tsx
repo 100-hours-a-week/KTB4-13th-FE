@@ -7,6 +7,7 @@ import { CartPage } from "@/pages/cart/CartPage";
 import { CatalogPage } from "@/pages/catalog/CatalogPage";
 import { HomePage } from "@/pages/home/HomePage";
 import { LoginPage } from "@/pages/login/LoginPage";
+import { MyPage } from "@/pages/my/MyPage";
 import { OnboardingPage } from "@/pages/onboarding/OnboardingPage";
 import { OrderCompletePage } from "@/pages/order-complete/OrderCompletePage";
 import { OrderPage } from "@/pages/order/OrderPage";
@@ -30,6 +31,7 @@ export function Router() {
           <Route path="/search" element={<SearchResultsPage />} />
           <Route element={<RequireAuth />}>
             <Route path="/cart" element={<CartPage />} />
+            <Route path="/my" element={<MyPage />} />
             <Route
               path="/catalog/recommendations"
               element={<CatalogPage mode="recommendation" />}

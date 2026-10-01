@@ -1,4 +1,3 @@
-import type { ComponentType, SVGProps } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 import {
@@ -8,14 +7,8 @@ import {
   UserIcon,
 } from "@/common/components/AppIcons";
 
-type NavIcon = ComponentType<SVGProps<SVGSVGElement>>;
-
 const AI_RECOMMENDATION_PATH = "/recommendations/chat";
-
-const unavailableTabs: { icon: NavIcon; label: string }[] = [
-  { icon: BellIcon, label: "알림" },
-  { icon: UserIcon, label: "마이" },
-];
+const MY_PATH = "/my";
 
 const tabClassName =
   "relative flex min-h-14 w-full flex-col items-center justify-center gap-0.5 type-caption transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary";
@@ -39,8 +32,10 @@ export function BottomNavigation({
   onUnavailableTabClick,
 }: BottomNavigationProps) {
   const { pathname } = useLocation();
-  // Home stays the highlighted tab on every other screen, as before.
   const isAiRecommendationActive = pathname === AI_RECOMMENDATION_PATH;
+  const isMyActive = pathname === MY_PATH || pathname.startsWith(`${MY_PATH}/`);
+  // Home stays highlighted on every screen not owned by another available tab.
+  const isHomeActive = !isAiRecommendationActive && !isMyActive;
 
   return (
     <nav
@@ -50,13 +45,11 @@ export function BottomNavigation({
       <ul className="grid grid-cols-4">
         <li>
           <Link
-            aria-current={isAiRecommendationActive ? undefined : "page"}
-            className={
-              isAiRecommendationActive ? inactiveTabClassName : activeTabClassName
-            }
+            aria-current={isHomeActive ? "page" : undefined}
+            className={isHomeActive ? activeTabClassName : inactiveTabClassName}
             to="/"
           >
-            {isAiRecommendationActive ? null : <ActiveIndicator />}
+            {isHomeActive ? <ActiveIndicator /> : null}
             <HomeIcon className="size-6" />홈
           </Link>
         </li>
@@ -74,18 +67,27 @@ export function BottomNavigation({
             AI 추천
           </Link>
         </li>
-        {unavailableTabs.map(({ icon: TabIcon, label }) => (
-          <li key={label}>
-            <button
-              className={inactiveTabClassName}
-              onClick={onUnavailableTabClick}
-              type="button"
-            >
-              <TabIcon className="size-6" />
-              {label}
-            </button>
-          </li>
-        ))}
+        <li>
+          <button
+            className={inactiveTabClassName}
+            onClick={onUnavailableTabClick}
+            type="button"
+          >
+            <BellIcon className="size-6" />
+            알림
+          </button>
+        </li>
+        <li>
+          <Link
+            aria-current={isMyActive ? "page" : undefined}
+            className={isMyActive ? activeTabClassName : inactiveTabClassName}
+            to={MY_PATH}
+          >
+            {isMyActive ? <ActiveIndicator /> : null}
+            <UserIcon className="size-6" />
+            마이
+          </Link>
+        </li>
       </ul>
     </nav>
   );
