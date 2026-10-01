@@ -12,6 +12,7 @@ import {
   getResumeStep,
   isQuestionStep,
 } from "@/features/onboarding/lib/onboardingSteps";
+import { toSubcategoryCodes } from "@/features/onboarding/lib/subcategoryCodes";
 import type {
   BookCandidate,
   OnboardingQuestion,
@@ -165,25 +166,39 @@ export function useOnboardingFlow() {
     }
 
     let isActive = true;
+    const subcategoryQuestionId = QUESTION_ID_BY_STEP[4];
+    const selectedSubcategoryOptionIds =
+      selectedOptionIdsByQuestion[subcategoryQuestionId] ?? [];
 
-    void fetchOnboardingBookCandidates().then((loadedBooks) => {
-      if (!isActive) {
-        return;
-      }
+    // Rebuilt from the saved Q4 answer and the server's Q4 options on every load and retry,
+    // so a refresh or re-entry at step 5 sends the same codes as the first visit.
+    void fetchOnboardingQuestion(subcategoryQuestionId).then(
+      async (subcategoryQuestion) => {
+        const subcategoryCodes = subcategoryQuestion
+          ? toSubcategoryCodes(subcategoryQuestion, selectedSubcategoryOptionIds)
+          : null;
+        const loadedBooks = subcategoryCodes
+          ? await fetchOnboardingBookCandidates(subcategoryCodes)
+          : null;
 
-      if (!loadedBooks) {
-        setBookCandidatesStatus("error");
-        return;
-      }
+        if (!isActive) {
+          return;
+        }
 
-      setBookCandidates(loadedBooks);
-      setBookCandidatesStatus("ready");
-    });
+        if (!loadedBooks) {
+          setBookCandidatesStatus("error");
+          return;
+        }
+
+        setBookCandidates(loadedBooks);
+        setBookCandidatesStatus("ready");
+      },
+    );
 
     return () => {
       isActive = false;
     };
-  }, [bookCandidatesRequestKey, progressStatus, step]);
+  }, [bookCandidatesRequestKey, progressStatus, selectedOptionIdsByQuestion, step]);
 
   const moveToStep = (nextStep: OnboardingStep) => {
     setStep(nextStep);

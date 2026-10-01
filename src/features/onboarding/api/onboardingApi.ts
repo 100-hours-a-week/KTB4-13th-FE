@@ -139,10 +139,19 @@ export async function saveOnboardingAnswers(
   return result?.ok === true;
 }
 
-export async function fetchOnboardingBookCandidates(): Promise<
-  BookCandidate[] | null
-> {
-  const result = await requestOnboardingApi("/api/v1/onboarding/books");
+// The backend binds one comma-separated value to a list, so each code is encoded on its own
+// and joined with a literal comma.
+export async function fetchOnboardingBookCandidates(
+  subcategoryCodes: string[],
+): Promise<BookCandidate[] | null> {
+  if (subcategoryCodes.length === 0) {
+    return null;
+  }
+
+  const query = subcategoryCodes.map(encodeURIComponent).join(",");
+  const result = await requestOnboardingApi(
+    `/api/v1/onboarding/books?subcategoryCodes=${query}`,
+  );
 
   return result?.ok && isBookCandidatesResponse(result.data)
     ? result.data.candidates
