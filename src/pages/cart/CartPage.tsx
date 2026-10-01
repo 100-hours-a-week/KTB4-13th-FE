@@ -205,7 +205,10 @@ export function CartPage() {
             <p className="type-body-small text-text-secondary">
               마음에 드는 책을 찾아 장바구니에 담아보세요
             </p>
-            <Button className="mt-4" onClick={() => navigate("/")}>
+            <Button
+              className="mt-4"
+              onClick={() => navigate("/recommendations/chat")}
+            >
               책 추천받기
             </Button>
           </section>
