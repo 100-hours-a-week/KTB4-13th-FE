@@ -8,7 +8,7 @@ interface HomeSectionHeaderProps {
 export function HomeSectionHeader({ id, onMoreClick, title }: HomeSectionHeaderProps) {
   return (
     <div className="flex items-center justify-between">
-      <h2 className="type-subheading text-text-primary" id={id}>
+      <h2 className="type-title font-bold text-text-primary" id={id}>
         {title}
       </h2>
       {onMoreClick ? (

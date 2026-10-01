@@ -47,7 +47,7 @@ export function SearchHeader({
           <span className="sr-only">검색어</span>
           <input
             autoComplete="off"
-            className="min-w-0 flex-1 appearance-none bg-transparent py-2 type-body-small text-text-primary outline-none placeholder:text-text-tertiary"
+            className="min-w-0 flex-1 appearance-none bg-transparent py-2 type-body-small text-text-primary outline-none placeholder:text-text-tertiary [&::-webkit-search-cancel-button]:appearance-none"
             maxLength={200}
             onChange={(event) => setInputValue(event.target.value)}
             placeholder="궁금한 책을 검색해보세요"

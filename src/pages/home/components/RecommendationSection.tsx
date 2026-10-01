@@ -35,9 +35,6 @@ function RecommendationCard({
       <p className="line-clamp-2 type-body-small font-semibold text-text-primary">
         {book.title}
       </p>
-      <p className="truncate type-caption text-text-tertiary">
-        {book.author ?? "저자 정보 없음"}
-      </p>
       {book.price !== null ? (
         <p className="type-body-small font-bold text-text-primary">
           {priceFormatter.format(book.price)}원
@@ -114,7 +111,7 @@ export function RecommendationSection({
       {recommendations.kind === "ready" && recommendations.items.length > 0 ? (
         <div
           aria-label="추천 도서 목록"
-          className="-mx-5 overflow-x-auto px-5 pb-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="-mx-5 overflow-x-auto px-5 pb-1 [scrollbar-width:none] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           role="region"
           tabIndex={0}
         >
