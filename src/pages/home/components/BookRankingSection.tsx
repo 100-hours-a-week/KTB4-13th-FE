@@ -91,7 +91,11 @@ export function BookRankingSection({
                   onClick={onProductClick}
                   to={`/products/${item.itemId}`}
                 >
-                  <BookCover alt="" thumbnailUrl={item.thumbnailUrl} />
+                  <BookCover
+                    alt=""
+                    fallbackTitle={item.itemName}
+                    thumbnailUrl={item.thumbnailUrl}
+                  />
                   <RankBadge rank={index + 1} />
                 </Link>
               </li>

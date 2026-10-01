@@ -13,7 +13,11 @@ const SKELETON_COUNT = 12;
 function SearchResultCard({ item }: { item: BookSearchItem }) {
   return (
     <article className="flex min-w-0 flex-col gap-1.5">
-      <BookCover alt="" thumbnailUrl={item.coverUrl} />
+      <BookCover
+        alt=""
+        fallbackTitle={item.title}
+        thumbnailUrl={item.coverUrl}
+      />
       <h2 className="line-clamp-2 min-h-10 type-body-small font-semibold text-text-primary">
         {item.title}
       </h2>

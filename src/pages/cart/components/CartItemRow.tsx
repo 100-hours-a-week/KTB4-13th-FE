@@ -49,6 +49,7 @@ export function CartItemRow({
         >
           <BookCover
             alt={`${item.itemName} 표지`}
+            fallbackTitle={item.itemName}
             thumbnailUrl={item.thumbnailUrl}
           />
         </Link>

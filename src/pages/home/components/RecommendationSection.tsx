@@ -64,7 +64,11 @@ export function RecommendationSection({ onMoreClick }: RecommendationSectionProp
           <ul className="flex gap-3">
             {recommendations.items.map((book) => (
               <li className={RECOMMENDATION_CARD_CLASS_NAME} key={book.bookId}>
-                <BookCover alt="" thumbnailUrl={book.coverUrl} />
+                <BookCover
+                  alt=""
+                  fallbackTitle={book.title}
+                  thumbnailUrl={book.coverUrl}
+                />
                 <p className="line-clamp-2 type-body-small font-semibold text-text-primary">
                   {book.title}
                 </p>
