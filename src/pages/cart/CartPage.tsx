@@ -15,8 +15,6 @@ import { useCart } from "@/pages/cart/hooks/useCart";
 import { useCartSelection } from "@/pages/cart/hooks/useCartSelection";
 import { calculateCartTotals } from "@/pages/cart/lib/cartTotals";
 
-const UNAVAILABLE_NOTICE = "아직 준비 중인 기능이에요";
-
 type DeleteTarget =
   | { cartItemIds: number[]; kind: "selection" }
   | { cartItemIds: [number]; kind: "single" };
@@ -207,7 +205,10 @@ export function CartPage() {
             <p className="type-body-small text-text-secondary">
               마음에 드는 책을 찾아 장바구니에 담아보세요
             </p>
-            <Button className="mt-4" onClick={() => navigate("/")}>
+            <Button
+              className="mt-4"
+              onClick={() => navigate("/recommendations/chat")}
+            >
               책 추천받기
             </Button>
           </section>
@@ -280,9 +281,7 @@ export function CartPage() {
         </div>
       ) : null}
 
-      <BottomNavigation
-        onUnavailableTabClick={() => showNotice(UNAVAILABLE_NOTICE)}
-      />
+      <BottomNavigation />
 
       <DeleteCartItemsDialog
         fallbackFocusRef={headingRef}

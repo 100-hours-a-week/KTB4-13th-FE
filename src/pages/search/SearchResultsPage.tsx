@@ -1,8 +1,6 @@
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { BottomNavigation } from "@/common/components/BottomNavigation";
-import { Toast } from "@/common/components/Toast";
-import { useTransientNotice } from "@/common/hooks/useTransientNotice";
 import { SearchFilters } from "@/pages/search/components/SearchFilters";
 import { SearchHeader } from "@/pages/search/components/SearchHeader";
 import { SearchResultToolbar } from "@/pages/search/components/SearchResultToolbar";
@@ -15,13 +13,10 @@ import {
 import type { BookSearchSort } from "@/features/search/types/bookSearch";
 import type { SearchFilters as SearchFilterValues } from "@/pages/search/types/search";
 
-const UNAVAILABLE_NOTICE = "아직 준비 중인 기능이에요";
-
 export function SearchResultsPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { notice, showNotice } = useTransientNotice();
   const request = readSearchRequest(searchParams);
   const searchResults = useSearchResults(request);
   const filters: SearchFilterValues = {
@@ -74,15 +69,7 @@ export function SearchResultsPage() {
         />
       </main>
 
-      {notice ? (
-        <div className="page-content pointer-events-none absolute inset-x-0 bottom-20 z-20">
-          <Toast>{notice}</Toast>
-        </div>
-      ) : null}
-
-      <BottomNavigation
-        onUnavailableTabClick={() => showNotice(UNAVAILABLE_NOTICE)}
-      />
+      <BottomNavigation />
     </div>
   );
 }

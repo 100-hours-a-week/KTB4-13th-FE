@@ -7,11 +7,13 @@ interface KakaoLoginButtonProps extends Omit<
   "children" | "isLoading"
 > {
   isLoading: boolean;
+  label?: string;
 }
 
 export function KakaoLoginButton({
   isLoading,
   className,
+  label = "카카오로 계속하기",
   ...props
 }: KakaoLoginButtonProps) {
   return (
@@ -26,7 +28,7 @@ export function KakaoLoginButton({
         .filter(Boolean)
         .join(" ")}
     >
-      카카오로 시작하기
+      {label}
     </Button>
   );
 }

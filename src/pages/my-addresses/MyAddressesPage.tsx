@@ -18,7 +18,6 @@ import { AddressPageHeader } from "@/pages/my-addresses/components/AddressPageHe
 import { DeleteAddressDialog } from "@/pages/my-addresses/components/DeleteAddressDialog";
 import { getAddressFailureMessage } from "@/pages/my-addresses/lib/addressFailureMessage";
 
-const NAVIGATION_UNAVAILABLE_NOTICE = "아직 준비 중인 기능이에요";
 const ADDRESS_LIMIT_NOTICE = `배송지는 최대 ${MAX_USER_ADDRESS_COUNT}개까지 등록할 수 있어요`;
 
 const actionClassName =
@@ -240,9 +239,7 @@ export function MyAddressesPage() {
         </div>
       ) : null}
 
-      <BottomNavigation
-        onUnavailableTabClick={() => showNotice(NAVIGATION_UNAVAILABLE_NOTICE)}
-      />
+      <BottomNavigation />
 
       <DeleteAddressDialog
         addressLabel={deleteTarget?.label ?? ""}

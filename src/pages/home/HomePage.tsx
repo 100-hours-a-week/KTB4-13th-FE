@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import {
   createSearchParams,
   useLocation,
@@ -6,22 +6,42 @@ import {
 } from "react-router-dom";
 
 import { BottomNavigation } from "@/common/components/BottomNavigation";
-import { Toast } from "@/common/components/Toast";
-import { useTransientNotice } from "@/common/hooks/useTransientNotice";
-import { LoginRequired } from "@/features/auth/components/LoginRequired";
+import { LoginRequiredDialog } from "@/features/auth/components/LoginRequiredDialog";
 import { useAuth } from "@/features/auth/context/useAuth";
 import { BookRankingSection } from "@/pages/home/components/BookRankingSection";
+import { GuestRecommendationBanner } from "@/pages/home/components/GuestRecommendationBanner";
 import { HomeHeader } from "@/pages/home/components/HomeHeader";
 import { RecommendationSection } from "@/pages/home/components/RecommendationSection";
 
-const UNAVAILABLE_NOTICE = "아직 준비 중인 기능이에요";
+type HomeLoginPrompt = "cart" | "login" | "recommendation";
+
+const LOGIN_PROMPT_CONTENT: Record<
+  HomeLoginPrompt,
+  { description: string; returnTo: string; title: string }
+> = {
+  cart: {
+    description: "로그인하면 장바구니에 담은 책을 확인할 수 있어요.",
+    returnTo: "/cart",
+    title: "장바구니를 이용하려면 로그인이 필요해요",
+  },
+  login: {
+    description: "취향에 맞는 책을 찾고 필요한 기능을 이어갈 수 있어요.",
+    returnTo: "/",
+    title: "로그인하고 북적북적을 이용해보세요",
+  },
+  recommendation: {
+    description: "로그인하면 나만의 추천 도서를 볼 수 있어요.",
+    returnTo: "/",
+    title: "취향에 맞는 추천을 준비해드릴게요",
+  },
+};
 
 export function HomePage() {
   const { status } = useAuth();
-  const { notice, showNotice } = useTransientNotice();
   const location = useLocation();
   const navigate = useNavigate();
   const mainRef = useRef<HTMLElement>(null);
+  const [loginPrompt, setLoginPrompt] = useState<HomeLoginPrompt | null>(null);
   const homeScrollTop = (location.state as { homeScrollTop?: unknown } | null)
     ?.homeScrollTop;
 
@@ -31,7 +51,6 @@ export function HomePage() {
     }
   }, [homeScrollTop]);
 
-  const showUnavailableNotice = () => showNotice(UNAVAILABLE_NOTICE);
   const handleSearchSubmit = (query: string) => {
     navigate({
       pathname: "/search",
@@ -55,9 +74,15 @@ export function HomePage() {
   return (
     <div className="relative flex h-dvh flex-col bg-surface">
       <HomeHeader
-        onCartClick={() =>
-          navigate(status === "unauthenticated" ? "/login" : "/cart")
-        }
+        isGuest={status === "unauthenticated"}
+        onCartClick={() => {
+          if (status === "unauthenticated") {
+            setLoginPrompt("cart");
+            return;
+          }
+          navigate("/cart");
+        }}
+        onLoginClick={() => setLoginPrompt("login")}
         onSearchSubmit={handleSearchSubmit}
       />
 
@@ -75,20 +100,21 @@ export function HomePage() {
             />
           ) : null}
           {status === "unauthenticated" ? (
-            <div className="page-content">
-              <LoginRequired description="로그인하고 취향에 맞는 도서를 추천받아 보세요" />
-            </div>
+            <GuestRecommendationBanner
+              onLoginClick={() => setLoginPrompt("recommendation")}
+            />
           ) : null}
         </div>
       </main>
 
-      {notice ? (
-        <div className="page-content pointer-events-none absolute inset-x-0 bottom-20">
-          <Toast>{notice}</Toast>
-        </div>
-      ) : null}
-
-      <BottomNavigation onUnavailableTabClick={showUnavailableNotice} />
+      <BottomNavigation />
+      <LoginRequiredDialog
+        description={LOGIN_PROMPT_CONTENT[loginPrompt ?? "cart"].description}
+        isOpen={loginPrompt !== null}
+        onClose={() => setLoginPrompt(null)}
+        returnTo={LOGIN_PROMPT_CONTENT[loginPrompt ?? "cart"].returnTo}
+        title={LOGIN_PROMPT_CONTENT[loginPrompt ?? "cart"].title}
+      />
     </div>
   );
 }

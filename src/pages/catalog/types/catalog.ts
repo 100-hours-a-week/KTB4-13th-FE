@@ -8,6 +8,8 @@ export type RecommendationSort = RecommendationFeedSort;
 export interface CatalogBookItem {
   author: string | null;
   key: string;
+  // Recommendation rows only; ranking rows have no taste score.
+  matchScore: number | null;
   originalPrice: number | null;
   price: number | null;
   productId: number | null;

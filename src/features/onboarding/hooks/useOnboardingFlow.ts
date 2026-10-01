@@ -22,6 +22,13 @@ import type {
 const TOTAL_STEPS = 5;
 const LIMIT_NOTICE_DURATION_MS = 2_000;
 
+function hasSameOptionIds(selectedOptionIds: number[], savedOptionIds: number[]) {
+  return (
+    selectedOptionIds.length === savedOptionIds.length &&
+    selectedOptionIds.every((optionId) => savedOptionIds.includes(optionId))
+  );
+}
+
 type LoadStatus = "loading" | "error" | "ready";
 type ProgressStatus = LoadStatus | "completed";
 
@@ -32,6 +39,10 @@ export function useOnboardingFlow() {
   const [step, setStep] = useState<OnboardingStep>(1);
   const [selectedOptionIdsByQuestion, setSelectedOptionIdsByQuestion] =
     useState<Record<number, number[]>>({});
+  // Answers the server already holds, so going back and forward unchanged does not re-save them.
+  const [savedOptionIdsByQuestion, setSavedOptionIdsByQuestion] = useState<
+    Record<number, number[]>
+  >({});
   const [question, setQuestion] = useState<OnboardingQuestion | null>(null);
   const [questionStatus, setQuestionStatus] = useState<LoadStatus>("loading");
   const [questionRequestKey, setQuestionRequestKey] = useState(0);
@@ -84,14 +95,14 @@ export function useOnboardingFlow() {
           return;
         }
 
-        setSelectedOptionIdsByQuestion(
-          Object.fromEntries(
-            result.progress.answers.map((answer) => [
-              answer.questionId,
-              answer.optionIds,
-            ]),
-          ),
+        const savedAnswers = Object.fromEntries(
+          result.progress.answers.map((answer) => [
+            answer.questionId,
+            answer.optionIds,
+          ]),
         );
+        setSelectedOptionIdsByQuestion(savedAnswers);
+        setSavedOptionIdsByQuestion(savedAnswers);
         setSelectedBookIds(result.progress.bookIds);
         setStep(getResumeStep(result.progress.answers));
       }
@@ -264,6 +275,15 @@ export function useOnboardingFlow() {
       return;
     }
 
+    const nextStep = Math.min(step + 1, TOTAL_STEPS) as OnboardingStep;
+    const savedOptionIds = savedOptionIdsByQuestion[question.questionId] ?? [];
+
+    // The backend rejects re-saving an answer it already holds, and nothing would change anyway.
+    if (hasSameOptionIds(selectedOptionIds, savedOptionIds)) {
+      moveToStep(nextStep);
+      return;
+    }
+
     isSavingRef.current = true;
     setIsSaving(true);
     setHasSaveError(false);
@@ -281,7 +301,10 @@ export function useOnboardingFlow() {
       return;
     }
 
-    const nextStep = Math.min(step + 1, TOTAL_STEPS) as OnboardingStep;
+    setSavedOptionIdsByQuestion((current) => ({
+      ...current,
+      [question.questionId]: selectedOptionIds,
+    }));
     moveToStep(nextStep);
   };
 

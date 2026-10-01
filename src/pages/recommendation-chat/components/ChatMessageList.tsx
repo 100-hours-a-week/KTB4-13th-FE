@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
+import { ProductAvailabilityBadge } from "@/common/components/ProductAvailabilityBadge";
 import type {
   ChatErrorReason,
   ChatPresentationMessage,
@@ -51,6 +52,11 @@ function RecommendationCard({
         <p className="mt-1 line-clamp-2 type-caption text-text-secondary">
           {recommendation.reasonShort}
         </p>
+      ) : null}
+      {recommendation.productId === null ? (
+        <div className="mt-2">
+          <ProductAvailabilityBadge />
+        </div>
       ) : null}
     </article>
   );

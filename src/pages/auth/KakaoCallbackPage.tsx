@@ -8,6 +8,10 @@ import {
   clearKakaoLoginTransaction,
   readKakaoLoginTransaction,
 } from "@/features/auth/storage/kakaoLoginTransaction";
+import {
+  clearLoginReturnTo,
+  readLoginReturnTo,
+} from "@/features/auth/storage/loginReturnTo";
 import { OnboardingEntryError } from "@/features/onboarding/components/OnboardingEntryError";
 import { useOnboardingEntryPath } from "@/features/onboarding/hooks/useOnboardingEntryPath";
 
@@ -21,11 +25,20 @@ const callbackMessages = {
   success: "로그인이 완료되었어요",
 } as const;
 
+function LoginRedirect({ to }: { to: string }) {
+  useEffect(() => {
+    clearLoginReturnTo();
+  }, []);
+
+  return <Navigate replace to={to} />;
+}
+
 export function KakaoCallbackPage() {
   const { setAccessToken } = useAuth();
   const hasProcessed = useRef(false);
   const [status, setStatus] = useState<CallbackStatus>("loading");
   const [message, setMessage] = useState("로그인 처리 중이에요");
+  const [returnTo] = useState(readLoginReturnTo);
   const { entry, retry } = useOnboardingEntryPath(status === "success");
 
   useEffect(() => {
@@ -37,6 +50,7 @@ export function KakaoCallbackPage() {
 
     const fail = (failureMessage: string) => {
       clearKakaoLoginTransaction();
+      clearLoginReturnTo();
       setMessage(failureMessage);
       setStatus("error");
     };
@@ -75,6 +89,7 @@ export function KakaoCallbackPage() {
       });
 
       if (!result.ok) {
+        clearLoginReturnTo();
         setMessage(
           result.reason === "network-error"
             ? callbackMessages.network
@@ -93,7 +108,9 @@ export function KakaoCallbackPage() {
   }, [setAccessToken]);
 
   if (status === "success" && entry.kind === "ready") {
-    return <Navigate replace to={entry.path} />;
+    return (
+      <LoginRedirect to={entry.path === "/" ? (returnTo ?? "/") : entry.path} />
+    );
   }
 
   if (status === "success" && entry.kind === "error") {

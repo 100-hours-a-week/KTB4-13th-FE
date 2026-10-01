@@ -26,21 +26,21 @@ export function ArrowLeftIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-export function BellIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <Icon {...props}>
-      <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z" />
-      <path d="M10 20.5a2.2 2.2 0 0 0 4 0" />
-    </Icon>
-  );
-}
-
 export function CartIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>
       <path d="M3 4h2l2.2 10.2a1 1 0 0 0 1 .8h9.1a1 1 0 0 0 1-.8L20 8H6.2" />
       <circle cx="9.5" cy="19" r="1.2" />
       <circle cx="17" cy="19" r="1.2" />
+    </Icon>
+  );
+}
+
+export function BookIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M5 4.5h9a3 3 0 0 1 3 3v12H8a3 3 0 0 1-3-3z" />
+      <path d="M8 19.5a3 3 0 0 1 0-6h9" />
     </Icon>
   );
 }

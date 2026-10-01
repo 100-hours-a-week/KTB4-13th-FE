@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { BookIcon } from "@/common/components/AppIcons";
+
 interface BookCoverProps {
   // Empty when adjacent text already names the book.
   alt: string;
@@ -32,17 +34,17 @@ export function BookCover({ alt, fallbackTitle, thumbnailUrl }: BookCoverProps) 
     );
   }
 
-  // Bottom-aligned so callers' top-left overlays such as rank badges never cover the title.
   return (
     <div
       aria-hidden={alt ? undefined : true}
       aria-label={alt || undefined}
-      className={`${COVER_FRAME_CLASS_NAME} flex items-end justify-center p-2 text-center`}
+      className={`${COVER_FRAME_CLASS_NAME} flex flex-col items-center justify-end gap-1 p-2 pt-7 text-center text-text-tertiary`}
       role={alt ? "img" : undefined}
     >
+      <BookIcon className="size-5 shrink-0" />
       <span
         aria-hidden="true"
-        className="line-clamp-3 break-words break-keep type-caption text-text-secondary"
+        className="line-clamp-2 break-words break-keep type-caption font-medium text-text-secondary"
       >
         {fallbackTitle}
       </span>

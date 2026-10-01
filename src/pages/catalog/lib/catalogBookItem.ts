@@ -10,6 +10,7 @@ export function toRankingBookItem(product: ProductListItem): CatalogBookItem {
   return {
     author: product.author,
     key: `product-${product.itemId}`,
+    matchScore: null,
     originalPrice: hasDiscount ? product.salePrice : null,
     price: hasDiscount ? product.discountedPrice : product.salePrice,
     productId: product.itemId,
@@ -24,6 +25,7 @@ export function toRecommendationBookItem(
   return {
     author: book.author,
     key: `book-${book.bookId}`,
+    matchScore: book.matchScore,
     originalPrice: null,
     price: book.price,
     productId: book.productId,
