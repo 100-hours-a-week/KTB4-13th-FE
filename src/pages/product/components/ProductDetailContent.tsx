@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { BookCover } from "@/common/components/BookCover";
 import type { ProductDetail } from "@/features/product/types/product";
@@ -39,7 +39,27 @@ function ProductPrice({ product }: { product: ProductDetail }) {
 
 function BookDescription({ description }: { description: string | null }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isClamped, setIsClamped] = useState(false);
+  const descriptionRef = useRef<HTMLParagraphElement>(null);
   const normalizedDescription = description?.trim();
+
+  // Offers the toggle only when the line clamp actually cuts the text, re-measuring when the width changes.
+  useEffect(() => {
+    const descriptionElement = descriptionRef.current;
+
+    if (!descriptionElement || isExpanded) {
+      return undefined;
+    }
+
+    const observer = new ResizeObserver(() => {
+      setIsClamped(
+        descriptionElement.scrollHeight > descriptionElement.clientHeight,
+      );
+    });
+    observer.observe(descriptionElement);
+
+    return () => observer.disconnect();
+  }, [isExpanded, normalizedDescription]);
 
   if (!normalizedDescription) {
     return null;
@@ -54,22 +74,25 @@ function BookDescription({ description }: { description: string | null }) {
         책 소개
       </h2>
       <p
-        className={`mt-3 break-words whitespace-pre-line type-body-small text-text-secondary ${
+        className={`mt-3 break-words whitespace-pre-line type-body text-text-primary ${
           isExpanded ? "" : "line-clamp-4"
         }`}
         id="book-description-content"
+        ref={descriptionRef}
       >
         {normalizedDescription}
       </p>
-      <button
-        aria-controls="book-description-content"
-        aria-expanded={isExpanded}
-        className="mt-3 min-h-11 rounded-control border border-border px-4 type-body-small font-semibold text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-        onClick={() => setIsExpanded((current) => !current)}
-        type="button"
-      >
-        {isExpanded ? "접기" : "더보기"}
-      </button>
+      {isExpanded || isClamped ? (
+        <button
+          aria-controls="book-description-content"
+          aria-expanded={isExpanded}
+          className="mt-3 min-h-11 rounded-control border border-border px-4 type-body-small font-semibold text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          onClick={() => setIsExpanded((current) => !current)}
+          type="button"
+        >
+          {isExpanded ? "접기" : "더보기"}
+        </button>
+      ) : null}
     </section>
   );
 }
@@ -94,24 +117,30 @@ export function ProductDetailContent({
           />
         </div>
         <div className="min-w-0 flex-1 self-center">
-          <h2 className="break-words type-title text-text-primary">
+          <p className="break-words type-caption font-medium text-text-secondary">
+            <span className="sr-only">분류 </span>
+            {product.category}
+          </p>
+          <h2 className="mt-1 break-words type-subheading text-text-primary">
             {product.itemName}
           </h2>
-          <dl className="mt-2 space-y-1 type-caption text-text-secondary">
+          <dl className="mt-2 space-y-0.5 text-text-secondary">
             <div>
               <dt className="sr-only">저자</dt>
-              <dd className="break-words">{product.author}</dd>
+              <dd className="break-words type-body-small">{product.author}</dd>
             </div>
             <div>
               <dt className="sr-only">출판사</dt>
-              <dd className="break-words">{product.publisher}</dd>
+              <dd className="break-words type-caption">{product.publisher}</dd>
             </div>
             <div>
               <dt className="sr-only">출간일</dt>
-              <dd>{product.publishedAt.replaceAll("-", ".")}</dd>
+              <dd className="type-caption">
+                {product.publishedAt.replaceAll("-", ".")}
+              </dd>
             </div>
           </dl>
-          <div className="mt-3">
+          <div className="mt-4">
             <ProductPrice product={product} />
           </div>
         </div>
