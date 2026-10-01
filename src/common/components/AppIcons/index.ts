@@ -1,6 +1,6 @@
 export {
   ArrowLeftIcon,
-  BellIcon,
+  BookIcon,
   CartIcon,
   HomeIcon,
   SearchIcon,

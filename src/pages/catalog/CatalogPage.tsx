@@ -1,8 +1,6 @@
 import { useMemo, useState } from "react";
 
 import { BottomNavigation } from "@/common/components/BottomNavigation";
-import { Toast } from "@/common/components/Toast";
-import { useTransientNotice } from "@/common/hooks/useTransientNotice";
 import { CatalogBookList } from "@/pages/catalog/components/CatalogBookList";
 import { CatalogFilters } from "@/pages/catalog/components/CatalogFilters";
 import { CatalogHeader } from "@/pages/catalog/components/CatalogHeader";
@@ -18,8 +16,6 @@ import type {
   RecommendationSort,
 } from "@/pages/catalog/types/catalog";
 
-const UNAVAILABLE_NOTICE = "아직 준비 중인 기능이에요";
-
 const INITIAL_FILTERS: CatalogFilterState = {
   categoryId: null,
   matchScoreMin: null,
@@ -31,7 +27,6 @@ export function CatalogPage({ mode }: { mode: CatalogMode }) {
   const [filters, setFilters] = useState<CatalogFilterState>(INITIAL_FILTERS);
   const [sort, setSort] = useState<RecommendationSort>("match");
   const { categoryState, retryCategories } = useCatalogCategories();
-  const { notice, showNotice } = useTransientNotice();
 
   const requestModel = useMemo(
     () =>
@@ -73,15 +68,7 @@ export function CatalogPage({ mode }: { mode: CatalogMode }) {
         />
       </main>
 
-      {notice ? (
-        <div className="page-content pointer-events-none absolute inset-x-0 bottom-20 z-20">
-          <Toast>{notice}</Toast>
-        </div>
-      ) : null}
-
-      <BottomNavigation
-        onUnavailableTabClick={() => showNotice(UNAVAILABLE_NOTICE)}
-      />
+      <BottomNavigation />
     </div>
   );
 }

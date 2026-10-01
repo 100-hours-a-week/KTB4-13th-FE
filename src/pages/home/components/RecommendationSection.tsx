@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
+import { ProductAvailabilityBadge } from "@/common/components/ProductAvailabilityBadge";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
 import type { RecommendationFeedItem } from "@/features/recommendation/types/recommendationFeed";
@@ -42,6 +43,7 @@ function RecommendationCard({
           {priceFormatter.format(book.price)}원
         </p>
       ) : null}
+      {book.productId === null ? <ProductAvailabilityBadge /> : null}
     </>
   );
 

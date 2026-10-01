@@ -11,6 +11,7 @@ import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
 import { useTransientNotice } from "@/common/hooks/useTransientNotice";
 import { addCartItem } from "@/features/cart/api/cartApi";
+import { LoginRequiredDialog } from "@/features/auth/components/LoginRequiredDialog";
 import { useAuth } from "@/features/auth/context/useAuth";
 import type { OrderNavigationState } from "@/features/order/types/order";
 import { ProductDetailContent, ProductDetailSkeleton } from "@/pages/product/components/ProductDetailContent";
@@ -18,7 +19,6 @@ import { ProductHeader } from "@/pages/product/components/ProductHeader";
 import { PurchaseBar } from "@/pages/product/components/PurchaseBar";
 import { useProductDetail } from "@/pages/product/hooks/useProductDetail";
 
-const UNAVAILABLE_NOTICE = "아직 준비 중인 기능이에요";
 const PURCHASE_QUANTITY = 1;
 
 function parseProductId(value: string | undefined) {
@@ -50,14 +50,11 @@ export function ProductDetailPage() {
   const [pendingPurchaseAction, setPendingPurchaseAction] = useState<
     "cart" | "buy-now" | null
   >(null);
+  const [loginRequiredAction, setLoginRequiredAction] = useState<
+    "cart" | "buy-now" | null
+  >(null);
   const recommendationReason = readRecommendationReason(location.state);
   const product = state.kind === "ready" ? state.data : null;
-
-  const goToLogin = () => {
-    navigate("/login", {
-      state: { returnTo: location.pathname },
-    });
-  };
 
   const handleBack = () => {
     if (location.key === "default") {
@@ -80,7 +77,7 @@ export function ProductDetailPage() {
       return true;
     }
     if (result.reason === "unauthorized") {
-      goToLogin();
+      setLoginRequiredAction(action);
       return false;
     }
     if (result.reason === "stock") {
@@ -97,7 +94,7 @@ export function ProductDetailPage() {
       return;
     }
     if (authStatus !== "authenticated") {
-      goToLogin();
+      setLoginRequiredAction("cart");
       return;
     }
 
@@ -112,7 +109,7 @@ export function ProductDetailPage() {
       return;
     }
     if (authStatus !== "authenticated") {
-      goToLogin();
+      setLoginRequiredAction("buy-now");
       return;
     }
 
@@ -138,9 +135,13 @@ export function ProductDetailPage() {
     <div className="relative flex h-dvh w-full min-w-0 flex-col overflow-x-hidden bg-surface">
       <ProductHeader
         onBack={handleBack}
-        onCartClick={() =>
-          authStatus === "unauthenticated" ? goToLogin() : navigate("/cart")
-        }
+        onCartClick={() => {
+          if (authStatus !== "authenticated") {
+            setLoginRequiredAction("cart");
+            return;
+          }
+          navigate("/cart");
+        }}
       />
 
       <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
@@ -198,8 +199,17 @@ export function ProductDetailPage() {
           onBuyNow={handleBuyNow}
         />
       ) : null}
-      <BottomNavigation
-        onUnavailableTabClick={() => showNotice(UNAVAILABLE_NOTICE)}
+      <BottomNavigation />
+      <LoginRequiredDialog
+        description="로그인하면 보고 있던 책에서 계속할 수 있어요."
+        isOpen={loginRequiredAction !== null}
+        onClose={() => setLoginRequiredAction(null)}
+        returnTo={`${location.pathname}${location.search}`}
+        title={
+          loginRequiredAction === "buy-now"
+            ? "구매하려면 로그인이 필요해요"
+            : "장바구니를 이용하려면 로그인이 필요해요"
+        }
       />
     </div>
   );

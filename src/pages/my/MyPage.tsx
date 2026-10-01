@@ -3,15 +3,10 @@ import { Link } from "react-router-dom";
 
 import { BottomNavigation } from "@/common/components/BottomNavigation";
 import { Button } from "@/common/components/Button";
-import { Toast } from "@/common/components/Toast";
-import { useTransientNotice } from "@/common/hooks/useTransientNotice";
 import { useLogout } from "@/features/auth/hooks/useLogout";
-
-const NAVIGATION_UNAVAILABLE_NOTICE = "아직 준비 중인 기능이에요";
 
 export function MyPage() {
   const { logout } = useLogout();
-  const { notice, showNotice } = useTransientNotice();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const isLogoutRequestedRef = useRef(false);
 
@@ -52,17 +47,7 @@ export function MyPage() {
         </Button>
       </main>
 
-      {notice ? (
-        <div className="page-content pointer-events-none absolute inset-x-0 bottom-20">
-          <Toast>{notice}</Toast>
-        </div>
-      ) : null}
-
-      <BottomNavigation
-        onUnavailableTabClick={() =>
-          showNotice(NAVIGATION_UNAVAILABLE_NOTICE)
-        }
-      />
+      <BottomNavigation />
     </div>
   );
 }

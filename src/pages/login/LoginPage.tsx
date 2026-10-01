@@ -1,15 +1,28 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { Toast } from "@/common/components/Toast";
 import { KakaoLoginButton } from "@/features/auth/components/KakaoLoginButton";
 import { useLogin } from "@/features/auth/hooks/useLogin";
+import {
+  clearLoginReturnTo,
+  getInternalLoginReturnTo,
+} from "@/features/auth/storage/loginReturnTo";
+import { clearKakaoLoginTransaction } from "@/features/auth/storage/kakaoLoginTransaction";
 import { LoginBrand } from "@/pages/login/components/LoginBrand";
 
 export function LoginPage() {
+  const location = useLocation();
   const navigate = useNavigate();
   const { beginLogin, feedback, handleLoginCancelled, isLoading } = useLogin();
+  const returnTo =
+    typeof location.state === "object" && location.state !== null
+      ? getInternalLoginReturnTo(Reflect.get(location.state, "returnTo"))
+      : null;
 
   const handleClose = () => {
+    clearKakaoLoginTransaction();
+    clearLoginReturnTo();
+
     if (window.history.length > 1) {
       navigate(-1);
       return;
@@ -40,7 +53,7 @@ export function LoginPage() {
               feedback.kind === "network-error" ? (
                 <button
                   className="shrink-0 font-semibold text-accent underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                  onClick={beginLogin}
+                  onClick={() => beginLogin(returnTo)}
                   type="button"
                 >
                   다시 시도
@@ -62,7 +75,7 @@ export function LoginPage() {
         <KakaoLoginButton
           className="w-full"
           isLoading={isLoading}
-          onClick={beginLogin}
+          onClick={() => beginLogin(returnTo)}
         />
         <p className="mx-auto mt-4 max-w-xs text-center type-caption text-text-tertiary">
           계속 진행 시 이용약관 및 개인정보 처리방침에 동의하는 것으로

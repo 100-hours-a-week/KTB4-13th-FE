@@ -15,8 +15,6 @@ import { useCart } from "@/pages/cart/hooks/useCart";
 import { useCartSelection } from "@/pages/cart/hooks/useCartSelection";
 import { calculateCartTotals } from "@/pages/cart/lib/cartTotals";
 
-const UNAVAILABLE_NOTICE = "아직 준비 중인 기능이에요";
-
 type DeleteTarget =
   | { cartItemIds: number[]; kind: "selection" }
   | { cartItemIds: [number]; kind: "single" };
@@ -280,9 +278,7 @@ export function CartPage() {
         </div>
       ) : null}
 
-      <BottomNavigation
-        onUnavailableTabClick={() => showNotice(UNAVAILABLE_NOTICE)}
-      />
+      <BottomNavigation />
 
       <DeleteCartItemsDialog
         fallbackFocusRef={headingRef}

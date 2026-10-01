@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
+import { ProductAvailabilityBadge } from "@/common/components/ProductAvailabilityBadge";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
 import type { BookSearchItem } from "@/features/search/types/bookSearch";
@@ -29,6 +30,7 @@ function SearchResultCard({ item }: { item: BookSearchItem }) {
           {priceFormatter.format(item.price)}원
         </p>
       ) : null}
+      {item.productId === null ? <ProductAvailabilityBadge /> : null}
     </article>
   );
 

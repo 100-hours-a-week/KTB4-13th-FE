@@ -11,6 +11,10 @@ import {
   clearKakaoLoginTransaction,
   saveKakaoLoginTransaction,
 } from "@/features/auth/storage/kakaoLoginTransaction";
+import {
+  clearLoginReturnTo,
+  saveLoginReturnTo,
+} from "@/features/auth/storage/loginReturnTo";
 import type { LoginFeedback, LoginStatus } from "@/features/auth/types/auth";
 
 const feedbackDuration: Record<LoginFeedback["kind"], number> = {
@@ -36,7 +40,7 @@ export function useLogin() {
     return () => window.clearTimeout(timeoutId);
   }, [feedback]);
 
-  const beginLogin = useCallback(async () => {
+  const beginLogin = useCallback(async (returnTo?: string | null) => {
     setFeedback(null);
     setStatus("loading");
 
@@ -48,6 +52,7 @@ export function useLogin() {
       const codeChallenge = await createS256CodeChallenge(codeVerifier);
 
       saveKakaoLoginTransaction({ codeVerifier, nonce, state });
+      saveLoginReturnTo(returnTo);
 
       window.location.assign(
         createKakaoAuthorizationUrl({
@@ -60,6 +65,7 @@ export function useLogin() {
       );
     } catch {
       clearKakaoLoginTransaction();
+      clearLoginReturnTo();
       setStatus("server-error");
       setFeedback({
         kind: "server-error",

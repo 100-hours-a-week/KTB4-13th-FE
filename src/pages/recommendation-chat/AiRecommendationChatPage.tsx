@@ -8,8 +8,6 @@ import { ChatHeader } from "@/pages/recommendation-chat/components/ChatHeader";
 import { ChatMessageList } from "@/pages/recommendation-chat/components/ChatMessageList";
 import { useRecommendationChat } from "@/pages/recommendation-chat/hooks/useRecommendationChat";
 
-const UNAVAILABLE_NOTICE = "아직 준비 중인 기능이에요";
-
 export function AiRecommendationChatPage() {
   const navigate = useNavigate();
   const { notice, showNotice } = useTransientNotice();
@@ -65,9 +63,7 @@ export function AiRecommendationChatPage() {
         onSend={sendMessage}
         status={status}
       />
-      <BottomNavigation
-        onUnavailableTabClick={() => showNotice(UNAVAILABLE_NOTICE)}
-      />
+      <BottomNavigation />
     </div>
   );
 }

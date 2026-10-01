@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
+import { ProductAvailabilityBadge } from "@/common/components/ProductAvailabilityBadge";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
 import type { CatalogListStatus } from "@/pages/catalog/hooks/useCatalogBooks";
@@ -76,6 +77,11 @@ function CatalogBookRow({
         {book.price !== null ? (
           <div className="mt-2">
             <BookPrice originalPrice={book.originalPrice} price={book.price} />
+          </div>
+        ) : null}
+        {book.productId === null ? (
+          <div className="mt-2">
+            <ProductAvailabilityBadge />
           </div>
         ) : null}
       </div>
