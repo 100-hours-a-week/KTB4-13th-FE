@@ -12,6 +12,7 @@ export function toRankingBookItem(product: ProductListItem): CatalogBookItem {
     key: `product-${product.itemId}`,
     originalPrice: hasDiscount ? product.salePrice : null,
     price: hasDiscount ? product.discountedPrice : product.salePrice,
+    productId: product.itemId,
     thumbnailUrl: product.thumbnailUrl,
     title: product.itemName,
   };
@@ -25,6 +26,7 @@ export function toRecommendationBookItem(
     key: `book-${book.bookId}`,
     originalPrice: null,
     price: book.price,
+    productId: null,
     thumbnailUrl: book.coverUrl,
     title: book.title,
   };

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
 import { RetryButton } from "@/common/components/RetryButton";
@@ -44,7 +45,7 @@ function CatalogBookRow({
   book: CatalogBookItem;
   rank?: number;
 }) {
-  return (
+  const row = (
     <article className="flex gap-4 py-3">
       <div className="relative w-[4.5rem] shrink-0">
         <BookCover alt="" thumbnailUrl={book.thumbnailUrl} />
@@ -75,6 +76,20 @@ function CatalogBookRow({
         ) : null}
       </div>
     </article>
+  );
+
+  if (book.productId === null) {
+    return row;
+  }
+
+  return (
+    <Link
+      aria-label={`${book.title} 상세 보기`}
+      className="block rounded-control transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      to={`/products/${book.productId}`}
+    >
+      {row}
+    </Link>
   );
 }
 
