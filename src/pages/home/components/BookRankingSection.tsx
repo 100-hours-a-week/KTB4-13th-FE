@@ -9,7 +9,7 @@ import { useBookRanking } from "@/pages/home/hooks/useBookRanking";
 const TOP_RANK = 3;
 const SKELETON_COUNT = 3;
 // One row ranked left to right; about 2.5 covers fit on a phone and the rest scroll sideways.
-const RANK_CARD_CLASS_NAME = "relative w-[36%] shrink-0";
+const RANK_CARD_CLASS_NAME = "relative w-[40%] shrink-0";
 
 interface BookRankingSectionProps {
   onMoreClick: () => void;
@@ -21,10 +21,8 @@ function RankBadge({ rank }: { rank: number }) {
 
   return (
     <span
-      className={`absolute left-1.5 top-1.5 flex items-center justify-center rounded-control font-bold ${
-        isTopRank
-          ? "h-7 min-w-7 bg-accent px-1.5 text-sm text-white"
-          : "h-6 min-w-6 border border-border bg-surface px-1 text-xs text-text-primary"
+      className={`absolute bottom-0 left-0 flex min-w-9 items-center justify-center rounded-bl-control rounded-tr-control px-2 py-1 type-title font-bold leading-none text-white ${
+        isTopRank ? "bg-accent" : "bg-primary"
       }`}
     >
       {rank}
@@ -78,7 +76,7 @@ export function BookRankingSection({
         // Focusable so keyboard users can scroll the sideways list.
         <div
           aria-label="책 랭킹 목록"
-          className="-mx-5 overflow-x-auto px-5 pb-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="-mx-5 overflow-x-auto px-5 pb-1 [scrollbar-width:none] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           role="region"
           tabIndex={0}
         >

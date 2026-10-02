@@ -1,6 +1,5 @@
 export {
   ArrowLeftIcon,
-  BookIcon,
   CartIcon,
   HomeIcon,
   SearchIcon,

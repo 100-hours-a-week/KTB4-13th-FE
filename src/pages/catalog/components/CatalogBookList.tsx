@@ -15,6 +15,7 @@ const priceFormatter = new Intl.NumberFormat("ko-KR");
 const SKELETON_COUNT = 5;
 
 interface CatalogBookListProps {
+  hasActiveFilters: boolean;
   hasLoadMoreError: boolean;
   items: CatalogBookItem[];
   mode: CatalogMode;
@@ -109,6 +110,7 @@ function CatalogBookRow({
 }
 
 export function CatalogBookList({
+  hasActiveFilters,
   hasLoadMoreError,
   items,
   mode,
@@ -169,20 +171,26 @@ export function CatalogBookList({
   }
 
   if (items.length === 0) {
+    const isFilteredRecommendation = mode === "recommendation" && hasActiveFilters;
+
     return (
       <section
         aria-live="polite"
         className="page-content flex min-h-64 flex-col items-center justify-center gap-2 py-12 text-center"
       >
         <h2 className="type-title text-text-primary">
-          {mode === "recommendation"
-            ? "추천 도서를 준비하고 있어요"
-            : "조건에 맞는 책이 없어요"}
+          {isFilteredRecommendation
+            ? "조건에 맞는 추천 도서가 없어요"
+            : mode === "recommendation"
+              ? "추천 도서를 준비하고 있어요"
+              : "조건에 맞는 책이 없어요"}
         </h2>
         <p className="type-body-small text-text-secondary">
-          {mode === "recommendation"
-            ? "조금만 기다리면 더 많은 추천 도서를 만나볼 수 있어요"
-            : "다른 도서종류를 선택해 보세요"}
+          {isFilteredRecommendation
+            ? "매칭도나 출간연도 조건을 조정해보세요"
+            : mode === "recommendation"
+              ? "조금만 기다리면 더 많은 추천 도서를 만나볼 수 있어요"
+              : "다른 도서종류를 선택해 보세요"}
         </p>
       </section>
     );

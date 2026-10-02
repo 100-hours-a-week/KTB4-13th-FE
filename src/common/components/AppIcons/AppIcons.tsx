@@ -36,15 +36,6 @@ export function CartIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-export function BookIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <Icon {...props}>
-      <path d="M5 4.5h9a3 3 0 0 1 3 3v12H8a3 3 0 0 1-3-3z" />
-      <path d="M8 19.5a3 3 0 0 1 0-6h9" />
-    </Icon>
-  );
-}
-
 export function HomeIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>

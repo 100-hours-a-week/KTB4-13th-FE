@@ -58,6 +58,7 @@ export function CatalogPage({ mode }: { mode: CatalogMode }) {
           />
         </div>
         <CatalogBookList
+          hasActiveFilters={Object.values(filters).some((value) => value !== null)}
           hasLoadMoreError={catalogBooks.hasLoadMoreError}
           items={catalogBooks.items}
           mode={mode}

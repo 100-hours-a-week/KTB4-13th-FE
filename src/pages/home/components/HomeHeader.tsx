@@ -25,7 +25,7 @@ export function HomeHeader({
   };
 
   return (
-    <header className="page-content shrink-0 border-b border-border pb-3 pt-3">
+    <header className="page-content shrink-0 pb-2 pt-3">
       <div className="flex items-center justify-between">
         <h1 className="type-title font-bold text-text-primary">북적북적</h1>
         <div className="-mr-2 flex items-center gap-1">
@@ -49,7 +49,7 @@ export function HomeHeader({
         </div>
       </div>
       <form className="mt-2" onSubmit={handleSubmit} role="search">
-        <label className="flex min-h-11 items-center gap-2 rounded-control border border-border bg-muted px-3 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary">
+        <label className="flex min-h-11 items-center gap-2 rounded-control bg-muted px-3 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary">
           <SearchIcon className="size-5 shrink-0 text-text-tertiary" />
           <span className="sr-only">도서 검색</span>
           <input
