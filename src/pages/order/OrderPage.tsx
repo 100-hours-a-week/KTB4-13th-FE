@@ -7,6 +7,7 @@ import { Toast } from "@/common/components/Toast";
 import { useTransientNotice } from "@/common/hooks/useTransientNotice";
 import { deleteCartItems } from "@/features/cart/api/cartApi";
 import { createOrder } from "@/features/order/api/orderApi";
+import { rememberOrderedCartItems } from "@/features/order/lib/orderedCartCleanup";
 import {
   readOrderNavigationState,
   toCreateOrderItems,
@@ -143,6 +144,13 @@ export function OrderPage() {
     }
 
     if (result.data.status === "ORDER_CREATED") {
+      rememberOrderedCartItems(
+        result.data.items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })),
+      );
+
       const cleanupResult =
         cartItemIds.length > 0 ? await deleteCartItems(cartItemIds) : null;
       const completeState: OrderCompleteNavigationState = {

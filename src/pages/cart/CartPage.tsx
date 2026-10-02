@@ -7,10 +7,13 @@ import { Button } from "@/common/components/Button";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
 import { useTransientNotice } from "@/common/hooks/useTransientNotice";
+import { takeOrderedCartItems } from "@/features/order/lib/orderedCartCleanup";
+import type { OrderedCartItem } from "@/features/order/lib/orderedCartCleanup";
 import type { OrderNavigationState } from "@/features/order/types/order";
 import { CartItemRow } from "@/pages/cart/components/CartItemRow";
 import { CartSummary } from "@/pages/cart/components/CartSummary";
 import { DeleteCartItemsDialog } from "@/pages/cart/components/DeleteCartItemsDialog";
+import { OrderedCartCleanupDialog } from "@/pages/cart/components/OrderedCartCleanupDialog";
 import { useCart } from "@/pages/cart/hooks/useCart";
 import { useCartSelection } from "@/pages/cart/hooks/useCartSelection";
 import { calculateCartTotals } from "@/pages/cart/lib/cartTotals";
@@ -117,7 +120,28 @@ export function CartPage() {
   const selection = useCartSelection(items, state.kind === "ready");
   const totals = calculateCartTotals(items, selection.selectedIds);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
+  const [orderedCartItems, setOrderedCartItems] = useState<OrderedCartItem[]>(
+    takeOrderedCartItems,
+  );
+  const [isCleaningOrderedItems, setIsCleaningOrderedItems] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
+
+  const orderedCleanupTargets = items.flatMap((item) => {
+    const ordered = orderedCartItems.find(
+      (orderedItem) => orderedItem.productId === item.productId,
+    );
+
+    if (!ordered) {
+      return [];
+    }
+
+    return [
+      {
+        cartItemId: item.cartItemId,
+        nextQuantity: Math.max(0, item.quantity - ordered.quantity),
+      },
+    ];
+  });
 
   const handleBack = () => {
     if (location.key === "default") {
@@ -151,6 +175,33 @@ export function CartPage() {
     if (!isSuccess) {
       showNotice("상품을 삭제하지 못했어요. 다시 시도해 주세요");
     }
+  };
+
+  const handleOrderedCleanup = async () => {
+    if (orderedCleanupTargets.length === 0 || isMutating) {
+      setOrderedCartItems([]);
+      return;
+    }
+
+    setIsCleaningOrderedItems(true);
+
+    for (const target of orderedCleanupTargets) {
+      const isSuccess =
+        target.nextQuantity === 0
+          ? await removeItem(target.cartItemId)
+          : await changeQuantity(target.cartItemId, target.nextQuantity);
+
+      if (!isSuccess) {
+        setIsCleaningOrderedItems(false);
+        setOrderedCartItems([]);
+        showNotice("주문한 상품을 정리하지 못했어요. 다시 시도해 주세요");
+        return;
+      }
+    }
+
+    setIsCleaningOrderedItems(false);
+    setOrderedCartItems([]);
+    showNotice("주문한 상품을 장바구니에서 정리했어요");
   };
 
   const handleOrder = () => {
@@ -292,6 +343,20 @@ export function CartPage() {
       ) : null}
 
       <BottomNavigation />
+
+      <OrderedCartCleanupDialog
+        fallbackFocusRef={headingRef}
+        isOpen={
+          state.kind === "ready" &&
+          orderedCartItems.length > 0 &&
+          orderedCleanupTargets.length > 0
+        }
+        isSubmitting={isCleaningOrderedItems}
+        onCancel={() => setOrderedCartItems([])}
+        onConfirm={() => {
+          void handleOrderedCleanup();
+        }}
+      />
 
       <DeleteCartItemsDialog
         fallbackFocusRef={headingRef}
