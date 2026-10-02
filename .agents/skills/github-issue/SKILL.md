@@ -1,11 +1,11 @@
 ---
 name: github-issue
-description: Draft a concise, implementation-ready frontend GitHub Issue without creating it unless the user explicitly requests creation.
+description: Draft or create a concise frontend tracking Issue only when the user asks; Issues are optional and not a prerequisite for implementation.
 ---
 
-# Frontend GitHub Issue drafting
+# Frontend GitHub Issue
 
-Use when the user asks to write or prepare a frontend issue. Read `.docs/GIT_CONVENTIONS.md`, current frontend architecture, and actual repository Issue templates and labels before creating one. Use the title format `<type>: <Korean summary>`.
+Use only when the user asks to write or create a frontend Issue. Issues are optional tracking in `.docs/GIT_CONVENTIONS.md`; normal implementation does not need one. Read that file, current frontend architecture, and actual repository Issue templates and labels before creating one. Use the title format `<type>: <Korean summary>`.
 
 Use this shape, adapting sections only when the request needs it:
 
@@ -34,4 +34,4 @@ Use this shape, adapting sections only when the request needs it:
 - ...
 ```
 
-Keep it factual and bounded. Do not write unverified requirements as facts, force a detailed implementation prematurely, or combine broad frontend and backend work in one issue. Confirm actual labels before applying them. Drafting is not authorization to create an Issue: create one only on an explicit request. Creating an Issue does not authorize a branch, commit, push, or PR.
+Keep it factual and bounded. Do not write unverified requirements as facts, force a detailed implementation prematurely, or combine broad frontend and backend work in one issue. Confirm actual labels before applying them. Drafting is not a request to create the Issue: create one only when the user asks. Creating an Issue does not automatically create a branch, commit, or PR.

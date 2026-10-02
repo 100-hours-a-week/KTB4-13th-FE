@@ -1,76 +1,79 @@
 # Git Conventions
 
-This is the frontend Git workflow source of truth. It follows the verified team conventions in the sibling backend while applying them to this repository.
+This is the frontend Git workflow source of truth. `AGENTS.md`, `.docs/AI_WORKFLOW.md`, `.docs/SKILL_DOCS.md`, and the `github-*` skills follow this file.
 
-## Flow
-
-```text
-Issue → Branch → Commit → Pull Request → Review → Merge → Issue close
-```
-
-One Issue, branch, and PR should normally have one focused purpose. Each Git or GitHub action requires an explicit user request; completing one step does not authorize the next.
-
-## Issue
-
-Create an Issue before implementation when the work is being tracked. Titles use one of `feat`, `fix`, `refactor`, `test`, `docs`, or `chore`:
+## Default Flow
 
 ```text
-<type>: <Korean summary>
+Check main → Implement → Verify → Review diff → Stage → Commit → Push
 ```
 
-State the background, goal, scope, exclusions, completion conditions, and dependencies. Confirm actual repository labels and templates before applying them. Issue creation does not create a branch.
+Work directly on `main`. Issues, branches, and pull requests are optional and used only when the user asks for them.
 
-## Branch
+A general request such as "작업해줘", "수정해줘", "반영해줘", or "구현해줘" covers the whole flow through commit and push. A narrower request takes precedence, for example "commit 하지 마", "push 하지 마", "로컬 수정까지만", "분석만 해줘", or "PR만 만들어".
 
-`main` is the base branch. Do not work directly on it or push to it. Confirm the latest base state and an actual Issue number before creating a branch:
+## Working on main
 
-```text
-<type>/<issue-number>-<kebab-case-summary>
-```
-
-Examples: `feat/123-login-screen`, `fix/124-login-layout`, `docs/125-git-conventions`.
-
-The Issue number is required; never invent one. Keep unrelated work out of a branch. The verified backend rules do not prescribe automatic branch deletion, so delete a merged branch only when the repository policy or user request confirms it.
+- Confirm the current branch is `main` and check `git status` before starting.
+- Fetch and compare with `origin/main` when possible.
+- Do not overwrite existing uncommitted changes. Leave other people's or unrelated changes untouched, and do not include them in your commit.
 
 ## Commit
 
-Make independently understandable, reversible commits. The message format is:
-
-```text
-<type>: <Korean summary>(#<issue-number>)
-```
-
-Use the same six types as Issues. Keep summaries action-oriented, short, and without a final period. Do not use `WIP`, vague `update`, or vague `change` messages. Stage only approved paths after reviewing staged and unstaged diffs. Never commit secrets, personal settings, or build artifacts.
-
-Do not commit on `main`. If a branch and Issue do not match, stop and resolve the discrepancy before staging. Push is a separate explicit action.
-
-## Pull Request
-
-Open a PR from the Issue branch into `main` only after its scope and validation are reviewed. The title is:
-
 ```text
 <type>: <Korean summary>
 ```
 
-The body must distinguish completed checks from skipped or failed checks and include the real Issue connection under Related Issue:
+- Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`.
+- Keep the summary action-oriented, short, and without a final period. Do not use `WIP` or vague `update`/`change` messages.
+- An Issue number such as `(#123)` is optional; add it only when a real Issue exists and should be linked.
+- Commit only after the relevant validation passes.
+- Before staging, review `git status`, the staged diff, the unstaged diff, and untracked files. Stage only the files for this change.
+- Never commit secrets, personal settings, or build artifacts.
 
-```text
-Closes #<issue-number>
-```
+## Push
 
-`Fixes #<issue-number>` is also valid when appropriate. For UI work, state whether screenshots are needed. Document unconnected APIs and remaining TODOs. Keep PRs reviewable; the backend convention recommends around 400 changed lines, not a hard limit.
+- Push to `origin/main` directly. A push to `main` runs CI (lint and build) and dispatches the Dev deployment, so verify before pushing.
+- Never force-push.
+- If `origin/main` is ahead, check what changed before integrating it. If integration conflicts, stop and report instead of resolving it by force.
+- Do not delete unrelated commits or rewrite history.
 
-This frontend repository currently has no PR template. Until one is added, use the backend-aligned sections below in this order:
+## Optional Issue
+
+- Create an Issue only when the user asks, when long-term tracking is needed, or when team collaboration requires it. It is not a prerequisite for implementation.
+- Title: `<type>: <Korean summary>`. Creating an Issue does not create a branch, commit, or PR.
+
+## Optional Branch
+
+- Create a separate branch only when the user asks for branch-based work.
+- Branch from the latest `main` and keep the existing style `<type>/<kebab-case-summary>`; an Issue number such as `<type>/<issue-number>-<summary>` is optional.
+- Preserve uncommitted work when creating or switching branches.
+
+## Optional Pull Request
+
+- Create a PR only when the user asks for one, asks for a review workflow, or the work is on a separate branch.
+- Title: `<type>: <Korean summary>`. Linking an Issue (`Closes #<issue-number>`) is optional and only for a real Issue.
+- Do not merge or enable auto-merge unless the user asks.
+- This repository has no PR template. Use these sections:
 
 ```markdown
 ## Summary
 ## Changes
-## Related Issue
-Closes #<issue-number>
+## Related Issue (optional)
 ## Validation
 - 실행한 검증 및 결과:
 - 미검증 사항 및 사유:
 ## Notes
 ```
 
-Do not force-push, merge, enable auto-merge, or push to `main` without a separate explicit request. Do not claim uncommitted changes are part of a PR.
+## Safety Rules
+
+These require an explicit user request even within the default flow:
+
+- force push
+- `git reset --hard` or other discarding of work
+- rewriting shared history, amending existing commits, or rebasing commits that were already pushed
+- deleting other people's changes
+- large checkouts or reverts
+
+The sibling backend repository is read-only: never modify, format, test, install dependencies in, stage, commit, push, or switch branches there.

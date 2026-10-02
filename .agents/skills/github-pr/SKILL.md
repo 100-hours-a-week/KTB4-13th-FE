@@ -1,11 +1,13 @@
 ---
 name: github-pr
-description: Draft a frontend pull-request body from the actual diff, or create a PR only when the user explicitly authorizes it.
+description: Draft or create a frontend pull request only when the user asks for one; PRs are optional and not part of the default main flow.
 ---
 
-# Frontend pull-request drafting
+# Frontend pull request
 
-Use when the user asks to prepare or create a frontend PR. Read `.docs/GIT_CONVENTIONS.md` and the actual frontend PR template first. If no template exists, use the fallback structure in `GIT_CONVENTIONS.md`. Inspect the Issue-linked branch, `git status`, commits, and full diff from `origin/main` before drafting.
+The default flow in `.docs/GIT_CONVENTIONS.md` commits and pushes directly to `main`. Use this skill only when the user asks for a PR, asks for a review workflow, or the work is on a separate branch. Never create a PR automatically after implementation.
+
+Read `.docs/GIT_CONVENTIONS.md` and the actual frontend PR template first. If no template exists, use the fallback structure in `GIT_CONVENTIONS.md`. Inspect the branch, `git status`, commits, and the full diff from `origin/main` before drafting.
 
 ```markdown
 ## 작업 내용
@@ -22,7 +24,7 @@ Use when the user asks to prepare or create a frontend PR. Read `.docs/GIT_CONVE
 - [ ] lint
 - [ ] 주요 UI 확인
 
-## 관련 Issue
+## 관련 Issue (선택)
 
 - ...
 
@@ -33,4 +35,4 @@ Use when the user asks to prepare or create a frontend PR. Read `.docs/GIT_CONVE
 - 리뷰 시 확인할 부분
 ```
 
-Use `<type>: <Korean summary>` for the title and connect the real Issue with `Closes #<issue-number>` or `Fixes #<issue-number>` in the body. Do not claim backend work, validation, screenshots, or features that are absent from the diff. Indicate whether screenshots are useful for UI changes and make review points concrete. Drafting does not authorize branch changes, pushes, PR creation, merge, or auto-merge; each requires the user's explicit request.
+Use `<type>: <Korean summary>` for the title. Link an Issue with `Closes #<issue-number>` or `Fixes #<issue-number>` only when a real Issue exists. Base the body on the actual diff and validation results; do not claim backend work, validation, screenshots, or features that are absent. Indicate whether screenshots are useful for UI changes and make review points concrete. Do not merge or enable auto-merge unless the user asks.

@@ -15,4 +15,4 @@ Check for:
 - unverified backend-contract assumptions or accidental dependency changes; and
 - the actual lint/build results from `frontend-testing` when those checks were applicable.
 
-In the handoff, list changed files and reasons, verification results, remaining TODOs, deliberately unconnected pieces, and material risks. State clearly when a check or contract could not be verified.
+In the handoff, list changed files and reasons, verification results, remaining TODOs, deliberately unconnected pieces, and material risks. State clearly when a check or contract could not be verified. Report the actual Git outcome: the commit SHA and push result, or that commit/push was skipped and why.

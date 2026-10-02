@@ -1,17 +1,19 @@
 # AI Workflow
 
-AI로 작업할 때는 아래 순서를 따릅니다.
+AI로 작업할 때는 아래 순서를 따릅니다. 사용자가 범위를 제한하면("commit 하지 마", "push 하지 마", "분석만 해줘", "수정까지만 해줘") 그 요청이 우선합니다.
 
-1. `.docs` 문서, 현재 파일 구조와 관련 파일을 먼저 확인합니다.
-2. `AGENTS.md`, `.docs/ARCHITECTURE.md`, `.docs/FRONTEND_CONVENTIONS.md`를 읽습니다.
-3. 기존 component, hook, utility가 있는지 찾고 재사용을 우선합니다.
-4. dependency, 새로운 architecture pattern, Tailwind 이외의 스타일링 방식을 임의로 추가하지 않습니다.
-5. API 계약을 추측하지 않습니다. backend 명세가 불확실하면 실제 요청처럼 보이는 mock을 만들지 않습니다.
-6. feature 구조를 임의로 세분화하거나 common으로 과도하게 승격하지 않습니다.
-7. 요청과 무관한 파일은 수정하지 않고, 기능 하나 때문에 전체 구조를 리팩터링하지 않습니다.
-8. 공통 component 수정 전에는 사용하는 곳과 영향 범위를 확인합니다.
-9. 작업 뒤에는 변경한 파일과 이유를 보고하고, 가능한 범위에서 build, typecheck, lint를 검증합니다.
-10. Git 작업에는 `.docs/GIT_CONVENTIONS.md`와 관련 Git Skill을 읽습니다.
+1. 현재 branch가 `main`인지, `git status`와 `origin/main` 상태를 확인합니다. 기존 uncommitted 변경은 덮어쓰지 않습니다.
+2. `AGENTS.md`, `.docs/ARCHITECTURE.md`, `.docs/FRONTEND_CONVENTIONS.md`, `.docs/GIT_CONVENTIONS.md`와 관련 파일을 확인합니다.
+3. 기존 component, hook, utility와 중복 기능이 있는지 찾고 재사용을 우선합니다.
+4. API 계약이 필요하면 sibling backend를 read-only로 확인합니다. 계약을 추측하거나 실제 요청처럼 보이는 mock을 만들지 않습니다.
+5. `main`에서 요청 범위만 최소로 구현합니다. dependency, 새로운 architecture pattern, Tailwind 이외의 스타일링 방식을 임의로 추가하지 않고, 요청과 무관한 파일을 수정하거나 전체 구조를 리팩터링하지 않습니다. 공통 component 수정 전에는 사용처와 영향 범위를 확인합니다.
+6. 관련 frontend skill 기준으로 구현을 검토합니다.
+7. typecheck, lint, build 등 repository에 실제로 있는 검증을 실행합니다.
+8. `frontend-final-review`로 diff를 검토합니다.
+9. 관련 파일만 stage합니다.
+10. `main`에 commit합니다.
+11. `origin/main`에 push합니다.
+12. 변경한 파일과 이유, 검증 결과, commit SHA와 push 결과를 보고합니다.
 
 ## Skill workflow
 
@@ -20,8 +22,9 @@ AI로 작업할 때는 아래 순서를 따릅니다.
 - API 연동에는 기존 frontend 명세를 먼저 확인하고, 필요한 경우에만 `frontend-api-integration`에 따라 sibling backend를 읽기 전용으로 확인합니다. 계약이 불명확하면 추측해 연결하지 않습니다.
 - package 추가 전에는 `frontend-dependency-review`를 사용합니다. 명시적 요청 또는 승인 전에는 설치하지 않습니다.
 - 완료 전에는 실제 scripts 기준으로 `frontend-testing`, 이어서 diff 기준 `frontend-final-review`를 사용합니다.
-- Issue 요청에는 `github-issue`, branch 생성 요청에는 `github-branch`, commit 요청에는 `github-commit`, PR 요청에는 `github-pr`을 사용합니다.
-- Issue 생성 후 branch를 자동 생성하지 않고, branch 생성 후 commit하지 않으며, commit 후 push하지 않고, push 후 PR을 만들지 않습니다.
+- commit과 push에는 `github-commit`을 사용합니다.
+- Issue, 별도 branch, PR은 기본 흐름이 아니며 사용자가 요청할 때만 `github-issue`, `github-branch`, `github-pr`을 사용합니다. 구현이 끝났다고 PR을 자동으로 만들지 않습니다.
+- force push, `reset --hard`, history rewrite 같은 destructive Git action은 `.docs/GIT_CONVENTIONS.md`에 따라 명시적 요청이 있을 때만 수행합니다.
 
 ## Backend read-only policy
 

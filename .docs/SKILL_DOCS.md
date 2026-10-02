@@ -11,7 +11,7 @@ This is an index, not a duplicate of Skill instructions. Read the linked Skill w
 | `frontend-testing` | Run validation available in this repository. | Invent tests or install test tools. |
 | `frontend-dependency-review` | Assess a proposed dependency. | Install a package without explicit approval. |
 | `frontend-final-review` | Review the actual diff before handoff. | Expand the requested change. |
-| `github-issue` | Draft or create a tracked frontend Issue. | Create a branch, commit, or PR automatically. |
-| `github-branch` | Propose or create an Issue-linked branch. | Invent an Issue number or commit automatically. |
-| `github-commit` | Prepare or create a verified, scoped commit. | Commit on `main` or push automatically. |
-| `github-pr` | Draft or create an Issue-linked PR. | Push, merge, or enable auto-merge automatically. |
+| `github-commit` | Commit verified, scoped frontend changes on `main` and push them to `origin/main` in the default flow. | Include unrelated changes, force-push, or rewrite history. |
+| `github-issue` | Draft or create an Issue when the user asks. | Make an Issue a prerequisite, or create a branch, commit, or PR automatically. |
+| `github-branch` | Create or manage a separate branch when the user asks. | Require an Issue number or lose uncommitted work. |
+| `github-pr` | Draft or create a PR when the user asks. | Require an Issue link, merge, or enable auto-merge automatically. |
