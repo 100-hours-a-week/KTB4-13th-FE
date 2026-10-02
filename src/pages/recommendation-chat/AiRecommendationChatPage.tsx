@@ -32,7 +32,7 @@ export function AiRecommendationChatPage() {
 
       <div className="page-content shrink-0 py-2">
         <button
-          className="inline-flex min-h-10 items-center gap-2 rounded-control border border-border bg-muted px-3 type-caption text-text-secondary disabled:cursor-not-allowed disabled:opacity-70"
+          className="-ml-2 inline-flex min-h-10 items-center gap-2 rounded-control px-2 type-caption text-text-tertiary disabled:cursor-not-allowed"
           disabled
           type="button"
         >

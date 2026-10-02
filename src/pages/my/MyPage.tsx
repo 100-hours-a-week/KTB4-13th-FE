@@ -22,13 +22,13 @@ export function MyPage() {
 
   return (
     <div className="relative flex h-dvh min-w-0 flex-col bg-surface">
-      <header className="page-content flex min-h-14 shrink-0 items-center border-b border-border">
-        <h1 className="type-heading text-text-primary">마이</h1>
+      <header className="page-content flex min-h-14 shrink-0 items-end pb-1 pt-4">
+        <h1 className="type-section text-text-primary">마이</h1>
       </header>
 
-      <main className="page-content min-h-0 flex-1 overflow-y-auto py-6">
+      <main className="page-content min-h-0 flex-1 overflow-y-auto pb-6 pt-4">
         <Link
-          className="flex min-h-14 w-full items-center justify-between border-b border-border text-left text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="flex min-h-14 w-full items-center justify-between border-y border-hairline text-left text-text-primary transition-colors hover:bg-muted/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           to="/my/addresses"
         >
           <span className="type-title">배송지 관리</span>
@@ -38,7 +38,7 @@ export function MyPage() {
         </Link>
 
         <Button
-          className="mt-6 w-full"
+          className="mt-8 min-w-32"
           isLoading={isLoggingOut}
           onClick={handleLogout}
           variant="secondary"

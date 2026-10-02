@@ -16,7 +16,7 @@ export function SearchResultToolbar({
   sort,
 }: SearchResultToolbarProps) {
   return (
-    <div className="page-content flex min-h-14 items-center justify-between gap-3 border-b border-border bg-surface">
+    <div className="page-content flex min-h-14 items-center justify-between gap-3 bg-surface">
       {/* The search contract has no total count, so no result count is shown. */}
       <p className="type-body-small font-semibold text-text-primary">
         검색 결과
@@ -24,7 +24,7 @@ export function SearchResultToolbar({
       <label className="shrink-0">
         <span className="sr-only">검색 결과 정렬</span>
         <select
-          className="min-h-11 rounded-control border border-transparent bg-surface px-2 type-body-small text-text-primary focus-visible:border-border focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+          className="min-h-11 rounded-control border border-transparent bg-surface px-2 type-body-small font-semibold text-text-primary focus-visible:border-border focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
           onChange={(event) =>
             onSortChange(event.target.value as BookSearchSort)
           }

@@ -57,7 +57,7 @@ export function MyAddressCreatePage() {
       {state.kind === "loading" ? (
         <div aria-busy="true" className="page-content py-6" role="status">
           <span className="sr-only">배송지 정보를 불러오는 중이에요</span>
-          <div aria-hidden="true" className="h-40 rounded-panel bg-muted" />
+          <div aria-hidden="true" className="h-40 rounded-control bg-muted" />
         </div>
       ) : null}
 
@@ -78,7 +78,7 @@ export function MyAddressCreatePage() {
             사용하지 않는 배송지를 삭제한 뒤 다시 추가해 주세요
           </p>
           <Link
-            className="mt-6 inline-flex min-h-11 items-center rounded-control border border-border px-4 type-body-small font-semibold text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="mt-6 inline-flex min-h-11 items-center rounded-control border border-border-strong px-4 type-body-small font-semibold text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             replace
             to="/my/addresses"
           >

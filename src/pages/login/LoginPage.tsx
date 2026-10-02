@@ -73,11 +73,11 @@ export function LoginPage() {
 
       <footer className="safe-area-bottom shrink-0 px-5 pt-6">
         <KakaoLoginButton
-          className="w-full"
+          className="min-h-12 w-full"
           isLoading={isLoading}
           onClick={() => beginLogin(returnTo)}
         />
-        <p className="mx-auto mt-4 max-w-xs text-center type-caption text-text-tertiary">
+        <p className="mx-auto mt-4 max-w-xs break-keep text-center type-caption leading-relaxed text-text-tertiary">
           계속 진행 시 이용약관 및 개인정보 처리방침에 동의하는 것으로
           간주합니다.
         </p>

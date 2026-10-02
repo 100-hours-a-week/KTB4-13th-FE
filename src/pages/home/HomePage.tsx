@@ -87,7 +87,7 @@ export function HomePage() {
       />
 
       <main className="min-h-0 flex-1 overflow-y-auto" ref={mainRef}>
-        <div className="flex flex-col gap-8 py-6">
+        <div className="flex flex-col divide-y divide-hairline pb-6">
           <BookRankingSection
             onMoreClick={() => navigate("/catalog/ranking")}
             onProductClick={rememberHomeScroll}

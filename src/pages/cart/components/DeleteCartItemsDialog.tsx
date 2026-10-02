@@ -48,7 +48,7 @@ export function DeleteCartItemsDialog({
       aria-describedby="delete-cart-items-description"
       aria-labelledby="delete-cart-items-title"
       aria-modal="true"
-      className="m-auto w-[calc(100%-2.5rem)] max-w-sm rounded-panel border border-border bg-surface p-0 text-text-primary backdrop:bg-black/40"
+      className="m-auto w-[calc(100%-2.5rem)] max-w-sm rounded-panel border-0 bg-surface p-0 text-text-primary backdrop:bg-black/40"
       onCancel={(event) => {
         event.preventDefault();
         if (!isSubmitting) {
@@ -64,7 +64,7 @@ export function DeleteCartItemsDialog({
       role="dialog"
     >
       <div className="p-6 text-center">
-        <h2 className="type-heading" id="delete-cart-items-title">
+        <h2 className="type-subheading" id="delete-cart-items-title">
           선택한 상품을 삭제할까요?
         </h2>
         <p

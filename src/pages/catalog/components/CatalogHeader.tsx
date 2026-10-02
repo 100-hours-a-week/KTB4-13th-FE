@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+import { ArrowLeftIcon } from "@/common/components/AppIcons";
 import type {
   CatalogMode,
   RecommendationSort,
@@ -32,20 +33,20 @@ export function CatalogHeader({
       : `추천 도서 · ${SORT_LABEL[recommendationSort]}`;
 
   return (
-    <header className="page-content shrink-0 border-b border-border bg-surface pb-3 pt-3">
+    <header className="page-content shrink-0 bg-surface pb-2 pt-3">
       <div className="flex min-h-11 items-center gap-2">
         <Link
           aria-label="홈으로 돌아가기"
-          className="-ml-2 inline-flex size-11 shrink-0 items-center justify-center rounded-full text-2xl leading-none text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="-ml-2 inline-flex size-11 shrink-0 items-center justify-center rounded-full text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           to="/"
         >
-          <span aria-hidden="true">←</span>
+          <ArrowLeftIcon className="size-6" />
         </Link>
-        <h1 className="min-w-0 truncate type-heading text-text-primary">
+        <h1 className="min-w-0 truncate type-section text-text-primary">
           {copy.title}
         </h1>
       </div>
-      <p className="pl-11 type-body-small font-semibold text-text-secondary">
+      <p className="pl-11 type-caption text-text-tertiary">
         {description}
       </p>
     </header>

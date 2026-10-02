@@ -15,7 +15,7 @@ interface BookCandidateCoverProps {
 function BookCandidateCover({ book }: BookCandidateCoverProps) {
   const [hasImageError, setHasImageError] = useState(false);
   const className =
-    "flex aspect-[3/4] w-full items-center justify-center overflow-hidden rounded-control bg-muted";
+    "flex aspect-[3/4] w-full items-center justify-center overflow-hidden rounded-cover border border-border bg-muted";
 
   if (book.coverImageUrl && !hasImageError) {
     return (
@@ -48,27 +48,31 @@ export function BookPickStep({
   selectedBookIds,
 }: BookPickStepProps) {
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="grid grid-cols-3 gap-x-3 gap-y-6">
       {books.map((book) => {
         const isSelected = selectedBookIds.includes(book.bookId);
 
         return (
           <button
             aria-pressed={isSelected}
-            className={`relative flex min-w-0 flex-col gap-1.5 rounded-control border p-1.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
-              isSelected
-                ? "border-accent bg-accent-soft"
-                : "border-border bg-surface hover:border-border-strong"
-            }`}
+            className="group relative flex min-w-0 flex-col gap-1.5 rounded-cover text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
             key={book.bookId}
             onClick={() => onToggleBook(book.bookId)}
             type="button"
           >
-            <BookCandidateCover book={book} />
+            <span
+              className={`block rounded-cover transition-shadow ${
+                isSelected
+                  ? "ring-2 ring-text-primary ring-offset-2"
+                  : "group-hover:ring-1 group-hover:ring-border-strong group-hover:ring-offset-2"
+              }`}
+            >
+              <BookCandidateCover book={book} />
+            </span>
             {isSelected ? (
               <span
                 aria-hidden="true"
-                className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-full bg-accent text-xs font-bold text-white"
+                className="absolute right-1.5 top-1.5 flex size-6 items-center justify-center rounded-full bg-text-primary text-xs font-bold text-white"
               >
                 ✓
               </span>

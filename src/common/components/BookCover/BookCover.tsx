@@ -5,11 +5,14 @@ interface BookCoverProps {
   alt: string;
   // Shown visually only when the cover is missing or fails to load; alt stays the accessible name.
   fallbackTitle: string;
+  radius?: "control" | "cover";
   thumbnailUrl: string | null;
 }
 
-const COVER_FRAME_CLASS_NAME =
-  "aspect-[3/4] w-full overflow-hidden rounded-control border border-border bg-muted";
+const COVER_RADIUS_CLASS_NAMES = {
+  control: "rounded-control",
+  cover: "rounded-cover",
+};
 
 const FALLBACK_COVER_TONES = [
   { cover: "bg-muted text-text-primary", publisher: "text-text-tertiary", spine: "bg-border-strong" },
@@ -28,15 +31,23 @@ function getFallbackCoverTone(title: string) {
   return FALLBACK_COVER_TONES[titleHash % FALLBACK_COVER_TONES.length];
 }
 
-export function BookCover({ alt, fallbackTitle, thumbnailUrl }: BookCoverProps) {
+export function BookCover({
+  alt,
+  fallbackTitle,
+  radius = "control",
+  thumbnailUrl,
+}: BookCoverProps) {
   // Compared with the current URL so a new thumbnailUrl loads again instead of inheriting the previous result.
   const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const imageUrl = thumbnailUrl?.trim() ?? "";
+  const radiusClassName = COVER_RADIUS_CLASS_NAMES[radius];
 
   if (imageUrl && imageUrl !== failedUrl) {
     return (
-      <div className={COVER_FRAME_CLASS_NAME}>
+      <div
+        className={`aspect-[3/4] w-full overflow-hidden border border-border bg-muted ${radiusClassName}`}
+      >
         <img
           alt={alt}
           className={`size-full object-cover ${imageUrl === loadedUrl ? "" : "opacity-0"}`}
@@ -55,7 +66,7 @@ export function BookCover({ alt, fallbackTitle, thumbnailUrl }: BookCoverProps) 
     <div
       aria-hidden={alt ? undefined : true}
       aria-label={alt || undefined}
-      className={`@container relative aspect-[3/4] w-full overflow-hidden rounded-control border border-border ${fallbackTone.cover}`}
+      className={`@container relative aspect-[3/4] w-full overflow-hidden border border-border ${radiusClassName} ${fallbackTone.cover}`}
       role={alt ? "img" : undefined}
     >
       <span

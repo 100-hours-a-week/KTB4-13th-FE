@@ -49,7 +49,7 @@ export function LoginRequiredDialog({
       aria-describedby={descriptionId}
       aria-labelledby={titleId}
       aria-modal="true"
-      className="fixed inset-x-0 bottom-0 top-auto m-0 w-full max-w-none rounded-t-panel border-x-0 border-b-0 border-t border-border bg-surface p-0 text-text-primary backdrop:bg-black/40 lg:left-1/2 lg:right-auto lg:w-[calc(100dvh*9/19.5)] lg:-translate-x-1/2"
+      className="fixed inset-x-0 bottom-0 top-auto m-0 w-full max-w-none rounded-t-panel border-0 bg-surface p-0 text-text-primary backdrop:bg-black/40 lg:left-1/2 lg:right-auto lg:w-[calc(100dvh*9/19.5)] lg:-translate-x-1/2"
       onCancel={(event) => {
         event.preventDefault();
         if (!isLoading) {
@@ -85,9 +85,9 @@ export function LoginRequiredDialog({
       ref={dialogRef}
       role="dialog"
     >
-      <div className="safe-area-bottom px-5 pt-5">
+      <div className="safe-area-bottom px-5 pt-6">
         <div className="flex items-start justify-between gap-3">
-          <h2 className="type-title pt-1 text-text-primary" id={titleId}>
+          <h2 className="break-keep pt-1 type-subheading text-text-primary" id={titleId}>
             {title}
           </h2>
           <button
@@ -103,7 +103,7 @@ export function LoginRequiredDialog({
           </button>
         </div>
         <p
-          className="mt-1 type-body-small text-text-secondary"
+          className="mt-2 break-keep type-body leading-relaxed text-text-secondary"
           id={descriptionId}
         >
           {description}
@@ -113,8 +113,9 @@ export function LoginRequiredDialog({
             {feedback.message}
           </p>
         ) : null}
-        <div className="mt-5">
+        <div className="mt-6">
           <KakaoLoginButton
+            className="min-h-12"
             isLoading={isLoading}
             label="카카오로 계속하기"
             onClick={() => beginLogin(returnTo)}

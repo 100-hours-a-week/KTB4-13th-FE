@@ -20,8 +20,10 @@ import { getAddressFailureMessage } from "@/pages/my-addresses/lib/addressFailur
 
 const ADDRESS_LIMIT_NOTICE = `배송지는 최대 ${MAX_USER_ADDRESS_COUNT}개까지 등록할 수 있어요`;
 
-const actionClassName =
-  "inline-flex min-h-11 items-center rounded-control border border-border bg-surface px-3 type-caption font-semibold text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50";
+const actionBaseClassName =
+  "inline-flex min-h-11 items-center rounded-control border border-border bg-surface px-3 type-caption font-semibold transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50";
+const actionClassName = `${actionBaseClassName} text-text-primary`;
+const deleteActionClassName = `${actionBaseClassName} text-error`;
 
 interface AddressListItemProps {
   address: UserAddress;
@@ -45,7 +47,7 @@ function AddressListItem({
           {address.label}
         </h2>
         {address.isDefault ? (
-          <span className="shrink-0 rounded-control bg-primary px-1.5 py-0.5 type-caption font-semibold text-white">
+          <span className="shrink-0 rounded-control border border-text-primary px-1.5 py-0.5 type-caption font-semibold text-text-primary">
             기본 배송지
           </span>
         ) : null}
@@ -79,7 +81,7 @@ function AddressListItem({
         )}
         <button
           aria-label={`${address.label} 배송지 삭제`}
-          className={actionClassName}
+          className={deleteActionClassName}
           disabled={isActionDisabled}
           onClick={() => onDeleteClick(address)}
           type="button"
@@ -154,7 +156,7 @@ export function MyAddressesPage() {
 
       <main className="page-content min-h-0 flex-1 overflow-y-auto py-6">
         <p
-          className="type-body-small text-text-secondary"
+          className="type-body-small tabular-nums text-text-secondary"
           ref={listHeadingRef}
           tabIndex={-1}
         >
@@ -165,8 +167,8 @@ export function MyAddressesPage() {
         {state.kind === "loading" ? (
           <div aria-busy="true" className="mt-4 space-y-3" role="status">
             <span className="sr-only">배송지를 불러오는 중이에요</span>
-            <div aria-hidden="true" className="h-24 rounded-panel bg-muted" />
-            <div aria-hidden="true" className="h-24 rounded-panel bg-muted" />
+            <div aria-hidden="true" className="h-24 rounded-control bg-muted" />
+            <div aria-hidden="true" className="h-24 rounded-control bg-muted" />
           </div>
         ) : null}
 
@@ -188,7 +190,7 @@ export function MyAddressesPage() {
         ) : null}
 
         {addresses.length > 0 ? (
-          <ul className="mt-2 divide-y divide-border border-b border-border">
+          <ul className="mt-2 divide-y divide-hairline border-b border-hairline">
             {addresses.map((address) => (
               <AddressListItem
                 address={address}
@@ -223,7 +225,7 @@ export function MyAddressesPage() {
               </>
             ) : (
               <Link
-                className="inline-flex min-h-12 w-full items-center justify-center rounded-control border border-border bg-surface px-4 type-body-small font-semibold text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                className="inline-flex min-h-12 w-full items-center justify-center rounded-control border border-border-strong bg-surface px-4 type-body-small font-semibold text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 to="/my/addresses/new"
               >
                 + 배송지 추가

@@ -176,7 +176,7 @@ export function AddressForm({
             />
             <button
               aria-busy={isOpeningPostcode || undefined}
-              className="mt-1.5 min-h-11 shrink-0 rounded-control border border-border bg-surface px-4 type-body-small font-semibold text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-1.5 min-h-11 shrink-0 rounded-control border border-border-strong bg-surface px-4 type-body-small font-semibold text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isOpeningPostcode}
               onClick={() => void handlePostcodeSearch()}
               type="button"
@@ -241,7 +241,7 @@ export function AddressForm({
         ) : null}
       </div>
 
-      <div className="safe-area-bottom shrink-0 border-t border-border bg-surface px-5 pt-3">
+      <div className="safe-area-bottom shrink-0 border-t border-hairline bg-surface px-5 pt-3">
         <Button className="min-h-12 w-full" isLoading={isSubmitting} type="submit">
           {submitLabel}
         </Button>

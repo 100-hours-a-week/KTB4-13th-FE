@@ -227,7 +227,7 @@ export function OnboardingPage() {
               추천 도서를 불러오지 못했어요
             </Toast>
           ) : bookCandidates.length === 0 ? (
-            <div className="rounded-panel border border-border bg-muted px-4 py-6 text-center">
+            <div className="rounded-control bg-muted px-4 py-6 text-center">
               <p className="type-body font-medium text-text-primary">
                 선택할 수 있는 책이 아직 없어요
               </p>

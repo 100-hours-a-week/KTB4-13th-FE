@@ -9,23 +9,23 @@ import { useBookRanking } from "@/pages/home/hooks/useBookRanking";
 const TOP_RANK = 3;
 const SKELETON_COUNT = 3;
 // One row ranked left to right; about 2.5 covers fit on a phone and the rest scroll sideways.
-const RANK_CARD_CLASS_NAME = "relative w-[40%] shrink-0";
+const RANK_CARD_CLASS_NAME = "w-[40%] shrink-0";
 
 interface BookRankingSectionProps {
   onMoreClick: () => void;
   onProductClick: () => void;
 }
 
-function RankBadge({ rank }: { rank: number }) {
+function RankNumeral({ rank }: { rank: number }) {
   const isTopRank = rank <= TOP_RANK;
 
   return (
     <span
-      className={`absolute bottom-0 left-0 flex min-w-9 items-center justify-center rounded-bl-control rounded-tr-control px-2 py-1 type-title font-bold leading-none text-white ${
-        isTopRank ? "bg-accent" : "bg-primary"
+      className={`mt-2.5 block type-numeral ${
+        isTopRank ? "text-text-primary" : "text-text-tertiary"
       }`}
     >
-      {rank}
+      {String(rank).padStart(2, "0")}
       <span className="sr-only">위</span>
     </span>
   );
@@ -38,7 +38,10 @@ export function BookRankingSection({
   const { ranking, retry } = useBookRanking();
 
   return (
-    <section aria-labelledby="book-ranking-title" className="page-content flex flex-col gap-3">
+    <section
+      aria-labelledby="book-ranking-title"
+      className="page-content flex flex-col gap-4 py-8 first:pt-5"
+    >
       <HomeSectionHeader
         id="book-ranking-title"
         onMoreClick={onMoreClick}
@@ -50,10 +53,11 @@ export function BookRankingSection({
           <p className="sr-only" role="status">
             책 랭킹을 불러오는 중이에요
           </p>
-          <div aria-hidden="true" className="flex gap-3 overflow-hidden">
+          <div aria-hidden="true" className="flex gap-4 overflow-hidden">
             {Array.from({ length: SKELETON_COUNT }, (_, index) => (
               <div className={RANK_CARD_CLASS_NAME} key={index}>
-                <div className="aspect-[3/4] rounded-control bg-muted" />
+                <div className="aspect-[3/4] rounded-cover bg-muted" />
+                <div className="mt-2.5 h-7 w-9 rounded-cover bg-muted" />
               </div>
             ))}
           </div>
@@ -80,21 +84,22 @@ export function BookRankingSection({
           role="region"
           tabIndex={0}
         >
-          <ol className="flex gap-3">
+          <ol className="flex gap-4">
             {ranking.items.map((item, index) => (
               <li className={RANK_CARD_CLASS_NAME} key={item.itemId}>
                 <Link
                   aria-label={`${item.itemName} 상세 보기`}
-                  className="block rounded-control focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  className="block rounded-cover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   onClick={onProductClick}
                   to={`/products/${item.itemId}`}
                 >
                   <BookCover
                     alt=""
                     fallbackTitle={item.itemName}
+                    radius="cover"
                     thumbnailUrl={item.thumbnailUrl}
                   />
-                  <RankBadge rank={index + 1} />
+                  <RankNumeral rank={index + 1} />
                 </Link>
               </li>
             ))}

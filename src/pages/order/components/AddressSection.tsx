@@ -236,7 +236,7 @@ function NewAddressFields({
           />
           <button
             aria-busy={isOpeningPostcode || undefined}
-            className="min-h-11 shrink-0 rounded-control border border-border bg-surface px-4 type-body-small font-semibold text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-11 shrink-0 rounded-control border border-border-strong bg-surface px-4 type-body-small font-semibold text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
             disabled={isOpeningPostcode}
             onClick={() => void handlePostcodeSearch()}
             type="button"
@@ -288,7 +288,7 @@ function AddressLoadingState() {
     <div aria-busy="true" className="space-y-3" role="status">
       <span className="sr-only">배송지를 불러오는 중이에요</span>
       <div aria-hidden="true" className="h-11 rounded-control bg-muted" />
-      <div aria-hidden="true" className="h-24 rounded-panel bg-muted" />
+      <div aria-hidden="true" className="h-24 rounded-control bg-muted" />
     </div>
   );
 }
@@ -328,10 +328,10 @@ export function AddressSection({
           <div aria-label="배송지 선택" className="flex flex-wrap gap-2">
             <button
               aria-pressed={isDefaultMode}
-              className={`min-h-11 rounded-full border px-4 type-body-small font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:text-text-disabled ${
+              className={`min-h-11 rounded-control border px-4 type-body-small focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:text-text-disabled ${
                 isDefaultMode
-                  ? "border-accent bg-accent-soft text-text-primary"
-                  : "border-border bg-surface text-text-secondary"
+                  ? "border-text-primary bg-surface font-semibold text-text-primary"
+                  : "border-border bg-surface font-medium text-text-secondary"
               }`}
               disabled={!defaultAddress}
               onClick={() => onModeChange("default")}
@@ -341,10 +341,10 @@ export function AddressSection({
             </button>
             <button
               aria-pressed={mode === "new"}
-              className={`min-h-11 rounded-full border px-4 type-body-small font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+              className={`min-h-11 rounded-control border px-4 type-body-small focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                 mode === "new"
-                  ? "border-accent bg-accent-soft text-text-primary"
-                  : "border-border bg-surface text-text-secondary"
+                  ? "border-text-primary bg-surface font-semibold text-text-primary"
+                  : "border-border bg-surface font-medium text-text-secondary"
               }`}
               onClick={() => onModeChange("new")}
               type="button"
@@ -361,7 +361,7 @@ export function AddressSection({
 
           <div className="space-y-3">
             {isDefaultMode ? (
-              <div className="rounded-panel bg-muted px-4 py-3">
+              <div className="rounded-control bg-muted px-4 py-3">
                 <p className="break-words type-body-small font-semibold text-text-primary">
                   {defaultAddress.label}
                 </p>

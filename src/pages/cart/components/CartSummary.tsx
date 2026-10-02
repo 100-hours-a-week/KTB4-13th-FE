@@ -5,7 +5,7 @@ export function CartSummary({ totals }: { totals: CartTotals }) {
   return (
     <section
       aria-labelledby="cart-summary-title"
-      className="rounded-panel border border-border bg-surface p-4"
+      className="border-t border-hairline pt-5"
     >
       <h2 className="sr-only" id="cart-summary-title">
         결제 금액 요약
@@ -13,15 +13,15 @@ export function CartSummary({ totals }: { totals: CartTotals }) {
       <dl className="space-y-3 type-body-small text-text-secondary">
         <div className="flex justify-between gap-4">
           <dt>총 상품금액</dt>
-          <dd>{formatWon(totals.subtotal)}</dd>
+          <dd className="tabular-nums">{formatWon(totals.subtotal)}</dd>
         </div>
         <div className="flex justify-between gap-4">
           <dt>배송비</dt>
-          <dd>{formatWon(totals.shippingFee)}</dd>
+          <dd className="tabular-nums">{formatWon(totals.shippingFee)}</dd>
         </div>
-        <div className="flex justify-between gap-4 border-t border-border pt-3 type-title text-text-primary">
+        <div className="flex items-baseline justify-between gap-4 border-t border-hairline pt-4 type-title text-text-primary">
           <dt>결제금액</dt>
-          <dd>{formatWon(totals.total)}</dd>
+          <dd className="type-subheading tabular-nums">{formatWon(totals.total)}</dd>
         </div>
       </dl>
     </section>

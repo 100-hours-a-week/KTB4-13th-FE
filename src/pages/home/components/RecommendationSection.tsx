@@ -16,7 +16,7 @@ interface RecommendationSectionProps {
 const priceFormatter = new Intl.NumberFormat("ko-KR");
 const SKELETON_COUNT = 3;
 const RECOMMENDATION_CARD_CLASS_NAME = "w-[30%] shrink-0";
-const RECOMMENDATION_CARD_CONTENT_CLASS_NAME = "flex flex-col gap-1.5";
+const RECOMMENDATION_CARD_CONTENT_CLASS_NAME = "flex flex-col gap-1";
 
 function RecommendationCard({
   book,
@@ -30,13 +30,14 @@ function RecommendationCard({
       <BookCover
         alt=""
         fallbackTitle={book.title}
+        radius="cover"
         thumbnailUrl={book.coverUrl}
       />
-      <p className="line-clamp-2 type-body-small font-semibold text-text-primary">
+      <p className="mt-1.5 line-clamp-2 break-keep type-body-small font-semibold text-text-primary">
         {book.title}
       </p>
       {book.price !== null ? (
-        <p className="type-body-small font-bold text-text-primary">
+        <p className="type-body-small tabular-nums text-text-secondary">
           {priceFormatter.format(book.price)}원
         </p>
       ) : null}
@@ -55,7 +56,7 @@ function RecommendationCard({
   return (
     <Link
       aria-label={`${book.title} 상세 보기`}
-      className={`${RECOMMENDATION_CARD_CONTENT_CLASS_NAME} rounded-control focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary`}
+      className={`${RECOMMENDATION_CARD_CONTENT_CLASS_NAME} rounded-cover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary`}
       onClick={onProductClick}
       to={`/products/${book.productId}`}
     >
@@ -73,7 +74,7 @@ export function RecommendationSection({
   return (
     <section
       aria-labelledby="book-recommendation-title"
-      className="page-content flex flex-col gap-3"
+      className="page-content flex flex-col gap-4 py-8 first:pt-5"
     >
       <HomeSectionHeader
         id="book-recommendation-title"
@@ -86,10 +87,10 @@ export function RecommendationSection({
           <p className="sr-only" role="status">
             추천 도서를 불러오는 중이에요
           </p>
-          <div aria-hidden="true" className="flex gap-3 overflow-hidden">
+          <div aria-hidden="true" className="flex gap-4 overflow-hidden">
             {Array.from({ length: SKELETON_COUNT }, (_, index) => (
               <div className={RECOMMENDATION_CARD_CLASS_NAME} key={index}>
-                <div className="aspect-[3/4] rounded-control bg-muted" />
+                <div className="aspect-[3/4] rounded-cover bg-muted" />
               </div>
             ))}
           </div>
@@ -115,7 +116,7 @@ export function RecommendationSection({
           role="region"
           tabIndex={0}
         >
-          <ul className="flex gap-3">
+          <ul className="flex gap-4">
             {recommendations.items.map((book) => (
               <li className={RECOMMENDATION_CARD_CLASS_NAME} key={book.bookId}>
                 <RecommendationCard

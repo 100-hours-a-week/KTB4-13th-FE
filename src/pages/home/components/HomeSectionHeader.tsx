@@ -7,13 +7,13 @@ interface HomeSectionHeaderProps {
 
 export function HomeSectionHeader({ id, onMoreClick, title }: HomeSectionHeaderProps) {
   return (
-    <div className="flex items-center justify-between">
-      <h2 className="type-title font-bold text-text-primary" id={id}>
+    <div className="flex items-baseline justify-between gap-4">
+      <h2 className="type-section text-text-primary" id={id}>
         {title}
       </h2>
       {onMoreClick ? (
         <button
-          className="-mr-1 inline-flex min-h-11 items-center px-1 type-body-small font-medium text-text-secondary transition-colors hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="-mr-1 inline-flex min-h-11 shrink-0 items-center px-1 type-caption font-medium text-text-tertiary underline-offset-4 transition-colors hover:text-text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           onClick={onMoreClick}
           type="button"
         >
