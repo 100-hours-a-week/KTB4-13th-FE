@@ -72,35 +72,62 @@ export function useCart() {
       return false;
     }
 
+    const previousQuantity = stored.state.items.find(
+      (item) => item.cartItemId === cartItemId,
+    )?.quantity;
+
+    if (previousQuantity === undefined) {
+      return false;
+    }
+
     mutationLockRef.current = true;
     setMutation({ cartItemId, kind: "quantity" });
+    setStored((current) => {
+      if (
+        current.requestKey !== requestKey ||
+        current.state.kind !== "ready"
+      ) {
+        return current;
+      }
+
+      return {
+        requestKey,
+        state: {
+          items: current.state.items.map((item) =>
+            item.cartItemId === cartItemId ? { ...item, quantity } : item,
+          ),
+          kind: "ready",
+        },
+      };
+    });
 
     try {
       const result = await updateCartItemQuantity(cartItemId, quantity);
 
       if (!result.ok) {
-        retry();
+        setStored((current) => {
+          if (
+            current.requestKey !== requestKey ||
+            current.state.kind !== "ready"
+          ) {
+            return current;
+          }
+
+          return {
+            requestKey,
+            state: {
+              items: current.state.items.map((item) =>
+                item.cartItemId === cartItemId
+                  ? { ...item, quantity: previousQuantity }
+                  : item,
+              ),
+              kind: "ready",
+            },
+          };
+        });
         return false;
       }
 
-      setStored((current) => {
-        if (
-          current.requestKey !== requestKey ||
-          current.state.kind !== "ready"
-        ) {
-          return current;
-        }
-
-        return {
-          requestKey,
-          state: {
-            items: current.state.items.map((item) =>
-              item.cartItemId === cartItemId ? { ...item, quantity } : item,
-            ),
-            kind: "ready",
-          },
-        };
-      });
       return true;
     } finally {
       mutationLockRef.current = false;

@@ -8,7 +8,6 @@ interface CartItemRowProps {
   isDeleteDisabled: boolean;
   isQuantityDisabled: boolean;
   isSelected: boolean;
-  isUpdating: boolean;
   item: CartItemViewModel;
   onDelete: (cartItemId: number) => void;
   onQuantityChange: (cartItemId: number, quantity: number) => void;
@@ -22,7 +21,6 @@ export function CartItemRow({
   isDeleteDisabled,
   isQuantityDisabled,
   isSelected,
-  isUpdating,
   item,
   onDelete,
   onQuantityChange,
@@ -120,11 +118,6 @@ export function CartItemRow({
                 +
               </button>
             </span>
-            {isUpdating ? (
-              <span className="type-caption text-text-tertiary" role="status">
-                변경 중
-              </span>
-            ) : null}
           </div>
         </div>
       </div>

@@ -116,13 +116,13 @@ export function CartPage() {
   const {
     changeQuantity,
     isDeleting,
-    isMutating,
     removeItem,
     removeItems,
     retry,
     state,
     updatingCartItemId,
   } = useCart();
+  const isQuantityUpdating = updatingCartItemId !== null;
   const items = state.kind === "ready" ? state.items : [];
   const selection = useCartSelection(items, state.kind === "ready");
   const totals = calculateCartTotals(items, selection.selectedIds);
@@ -185,7 +185,11 @@ export function CartPage() {
   };
 
   const handleOrderedCleanup = async () => {
-    if (orderedCleanupTargets.length === 0 || isMutating) {
+    if (
+      orderedCleanupTargets.length === 0 ||
+      isDeleting ||
+      isQuantityUpdating
+    ) {
       clearOrderedCartItems();
       setOrderedCartItems([]);
       return;
@@ -299,7 +303,7 @@ export function CartPage() {
           <div className="space-y-2 pb-8 pt-2">
             <SelectionToolbar
               isAllSelected={selection.isAllSelected}
-              isDeleteDisabled={isMutating}
+              isDeleteDisabled={isDeleting || isCleaningOrderedItems}
               onDelete={() =>
                 setDeleteTarget({
                   cartItemIds: Array.from(selection.selectedIds),
@@ -314,10 +318,13 @@ export function CartPage() {
             <ul className="divide-y divide-hairline">
               {items.map((item) => (
                 <CartItemRow
-                  isDeleteDisabled={isMutating}
-                  isQuantityDisabled={isMutating}
+                  isDeleteDisabled={isDeleting || isCleaningOrderedItems}
+                  isQuantityDisabled={
+                    isDeleting ||
+                    isCleaningOrderedItems ||
+                    updatingCartItemId === item.cartItemId
+                  }
                   isSelected={selection.selectedIds.has(item.cartItemId)}
-                  isUpdating={updatingCartItemId === item.cartItemId}
                   item={item}
                   key={item.cartItemId}
                   onDelete={(cartItemId) =>
@@ -353,7 +360,9 @@ export function CartPage() {
           <Button
             className="w-full min-h-12"
             disabled={
-              selection.selectedCount === 0 || isMutating
+              selection.selectedCount === 0 ||
+              isDeleting ||
+              isCleaningOrderedItems
             }
             onClick={handleOrder}
           >
