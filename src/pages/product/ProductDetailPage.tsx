@@ -11,6 +11,7 @@ import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
 import { useTransientNotice } from "@/common/hooks/useTransientNotice";
 import { addCartItem } from "@/features/cart/api/cartApi";
+import { notifyCartChanged } from "@/features/cart/lib/cartEvents";
 import { LoginRequiredDialog } from "@/features/auth/components/LoginRequiredDialog";
 import { useAuth } from "@/features/auth/context/useAuth";
 import type { OrderNavigationState } from "@/features/order/types/order";
@@ -99,6 +100,7 @@ export function ProductDetailPage() {
     }
 
     if (await addProductToCart(product.productId, "cart")) {
+      notifyCartChanged({ animate: true });
       showNotice("장바구니에 담았어요.");
     }
   };
@@ -134,6 +136,7 @@ export function ProductDetailPage() {
   return (
     <div className="relative flex h-dvh w-full min-w-0 flex-col overflow-x-hidden bg-surface">
       <ProductHeader
+        isCartCountEnabled={authStatus === "authenticated"}
         onBack={handleBack}
         onCartClick={() => {
           if (authStatus !== "authenticated") {

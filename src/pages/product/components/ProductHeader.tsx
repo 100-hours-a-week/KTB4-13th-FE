@@ -1,14 +1,14 @@
-import {
-  ArrowLeftIcon,
-  CartIcon,
-} from "@/common/components/AppIcons";
+import { ArrowLeftIcon } from "@/common/components/AppIcons";
+import { CartButton } from "@/features/cart/components/CartButton";
 
 interface ProductHeaderProps {
+  isCartCountEnabled: boolean;
   onBack: () => void;
   onCartClick: () => void;
 }
 
 export function ProductHeader({
+  isCartCountEnabled,
   onBack,
   onCartClick,
 }: ProductHeaderProps) {
@@ -26,14 +26,11 @@ export function ProductHeader({
         <ArrowLeftIcon className="size-6" />
       </button>
       <h1 className="text-center type-title text-text-primary">도서 상세</h1>
-      <button
-        aria-label="장바구니 보기"
+      <CartButton
         className={`${iconButtonClassName} -mr-2`}
+        countEnabled={isCartCountEnabled}
         onClick={onCartClick}
-        type="button"
-      >
-        <CartIcon className="size-6" />
-      </button>
+      />
     </header>
   );
 }

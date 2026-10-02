@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 
-import { CartIcon, SearchIcon } from "@/common/components/AppIcons";
+import { SearchIcon } from "@/common/components/AppIcons";
+import { CartButton } from "@/features/cart/components/CartButton";
 
 interface HomeHeaderProps {
   isGuest: boolean;
@@ -44,14 +45,11 @@ export function HomeHeader({
               로그인
             </button>
           ) : null}
-          <button
-            aria-label="장바구니"
+          <CartButton
             className="inline-flex size-11 items-center justify-center text-text-secondary transition-colors hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            countEnabled={!isGuest}
             onClick={onCartClick}
-            type="button"
-          >
-            <CartIcon className="size-6" />
-          </button>
+          />
         </div>
       </div>
       <form className="mt-2" onSubmit={handleSubmit} role="search">

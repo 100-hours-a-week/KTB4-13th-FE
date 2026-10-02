@@ -1,4 +1,5 @@
-import { ArrowLeftIcon, CartIcon } from "@/common/components/AppIcons";
+import { ArrowLeftIcon } from "@/common/components/AppIcons";
+import { CartButton } from "@/features/cart/components/CartButton";
 
 interface ChatHeaderProps {
   onBack: () => void;
@@ -20,14 +21,11 @@ export function ChatHeader({ onBack, onCartClick }: ChatHeaderProps) {
         <ArrowLeftIcon className="size-6" />
       </button>
       <h1 className="text-center type-title text-text-primary">AI 추천</h1>
-      <button
-        aria-label="장바구니 보기"
+      <CartButton
         className={`${iconButtonClassName} -mr-2`}
+        countEnabled
         onClick={onCartClick}
-        type="button"
-      >
-        <CartIcon className="size-6" />
-      </button>
+      />
     </header>
   );
 }
