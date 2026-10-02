@@ -32,7 +32,7 @@ export function HomeHeader({
           <img
             alt="북적북적"
             className="size-10 object-contain"
-            src="/assets/bookjeok-logo-mark.png"
+            src={`${import.meta.env.BASE_URL}assets/bookjeok-logo-mark.png`}
           />
         </h1>
         <div className="-mr-2 flex items-center gap-1">
