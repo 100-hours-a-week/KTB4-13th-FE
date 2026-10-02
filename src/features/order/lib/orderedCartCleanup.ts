@@ -23,7 +23,7 @@ function isOrderedCartItem(value: unknown): value is OrderedCartItem {
   );
 }
 
-function readStoredItems() {
+export function readOrderedCartItems() {
   if (typeof window === "undefined") {
     return [];
   }
@@ -48,7 +48,7 @@ export function rememberOrderedCartItems(items: OrderedCartItem[]) {
 
   const quantities = new Map<number, number>();
 
-  for (const item of [...readStoredItems(), ...items]) {
+  for (const item of [...readOrderedCartItems(), ...items]) {
     quantities.set(
       item.productId,
       (quantities.get(item.productId) ?? 0) + item.quantity,
@@ -66,12 +66,8 @@ export function rememberOrderedCartItems(items: OrderedCartItem[]) {
   );
 }
 
-export function takeOrderedCartItems() {
-  const items = readStoredItems();
-
+export function clearOrderedCartItems() {
   if (typeof window !== "undefined") {
     window.sessionStorage.removeItem(STORAGE_KEY);
   }
-
-  return items;
 }

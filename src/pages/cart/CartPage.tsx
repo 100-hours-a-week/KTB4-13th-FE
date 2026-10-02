@@ -7,7 +7,14 @@ import { Button } from "@/common/components/Button";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
 import { useTransientNotice } from "@/common/hooks/useTransientNotice";
-import { takeOrderedCartItems } from "@/features/order/lib/orderedCartCleanup";
+import {
+  deleteCartItems,
+  updateCartItemQuantity,
+} from "@/features/cart/api/cartApi";
+import {
+  clearOrderedCartItems,
+  readOrderedCartItems,
+} from "@/features/order/lib/orderedCartCleanup";
 import type { OrderedCartItem } from "@/features/order/lib/orderedCartCleanup";
 import type { OrderNavigationState } from "@/features/order/types/order";
 import { CartItemRow } from "@/pages/cart/components/CartItemRow";
@@ -121,7 +128,7 @@ export function CartPage() {
   const totals = calculateCartTotals(items, selection.selectedIds);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [orderedCartItems, setOrderedCartItems] = useState<OrderedCartItem[]>(
-    takeOrderedCartItems,
+    readOrderedCartItems,
   );
   const [isCleaningOrderedItems, setIsCleaningOrderedItems] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -179,28 +186,41 @@ export function CartPage() {
 
   const handleOrderedCleanup = async () => {
     if (orderedCleanupTargets.length === 0 || isMutating) {
+      clearOrderedCartItems();
       setOrderedCartItems([]);
       return;
     }
 
     setIsCleaningOrderedItems(true);
 
-    for (const target of orderedCleanupTargets) {
-      const isSuccess =
-        target.nextQuantity === 0
-          ? await removeItem(target.cartItemId)
-          : await changeQuantity(target.cartItemId, target.nextQuantity);
+    const deleteIds = orderedCleanupTargets
+      .filter((target) => target.nextQuantity === 0)
+      .map((target) => target.cartItemId);
+    const quantityUpdates = orderedCleanupTargets.filter(
+      (target) => target.nextQuantity > 0,
+    );
 
-      if (!isSuccess) {
-        setIsCleaningOrderedItems(false);
-        setOrderedCartItems([]);
-        showNotice("주문한 상품을 정리하지 못했어요. 다시 시도해 주세요");
-        return;
-      }
-    }
+    const deleteResult =
+      deleteIds.length > 0 ? await deleteCartItems(deleteIds) : { ok: true as const };
+    const updateResults = await Promise.all(
+      quantityUpdates.map((target) =>
+        updateCartItemQuantity(target.cartItemId, target.nextQuantity),
+      ),
+    );
+    const isSuccess =
+      deleteResult.ok && updateResults.every((result) => result.ok);
 
     setIsCleaningOrderedItems(false);
+
+    if (!isSuccess) {
+      retry();
+      showNotice("주문한 상품을 정리하지 못했어요. 다시 시도해 주세요");
+      return;
+    }
+
+    clearOrderedCartItems();
     setOrderedCartItems([]);
+    retry();
     showNotice("주문한 상품을 장바구니에서 정리했어요");
   };
 
@@ -352,7 +372,10 @@ export function CartPage() {
           orderedCleanupTargets.length > 0
         }
         isSubmitting={isCleaningOrderedItems}
-        onCancel={() => setOrderedCartItems([])}
+        onCancel={() => {
+          clearOrderedCartItems();
+          setOrderedCartItems([]);
+        }}
         onConfirm={() => {
           void handleOrderedCleanup();
         }}
