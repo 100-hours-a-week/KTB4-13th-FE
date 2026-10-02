@@ -27,7 +27,13 @@ export function HomeHeader({
   return (
     <header className="page-content shrink-0 pb-3 pt-3">
       <div className="flex items-center justify-between">
-        <h1 className="type-subheading font-serif tracking-tighter text-text-primary">북적북적</h1>
+        <h1>
+          <img
+            alt="북적북적"
+            className="size-10 object-contain"
+            src="/assets/bookjeok-logo-mark.png"
+          />
+        </h1>
         <div className="-mr-2 flex items-center gap-1">
           {isGuest ? (
             <button
