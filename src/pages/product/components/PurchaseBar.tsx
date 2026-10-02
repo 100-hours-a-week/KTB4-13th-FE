@@ -21,11 +21,11 @@ export function PurchaseBar({
   return (
     <div
       aria-busy={isPending}
-      className="flex shrink-0 gap-2 border-t border-border bg-surface px-5 py-3"
+      className="flex shrink-0 gap-2 border-t border-hairline bg-surface px-5 py-3"
     >
       <button
         aria-describedby={disabledDescription}
-        className={`${buttonClassName} border border-border bg-surface text-text-primary hover:bg-muted`}
+        className={`${buttonClassName} border border-border-strong bg-surface text-text-primary hover:bg-muted`}
         disabled={isSoldOut || isPending}
         onClick={onAddToCart}
         type="button"

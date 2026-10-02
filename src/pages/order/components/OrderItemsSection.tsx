@@ -17,7 +17,7 @@ export function OrderItemsSection({ items }: OrderItemsSectionProps) {
         <h2 className="type-title text-text-primary" id="order-items-title">
           주문상품
         </h2>
-        <div className="rounded-panel border border-border bg-muted p-5 text-center">
+        <div className="rounded-control bg-muted p-5 text-center">
           <p className="type-body-small text-text-secondary">
             주문할 상품 정보가 없어요
           </p>
@@ -39,7 +39,7 @@ export function OrderItemsSection({ items }: OrderItemsSectionProps) {
       <button
         aria-controls="order-item-list"
         aria-expanded={isExpanded}
-        className="flex min-h-12 w-full items-center justify-between gap-3 rounded-control border border-border bg-surface px-4 text-left type-body-small font-medium text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        className="flex min-h-12 w-full items-center justify-between gap-3 rounded-control border border-border bg-surface px-4 text-left type-body-small font-medium text-text-primary transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         onClick={() => setIsExpanded((current) => !current)}
         type="button"
       >
@@ -51,15 +51,16 @@ export function OrderItemsSection({ items }: OrderItemsSectionProps) {
 
       {isExpanded ? (
         <ul
-          className="divide-y divide-border rounded-panel border border-border"
+          className="divide-y divide-hairline"
           id="order-item-list"
         >
           {items.map((item) => (
-            <li className="flex gap-3 p-4" key={item.productId}>
+            <li className="flex gap-3 py-4" key={item.productId}>
               <div className="w-16 shrink-0">
                 <BookCover
                   alt=""
                   fallbackTitle={item.itemName}
+                  radius="cover"
                   thumbnailUrl={item.thumbnailUrl}
                 />
               </div>
@@ -67,10 +68,10 @@ export function OrderItemsSection({ items }: OrderItemsSectionProps) {
                 <p className="line-clamp-2 type-body-small font-semibold text-text-primary">
                   {item.itemName}
                 </p>
-                <p className="mt-1 type-caption text-text-secondary">
+                <p className="mt-1 type-caption tabular-nums text-text-secondary">
                   수량 {item.quantity}권
                 </p>
-                <p className="mt-2 type-body-small font-semibold text-text-primary">
+                <p className="mt-2 type-body-small font-semibold tabular-nums text-text-primary">
                   {formatWon(item.discountedPrice * item.quantity)}
                 </p>
               </div>

@@ -16,7 +16,7 @@ interface CartItemRowProps {
 }
 
 const quantityButtonClassName =
-  "inline-flex size-11 items-center justify-center rounded-control border border-border bg-surface type-title text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:bg-muted disabled:text-text-disabled";
+  "inline-flex size-11 items-center justify-center rounded-control type-title text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:bg-transparent disabled:text-text-disabled";
 
 export function CartItemRow({
   isDeleteDisabled,
@@ -31,7 +31,7 @@ export function CartItemRow({
   const isInteractionDisabled = !item.isPurchasable || isQuantityDisabled;
 
   return (
-    <li className="rounded-panel border border-border bg-surface p-4">
+    <li className="py-4">
       <div className="flex items-start gap-3">
         <input
           aria-label={`${item.itemName} 선택`}
@@ -44,12 +44,13 @@ export function CartItemRow({
 
         <Link
           aria-label={`${item.itemName} 상세 보기`}
-          className="w-16 shrink-0 rounded-control focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="w-[4.5rem] shrink-0 rounded-cover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           to={`/products/${item.productId}`}
         >
           <BookCover
             alt={`${item.itemName} 표지`}
             fallbackTitle={item.itemName}
+            radius="cover"
             thumbnailUrl={item.thumbnailUrl}
           />
         </Link>
@@ -58,13 +59,13 @@ export function CartItemRow({
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
               <Link
-                className="line-clamp-1 type-body-small font-semibold text-text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                className="line-clamp-1 type-body font-semibold text-text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 to={`/products/${item.productId}`}
               >
                 {item.itemName}
               </Link>
               {item.isPurchasable ? (
-                <p className="mt-1 type-body-small font-bold text-text-primary">
+                <p className="mt-1 type-body-small font-semibold tabular-nums text-text-primary">
                   {formatWon(item.unitPrice)}
                 </p>
               ) : (
@@ -86,37 +87,39 @@ export function CartItemRow({
 
           <div
             aria-label={`${item.itemName} 수량`}
-            className="mt-3 flex items-center gap-2"
+            className="mt-3 flex items-center gap-3"
             role="group"
           >
-            <button
-              aria-label="수량 줄이기"
-              className={quantityButtonClassName}
-              disabled={isInteractionDisabled || item.quantity <= 1}
-              onClick={() =>
-                onQuantityChange(item.cartItemId, item.quantity - 1)
-              }
-              type="button"
-            >
-              −
-            </button>
-            <output
-              aria-live="polite"
-              className="min-w-6 text-center type-body-small text-text-primary"
-            >
-              {item.quantity}
-            </output>
-            <button
-              aria-label="수량 늘리기"
-              className={quantityButtonClassName}
-              disabled={isInteractionDisabled || item.quantity >= 99}
-              onClick={() =>
-                onQuantityChange(item.cartItemId, item.quantity + 1)
-              }
-              type="button"
-            >
-              +
-            </button>
+            <span className="inline-flex items-center rounded-control border border-border">
+              <button
+                aria-label="수량 줄이기"
+                className={quantityButtonClassName}
+                disabled={isInteractionDisabled || item.quantity <= 1}
+                onClick={() =>
+                  onQuantityChange(item.cartItemId, item.quantity - 1)
+                }
+                type="button"
+              >
+                −
+              </button>
+              <output
+                aria-live="polite"
+                className="min-w-8 text-center type-body-small tabular-nums text-text-primary"
+              >
+                {item.quantity}
+              </output>
+              <button
+                aria-label="수량 늘리기"
+                className={quantityButtonClassName}
+                disabled={isInteractionDisabled || item.quantity >= 99}
+                onClick={() =>
+                  onQuantityChange(item.cartItemId, item.quantity + 1)
+                }
+                type="button"
+              >
+                +
+              </button>
+            </span>
             {isUpdating ? (
               <span className="type-caption text-text-tertiary" role="status">
                 변경 중

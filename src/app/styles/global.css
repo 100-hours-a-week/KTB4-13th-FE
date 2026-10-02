@@ -11,6 +11,7 @@
 
   --color-border: #e8e1d8;
   --color-border-strong: #d8cec2;
+  --color-hairline: #efe9e1;
 
   --color-primary: #252a2c;
   --color-primary-hover: #1a1d1e;
@@ -24,6 +25,9 @@
   --color-success: #4f765e;
   --color-error: #c84b55;
   --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-serif: ui-serif, "AppleMyungjo", "Noto Serif KR", "Noto Serif CJK KR",
+    "Nanum Myeongjo", serif;
+  --radius-cover: 0.125rem;
   --radius-control: 0.625rem;
   --radius-panel: 0.875rem;
   --aspect-mobile-shell: 9 / 19.5;
@@ -80,6 +84,23 @@
     font-weight: 700;
     line-height: 2.5rem;
     letter-spacing: -0.025em;
+  }
+
+  .type-section {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 2rem;
+    letter-spacing: -0.05em;
+  }
+
+  .type-numeral {
+    font-family: var(--font-serif);
+    font-size: 1.75rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    letter-spacing: -0.02em;
   }
 
   .type-heading {

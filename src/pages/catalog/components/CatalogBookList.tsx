@@ -28,11 +28,11 @@ interface CatalogBookListProps {
 function BookPrice({ price, originalPrice }: { originalPrice: number | null; price: number }) {
   return (
     <div className="flex flex-wrap items-baseline gap-x-2">
-      <p className="type-body-small font-bold text-text-primary">
+      <p className="type-body-small font-semibold tabular-nums text-text-primary">
         {priceFormatter.format(price)}원
       </p>
       {originalPrice !== null ? (
-        <p className="type-caption text-text-tertiary line-through">
+        <p className="type-caption tabular-nums text-text-tertiary line-through">
           {priceFormatter.format(originalPrice)}원
         </p>
       ) : null}
@@ -48,25 +48,24 @@ function CatalogBookRow({
   rank?: number;
 }) {
   const row = (
-    <article className="flex gap-4 py-3">
-      <div className="relative w-[4.5rem] shrink-0">
+    <article className="flex gap-4 py-4">
+      {rank !== undefined ? (
+        <span
+          className={`w-9 shrink-0 self-center type-numeral text-xl ${
+            rank <= 3 ? "text-text-primary" : "text-text-tertiary"
+          }`}
+        >
+          {String(rank).padStart(2, "0")}
+          <span className="sr-only">위</span>
+        </span>
+      ) : null}
+      <div className="w-[4.5rem] shrink-0">
         <BookCover
           alt=""
           fallbackTitle={book.title}
+          radius="cover"
           thumbnailUrl={book.thumbnailUrl}
         />
-        {rank !== undefined ? (
-          <span
-            className={`absolute left-1 top-1 flex min-h-6 min-w-6 items-center justify-center rounded-control px-1 text-xs font-bold ${
-              rank <= 3
-                ? "bg-accent text-white"
-                : "border border-border bg-surface text-text-primary"
-            }`}
-          >
-            {rank}
-            <span className="sr-only">위</span>
-          </span>
-        ) : null}
       </div>
       <div className="min-w-0 flex-1 self-center">
         <h2 className="line-clamp-2 type-title text-text-primary">
@@ -76,7 +75,7 @@ function CatalogBookRow({
           {book.author ?? "저자 정보 없음"}
         </p>
         {book.matchScore !== null ? (
-          <p className="mt-1 type-caption font-semibold text-accent">
+          <p className="mt-1 type-caption font-medium tabular-nums text-accent">
             취향 매칭 {book.matchScore}%
           </p>
         ) : null}
@@ -86,7 +85,7 @@ function CatalogBookRow({
           </div>
         ) : null}
         {book.productId === null ? (
-          <div className="mt-2">
+          <div className="mt-1.5 flex">
             <ProductAvailabilityBadge />
           </div>
         ) : null}
@@ -101,7 +100,7 @@ function CatalogBookRow({
   return (
     <Link
       aria-label={`${book.title} 상세 보기`}
-      className="block rounded-control transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className="block transition-colors hover:bg-muted/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       to={`/products/${book.productId}`}
     >
       {row}
@@ -144,10 +143,13 @@ export function CatalogBookList({
         <p className="sr-only" role="status">
           도서 목록을 불러오는 중이에요
         </p>
-        <div aria-hidden="true" className="divide-y divide-border">
+        <div aria-hidden="true" className="divide-y divide-hairline">
           {Array.from({ length: SKELETON_COUNT }, (_, index) => (
-            <div className="flex gap-4 py-3" key={index}>
-              <div className="aspect-[3/4] w-[4.5rem] shrink-0 rounded-control bg-muted" />
+            <div className="flex gap-4 py-4" key={index}>
+              {mode === "ranking" ? (
+                <div className="h-5 w-9 shrink-0 self-center rounded-cover bg-muted" />
+              ) : null}
+              <div className="aspect-[3/4] w-[4.5rem] shrink-0 rounded-cover bg-muted" />
               <div className="flex flex-1 flex-col justify-center gap-2">
                 <div className="h-5 w-3/4 rounded bg-muted" />
                 <div className="h-4 w-1/3 rounded bg-muted" />
@@ -200,7 +202,7 @@ export function CatalogBookList({
     <div className="page-content pb-6">
       <ol aria-label={mode === "ranking" ? "책 랭킹 목록" : "추천 도서 목록"}>
         {items.map((book, index) => (
-          <li className="border-b border-border last:border-b-0" key={book.key}>
+          <li className="border-b border-hairline last:border-b-0" key={book.key}>
             <CatalogBookRow
               book={book}
               rank={mode === "ranking" ? index + 1 : undefined}

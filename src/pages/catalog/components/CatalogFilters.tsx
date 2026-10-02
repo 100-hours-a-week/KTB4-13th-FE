@@ -25,10 +25,18 @@ const MATCH_SCORE_OPTIONS: { label: string; value: number | null }[] = [
 ];
 
 const pendingFilterClassName =
-  "inline-flex min-h-11 items-center rounded-full border border-border bg-muted px-3 type-caption text-text-secondary";
+  "inline-flex min-h-11 items-center rounded-control bg-muted px-3 type-caption text-text-tertiary";
 
 const selectClassName =
-  "min-h-11 rounded-full border border-border bg-surface px-3 type-caption text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:text-text-tertiary";
+  "min-h-11 rounded-control border bg-surface px-3 type-caption focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:text-text-tertiary";
+
+function getFilterSelectClassName(isActive: boolean) {
+  return `${selectClassName} ${
+    isActive
+      ? "border-text-primary font-semibold text-text-primary"
+      : "border-border text-text-secondary"
+  }`;
+}
 
 interface CatalogFiltersProps {
   categoryState: CategoryState;
@@ -77,7 +85,7 @@ export function CatalogFilters({
   return (
     <section
       aria-label="도서 목록 필터와 정렬"
-      className="border-b border-border bg-surface px-5 py-3"
+      className="border-b border-hairline bg-surface px-5 py-3"
     >
       <div className="flex gap-2 overflow-x-auto pb-1">
         {/* The recommendation feed accepts onboarding category labels, not /api/v1/categories ids. */}
@@ -92,7 +100,7 @@ export function CatalogFilters({
           <label className="shrink-0">
             <span className="sr-only">도서종류</span>
             <select
-              className={selectClassName}
+              className={getFilterSelectClassName(filters.categoryId !== null)}
               disabled={categoryState.kind === "loading"}
               onChange={(event) => handleCategoryChange(event.target.value)}
               value={filters.categoryId ?? "all"}
@@ -116,7 +124,9 @@ export function CatalogFilters({
           <label>
             <span className="sr-only">출간연도 시작</span>
             <select
-              className={selectClassName}
+              className={getFilterSelectClassName(
+                filters.publicationYearFrom !== null,
+              )}
               onChange={(event) =>
                 handlePublicationYearFromChange(event.target.value)
               }
@@ -143,7 +153,9 @@ export function CatalogFilters({
           <label>
             <span className="sr-only">출간연도 끝</span>
             <select
-              className={selectClassName}
+              className={getFilterSelectClassName(
+                filters.publicationYearTo !== null,
+              )}
               onChange={(event) =>
                 handlePublicationYearToChange(event.target.value)
               }
@@ -170,7 +182,7 @@ export function CatalogFilters({
           <label className="shrink-0">
             <span className="sr-only">매칭도</span>
             <select
-              className={selectClassName}
+              className={getFilterSelectClassName(filters.matchScoreMin !== null)}
               onChange={(event) => handleMatchScoreChange(event.target.value)}
               value={filters.matchScoreMin ?? "all"}
             >
@@ -210,7 +222,7 @@ export function CatalogFilters({
           <label className="shrink-0">
             <span className="sr-only">추천 도서 정렬</span>
             <select
-              className={selectClassName}
+              className={`${selectClassName} border-transparent font-semibold text-text-primary`}
               onChange={(event) =>
                 onSortChange(event.target.value as RecommendationSort)
               }

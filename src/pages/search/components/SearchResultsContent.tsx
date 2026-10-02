@@ -13,20 +13,21 @@ const SKELETON_COUNT = 12;
 
 function SearchResultCard({ item }: { item: BookSearchItem }) {
   const card = (
-    <article className="flex min-w-0 flex-col gap-1.5">
+    <article className="flex min-w-0 flex-col gap-1">
       <BookCover
         alt=""
         fallbackTitle={item.title}
+        radius="cover"
         thumbnailUrl={item.coverUrl}
       />
-      <h2 className="line-clamp-2 min-h-10 type-body-small font-semibold text-text-primary">
+      <h2 className="mt-1.5 line-clamp-2 min-h-10 type-body-small font-semibold text-text-primary">
         {item.title}
       </h2>
       <p className="truncate type-caption text-text-tertiary">
         {item.author ?? "저자 정보 없음"}
       </p>
       {item.price !== null ? (
-        <p className="type-body-small font-bold text-text-primary">
+        <p className="type-body-small font-semibold tabular-nums text-text-primary">
           {priceFormatter.format(item.price)}원
         </p>
       ) : null}
@@ -41,7 +42,7 @@ function SearchResultCard({ item }: { item: BookSearchItem }) {
   return (
     <Link
       aria-label={`${item.title} 상세 보기`}
-      className="block rounded-control focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className="block rounded-cover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       to={`/products/${item.productId}`}
     >
       {card}
@@ -102,10 +103,10 @@ export function SearchResultsContent({
         <p className="sr-only" role="status">
           검색 결과를 불러오는 중이에요
         </p>
-        <div aria-hidden="true" className="grid grid-cols-3 gap-x-3 gap-y-6">
+        <div aria-hidden="true" className="grid grid-cols-3 gap-x-3 gap-y-8">
           {Array.from({ length: SKELETON_COUNT }, (_, index) => (
             <div className="space-y-2" key={index}>
-              <div className="aspect-[3/4] rounded-control bg-muted" />
+              <div className="aspect-[3/4] rounded-cover bg-muted" />
               <div className="h-4 rounded bg-muted" />
               <div className="h-3 w-2/3 rounded bg-muted" />
               <div className="h-4 w-1/2 rounded bg-muted" />
@@ -145,7 +146,7 @@ export function SearchResultsContent({
     <div className="page-content pb-6 pt-4">
       <ul
         aria-label="검색된 도서 목록"
-        className="grid grid-cols-3 gap-x-3 gap-y-6"
+        className="grid grid-cols-3 gap-x-3 gap-y-8"
       >
         {state.items.map((item) => (
           <li className="min-w-0" key={item.bookId}>
@@ -155,14 +156,14 @@ export function SearchResultsContent({
       </ul>
 
       {state.nextCursor !== null ? (
-        <div aria-live="polite" className="flex flex-col items-center gap-2 pt-6">
+        <div aria-live="polite" className="flex flex-col items-center gap-2 pt-8">
           {state.paginationStatus === "error" ? (
             <p className="type-body-small text-error">
               검색 결과를 더 불러오지 못했어요
             </p>
           ) : null}
           <button
-            className="min-h-11 rounded-control px-4 type-body-small font-semibold text-text-secondary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-wait disabled:text-text-tertiary"
+            className="min-h-11 px-4 type-caption font-semibold text-text-secondary underline-offset-4 transition-colors hover:text-text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-wait disabled:no-underline"
             disabled={state.paginationStatus === "loadingMore"}
             onClick={onLoadMore}
             ref={loadMoreButtonRef}
@@ -177,7 +178,7 @@ export function SearchResultsContent({
         </div>
       ) : (
         <p
-          className="pt-8 text-center type-body-small text-text-secondary"
+          className="pt-10 text-center type-caption text-text-tertiary"
           role="status"
         >
           검색결과를 모두 확인했어요

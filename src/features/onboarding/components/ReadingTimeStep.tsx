@@ -51,12 +51,12 @@ export function ReadingTimeStep({
         selectedIds={selectedOptionIds}
       />
 
-      <div className="border-t border-border pt-5">
+      <div className="border-t border-hairline pt-6">
         <h3 className="type-title text-text-primary">맞춤 추천을 위한 정보 활용</h3>
         <label className="mt-3 flex items-start gap-2.5">
           <input
             checked={hasAgreedToPersonalization}
-            className="mt-0.5 size-4 accent-accent"
+            className="mt-0.5 size-4 accent-primary"
             onChange={(event) =>
               onSetHasAgreedToPersonalization(event.target.checked)
             }
@@ -74,14 +74,14 @@ export function ReadingTimeStep({
         <button
           aria-controls="personalization-consent-detail"
           aria-expanded={isDetailOpen}
-          className="mt-2 type-caption font-semibold text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="mt-1 inline-flex min-h-11 items-center type-caption font-semibold text-text-secondary underline underline-offset-4 transition-colors hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           onClick={() => setIsDetailOpen((current) => !current)}
           type="button"
         >
           수집·이용 내용 자세히 보기 →
         </button>
         <dl
-          className="mt-2 flex flex-col gap-1.5 rounded-control bg-muted px-3 py-2.5 type-caption"
+          className="mt-1 flex flex-col gap-1.5 rounded-control bg-muted px-3 py-2.5 type-caption"
           hidden={!isDetailOpen}
           id="personalization-consent-detail"
         >

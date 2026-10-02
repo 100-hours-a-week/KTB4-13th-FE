@@ -50,12 +50,12 @@ export function ChatComposer({
 
   return (
     <form
-      className="page-content flex shrink-0 items-center gap-2 border-t border-border bg-surface py-3"
+      className="page-content flex shrink-0 items-center gap-2 border-t border-hairline bg-surface py-3"
       onSubmit={handleSubmit}
     >
       <button
         aria-label="이미지 첨부"
-        className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-surface type-heading text-text-secondary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        className="inline-flex size-11 shrink-0 items-center justify-center rounded-control border border-border bg-surface type-heading font-normal text-text-secondary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         onClick={onAttachClick}
         type="button"
       >
@@ -65,7 +65,7 @@ export function ChatComposer({
         <span className="sr-only">AI 추천 메시지</span>
         <input
           autoComplete="off"
-          className="min-h-11 w-full rounded-control border border-border bg-surface px-3 type-body-small text-text-primary outline-none placeholder:text-text-tertiary focus-visible:border-primary focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary disabled:bg-muted"
+          className="min-h-11 w-full rounded-control border border-transparent bg-muted px-3 type-body-small text-text-primary outline-none placeholder:text-text-tertiary focus-visible:border-primary focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary disabled:cursor-not-allowed disabled:text-text-disabled disabled:opacity-60"
           disabled={isLocked}
           maxLength={MAX_MESSAGE_LENGTH}
           onChange={(event) => setDraft(event.target.value)}

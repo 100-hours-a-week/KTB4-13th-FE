@@ -5,9 +5,9 @@ import type { SearchFilters as SearchFilterValues } from "@/pages/search/types/s
 type RangeKind = "price" | "year";
 
 const controlClassName =
-  "min-h-11 shrink-0 rounded-full border border-border bg-surface px-3 type-caption text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:text-text-tertiary";
+  "min-h-11 shrink-0 rounded-control border bg-surface px-3 type-caption aria-expanded:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:text-text-tertiary";
 const pendingFilterClassName =
-  "inline-flex min-h-11 shrink-0 items-center rounded-full border border-border bg-muted px-3 type-caption text-text-secondary";
+  "inline-flex min-h-11 shrink-0 items-center rounded-control bg-muted px-3 type-caption text-text-tertiary";
 const priceFormatter = new Intl.NumberFormat("ko-KR");
 
 function parseOptionalInteger(value: string) {
@@ -68,7 +68,7 @@ function RangeFilterPanel({
 
   return (
     <form
-      className="mt-3 rounded-panel border border-border bg-muted p-4"
+      className="mt-3 border-t border-hairline pt-4"
       id={`search-${kind}-filter`}
       onSubmit={handleSubmit}
     >
@@ -115,14 +115,14 @@ function RangeFilterPanel({
       ) : null}
       <div className="mt-3 flex justify-end gap-2">
         <button
-          className="min-h-11 rounded-control px-3 type-body-small font-semibold text-text-secondary hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="min-h-11 rounded-control px-3 type-body-small font-semibold text-text-secondary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           onClick={() => onApply(null, null)}
           type="button"
         >
           조건 지우기
         </button>
         <button
-          className="min-h-11 rounded-control px-3 type-body-small font-semibold text-text-secondary hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="min-h-11 rounded-control px-3 type-body-small font-semibold text-text-secondary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           onClick={onClose}
           type="button"
         >
@@ -176,7 +176,7 @@ export function SearchFilters({ filters, onChange }: SearchFiltersProps) {
   return (
     <section
       aria-label="검색 결과 필터"
-      className="shrink-0 border-b border-border bg-surface px-5 py-3"
+      className="shrink-0 border-b border-hairline bg-surface px-5 pb-3"
     >
       <div className="flex max-w-full gap-2 overflow-x-auto pb-1">
         {/* Search accepts onboarding category labels, not /api/v1/categories values, so it stays unfiltered. */}
@@ -192,8 +192,8 @@ export function SearchFilters({ filters, onChange }: SearchFiltersProps) {
           aria-expanded={openRange === "price"}
           className={`${controlClassName} ${
             filters.priceMin !== null || filters.priceMax !== null
-              ? "border-primary bg-muted font-semibold"
-              : ""
+              ? "border-text-primary font-semibold text-text-primary"
+              : "border-border text-text-secondary"
           }`}
           onClick={() =>
             setOpenRange((current) => (current === "price" ? null : "price"))
@@ -208,8 +208,8 @@ export function SearchFilters({ filters, onChange }: SearchFiltersProps) {
           aria-expanded={openRange === "year"}
           className={`${controlClassName} ${
             filters.pubYearFrom !== null || filters.pubYearTo !== null
-              ? "border-primary bg-muted font-semibold"
-              : ""
+              ? "border-text-primary font-semibold text-text-primary"
+              : "border-border text-text-secondary"
           }`}
           onClick={() =>
             setOpenRange((current) => (current === "year" ? null : "year"))

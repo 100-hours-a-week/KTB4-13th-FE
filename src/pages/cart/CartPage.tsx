@@ -48,7 +48,7 @@ function SelectionToolbar({
   return (
     <section
       aria-label="장바구니 상품 선택"
-      className="flex items-center justify-between gap-4 rounded-panel border border-border bg-surface p-4"
+      className="flex items-center justify-between gap-4 border-b border-hairline pb-2"
     >
       <label className="flex min-h-11 items-center gap-3 type-body-small font-medium text-text-primary">
         <input
@@ -62,9 +62,10 @@ function SelectionToolbar({
         전체 선택 ({selectableCount})
       </label>
       <Button
+        className="-mr-2 px-2 text-text-secondary hover:text-text-primary"
         disabled={selectedCount === 0 || isDeleteDisabled}
         onClick={onDelete}
-        variant="secondary"
+        variant="custom"
       >
         선택 삭제
       </Button>
@@ -74,17 +75,25 @@ function SelectionToolbar({
 
 function CartLoadingState() {
   return (
-    <div aria-busy="true" className="space-y-4 py-6">
+    <div aria-busy="true" className="py-4">
       <p className="sr-only" role="status">
         장바구니를 불러오는 중이에요
       </p>
-      <div aria-hidden="true" className="h-20 rounded-panel bg-muted" />
+      <div aria-hidden="true" className="h-11 w-1/3 rounded bg-muted" />
       {Array.from({ length: 2 }, (_, index) => (
         <div
           aria-hidden="true"
-          className="h-40 rounded-panel bg-muted"
+          className="flex gap-3 border-t border-hairline py-4"
           key={index}
-        />
+        >
+          <div className="size-5 shrink-0 rounded bg-muted" />
+          <div className="aspect-[3/4] w-[4.5rem] shrink-0 rounded-cover bg-muted" />
+          <div className="flex flex-1 flex-col gap-2">
+            <div className="h-5 w-3/4 rounded bg-muted" />
+            <div className="h-4 w-1/3 rounded bg-muted" />
+            <div className="mt-2 h-11 w-32 rounded-control bg-muted" />
+          </div>
+        </div>
       ))}
     </div>
   );
@@ -168,7 +177,7 @@ export function CartPage() {
 
   return (
     <div className="relative flex h-dvh min-w-0 flex-col bg-surface">
-      <header className="page-content grid min-h-16 shrink-0 grid-cols-[2.75rem_1fr_2.75rem] items-center border-b border-border bg-surface">
+      <header className="page-content grid min-h-16 shrink-0 grid-cols-[2.75rem_1fr_2.75rem] items-center bg-surface">
         <button
           aria-label="이전 화면으로 돌아가기"
           className="-ml-2 inline-flex size-11 items-center justify-center rounded-full text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
@@ -216,7 +225,7 @@ export function CartPage() {
         ) : null}
 
         {state.kind === "ready" && items.length > 0 ? (
-          <div className="space-y-4 py-6">
+          <div className="space-y-2 pb-8 pt-2">
             <SelectionToolbar
               isAllSelected={selection.isAllSelected}
               isDeleteDisabled={isMutating}
@@ -231,7 +240,7 @@ export function CartPage() {
               selectedCount={selection.selectedCount}
             />
 
-            <ul className="space-y-3">
+            <ul className="divide-y divide-hairline">
               {items.map((item) => (
                 <CartItemRow
                   isDeleteDisabled={isMutating}
@@ -269,7 +278,7 @@ export function CartPage() {
       ) : null}
 
       {state.kind === "ready" && items.length > 0 ? (
-        <div className="shrink-0 border-t border-border bg-surface px-5 py-3">
+        <div className="shrink-0 border-t border-hairline bg-surface px-5 py-3">
           <Button
             className="w-full min-h-12"
             disabled={

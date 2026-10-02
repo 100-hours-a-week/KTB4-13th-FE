@@ -16,7 +16,7 @@ interface SelectableOptionProps {
 const variantClassName: Record<SelectableVariant, string> = {
   row: "flex min-h-[3.25rem] w-full items-center gap-3 rounded-control px-4 py-3 text-left",
   tile: "flex min-h-[3.25rem] items-center justify-center rounded-control px-4 py-3 text-center",
-  chip: "inline-flex items-center justify-center rounded-full px-3.5 py-2 text-center",
+  chip: "inline-flex min-h-11 items-center justify-center rounded-full px-3.5 py-2 text-center",
 };
 
 export function SelectableOption({
@@ -37,7 +37,7 @@ export function SelectableOption({
           aria-hidden="true"
           className={`flex size-5 shrink-0 items-center justify-center rounded-full border text-xs font-bold ${
             isSelected
-              ? "border-accent bg-accent text-white"
+              ? "border-text-primary bg-text-primary text-white"
               : "border-border-strong text-transparent"
           }`}
         >

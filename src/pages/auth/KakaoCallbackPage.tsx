@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 
-import { Toast } from "@/common/components/Toast";
 import { loginWithKakao } from "@/features/auth/api/kakaoLoginApi";
 import { useAuth } from "@/features/auth/context/useAuth";
 import {
@@ -119,13 +118,21 @@ export function KakaoCallbackPage() {
 
   return (
     <main className="flex min-h-dvh items-center justify-center bg-surface px-5 py-10">
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-xs">
         {status === "error" ? (
-          <Toast variant="error">{message}</Toast>
+          <div
+            aria-live="assertive"
+            className="border-t border-error pt-4 text-center"
+            role="alert"
+          >
+            <p className="break-keep type-body leading-relaxed text-text-primary">
+              {message}
+            </p>
+          </div>
         ) : (
           <p
             aria-live="polite"
-            className="text-center type-body text-text-secondary"
+            className="break-keep text-center type-body leading-relaxed text-text-secondary"
             role="status"
           >
             {message}

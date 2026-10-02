@@ -26,10 +26,11 @@ function RecommendationCard({
   recommendation: RecommendationCardViewModel;
 }) {
   const card = (
-    <article className="flex h-full flex-col rounded-panel border border-border bg-surface p-2.5">
+    <article className="flex h-full flex-col">
       <BookCover
         alt={`${recommendation.title} 표지`}
         fallbackTitle={recommendation.title}
+        radius="cover"
         thumbnailUrl={recommendation.coverImageUrl}
       />
       <h3 className="mt-2 line-clamp-2 type-body-small font-semibold text-text-primary">
@@ -41,20 +42,20 @@ function RecommendationCard({
         </p>
       ) : null}
       {recommendation.price !== null ? (
-        <p className="mt-1 type-body-small font-bold text-text-primary">
+        <p className="mt-1 type-body-small font-semibold tabular-nums text-text-primary">
           {priceFormatter.format(recommendation.price)}원
         </p>
       ) : null}
-      <p className="mt-2 type-caption font-semibold text-accent">
+      <p className="mt-2 type-caption font-medium tabular-nums text-accent">
         매칭 {recommendation.matchScore}%
       </p>
       {recommendation.reasonShort ? (
-        <p className="mt-1 line-clamp-2 type-caption text-text-secondary">
+        <p className="mt-1.5 line-clamp-2 border-l border-border-strong pl-2 type-caption leading-relaxed text-text-secondary">
           {recommendation.reasonShort}
         </p>
       ) : null}
       {recommendation.productId === null ? (
-        <div className="mt-2">
+        <div className="mt-1.5">
           <ProductAvailabilityBadge />
         </div>
       ) : null}
@@ -69,7 +70,7 @@ function RecommendationCard({
   return (
     <Link
       aria-label={`${recommendation.title} 상세 보기`}
-      className="block h-full rounded-panel focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className="block h-full rounded-cover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       to={`/products/${recommendation.productId}`}
     >
       {card}
@@ -91,9 +92,12 @@ function RecommendationCardList({
       role="region"
       tabIndex={0}
     >
-      <ul className="flex items-stretch gap-3">
+      <ul className="flex items-stretch gap-4">
         {visibleRecommendations.map((recommendation) => (
-          <li className="w-[42%] shrink-0" key={recommendation.id}>
+          <li
+            className="w-[calc(42%-22px)] shrink-0 min-[360px]:w-[42%]"
+            key={recommendation.id}
+          >
             <RecommendationCard recommendation={recommendation} />
           </li>
         ))}
@@ -107,12 +111,12 @@ function ChatBubble({ message }: { message: ChatPresentationMessage }) {
 
   return (
     <div className={isUser ? "flex justify-end" : "flex justify-start"}>
-      <div className={isUser ? "max-w-[78%]" : "min-w-0 max-w-[86%]"}>
+      <div className={isUser ? "max-w-[78%]" : "w-full min-w-0"}>
         <p
-          className={`whitespace-pre-wrap break-words rounded-panel px-4 py-3 type-body-small ${
+          className={`whitespace-pre-wrap break-words ${
             isUser
-              ? "bg-primary text-white"
-              : "bg-muted text-text-primary"
+              ? "rounded-control bg-primary px-3.5 py-2.5 type-body-small text-white"
+              : "type-body leading-relaxed text-text-primary"
           }`}
         >
           {message.content}
@@ -146,7 +150,7 @@ export function ChatMessageList({
 
   return (
     <div className="page-content py-5">
-      <ol aria-live="polite" className="flex flex-col gap-4">
+      <ol aria-live="polite" className="flex flex-col gap-6">
         {messages.map((message) => (
           <li key={message.id}>
             <ChatBubble message={message} />
@@ -157,7 +161,7 @@ export function ChatMessageList({
       {status === "sending" ? (
         <p
           aria-live="polite"
-          className="mt-4 w-fit rounded-panel bg-muted px-4 py-3 type-body-small text-text-secondary"
+          className="mt-6 w-fit type-body-small text-text-tertiary"
           role="status"
         >
           추천을 준비하고 있어요
