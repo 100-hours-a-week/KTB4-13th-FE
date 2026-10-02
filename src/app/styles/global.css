@@ -24,9 +24,10 @@
 
   --color-success: #4f765e;
   --color-error: #c84b55;
-  --font-sans: ui-sans-serif, system-ui, sans-serif;
-  --font-serif: ui-serif, "AppleMyungjo", "Noto Serif KR", "Noto Serif CJK KR",
-    "Nanum Myeongjo", serif;
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+    "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif;
+  --font-display: "Gowun Dodum", "Pretendard Variable", Pretendard,
+    "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
   --radius-cover: 0.125rem;
   --radius-control: 0.625rem;
   --radius-panel: 0.875rem;
@@ -80,24 +81,25 @@
   }
 
   .type-display {
+    font-family: var(--font-display);
     font-size: 2rem;
-    font-weight: 700;
+    font-weight: 400;
     line-height: 2.5rem;
-    letter-spacing: -0.025em;
+    letter-spacing: -0.035em;
   }
 
   .type-section {
-    font-family: var(--font-serif);
+    font-family: var(--font-display);
     font-size: 1.5rem;
-    font-weight: 600;
+    font-weight: 400;
     line-height: 2rem;
-    letter-spacing: -0.05em;
+    letter-spacing: -0.035em;
   }
 
   .type-numeral {
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: 1.75rem;
-    font-weight: 600;
+    font-weight: 650;
     font-variant-numeric: tabular-nums;
     line-height: 1;
     letter-spacing: -0.02em;
