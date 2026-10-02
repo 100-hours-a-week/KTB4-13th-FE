@@ -6,14 +6,25 @@ import * as Sentry from "@sentry/react";
 import "@/app/styles/global.css";
 import App from "@/app/App";
 
-ReactGA.initialize(import.meta.env.VITE_GA_MEASUREMENT_ID);
-clarity.init(import.meta.env.VITE_CLARITY_PROJECT_ID);
+const gaMeasurementId = import.meta.env.VITE_GA_MEASUREMENT_ID?.trim();
+const clarityProjectId = import.meta.env.VITE_CLARITY_PROJECT_ID?.trim();
+const sentryDsn = import.meta.env.VITE_SENTRY_DSN?.trim();
 
-Sentry.init({
-    dsn: import.meta.env.VITE_SENTRY_DSN,
+if (gaMeasurementId) {
+  ReactGA.initialize(gaMeasurementId);
+}
+
+if (clarityProjectId) {
+  clarity.init(clarityProjectId);
+}
+
+if (sentryDsn) {
+  Sentry.init({
+    dsn: sentryDsn,
     environment: import.meta.env.MODE,
     tracesSampleRate: 0.1,
-});
+  });
+}
 
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
