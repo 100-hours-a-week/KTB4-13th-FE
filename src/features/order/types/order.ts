@@ -21,10 +21,23 @@ export interface CreateOrderItemRequestDto {
 }
 
 export interface CreateOrderRequestDto {
-  addressId: number;
   items: CreateOrderItemRequestDto[];
 }
 
+export interface CreateOrderItemResponseDto {
+  author: string;
+  discountedPrice: number;
+  itemName: string;
+  productId: number;
+  quantity: number;
+  salePrice: number;
+  thumbnailUrl: string | null;
+  totalPrice: number;
+}
+
 export interface CreateOrderResponseDto {
+  items: CreateOrderItemResponseDto[];
   orderKey: string;
+  status: "ORDER_CREATED" | "NO_ADDRESS";
+  totalPrice: number;
 }
