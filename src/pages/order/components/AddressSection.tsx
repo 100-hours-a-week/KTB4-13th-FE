@@ -1,6 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import type { ChangeEvent } from "react";
-
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
 import {
@@ -10,10 +8,6 @@ import {
 } from "@/features/address/lib/kakaoPostcode";
 import type { UserAddress } from "@/features/address/types/address";
 import type { AddressesState } from "@/pages/order/hooks/useAddresses";
-import {
-  formatPhoneNumber,
-  MAX_PHONE_NUMBER_LENGTH,
-} from "@/pages/order/lib/orderForm";
 import type {
   DeliveryFormErrors,
   DeliveryFormField,
@@ -79,84 +73,6 @@ function AddressField({
       />
       {error ? (
         <p className="mt-1 type-caption text-error" id={errorId}>
-          {error}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
-interface PhoneNumberFieldProps {
-  error?: string;
-  onChange: (field: DeliveryFormField, value: string) => void;
-  onFieldBlur: (field: DeliveryFormField) => void;
-  value: string;
-}
-
-function PhoneNumberField({
-  error,
-  onChange,
-  onFieldBlur,
-  value,
-}: PhoneNumberFieldProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { selectionStart, value: rawValue } = event.target;
-    const digitsBeforeCaret = rawValue
-      .slice(0, selectionStart ?? rawValue.length)
-      .replace(/\D/g, "").length;
-    const formattedValue = formatPhoneNumber(rawValue);
-
-    onChange("phoneNumber", formattedValue);
-    window.requestAnimationFrame(() => {
-      const input = inputRef.current;
-
-      if (!input || document.activeElement !== input) {
-        return;
-      }
-
-      let caret = 0;
-      let digitCount = 0;
-      while (caret < formattedValue.length && digitCount < digitsBeforeCaret) {
-        if (/\d/.test(formattedValue[caret])) {
-          digitCount += 1;
-        }
-        caret += 1;
-      }
-      input.setSelectionRange(caret, caret);
-    });
-  };
-
-  return (
-    <div>
-      <label
-        className="type-caption font-medium text-text-secondary"
-        htmlFor="delivery-phoneNumber"
-      >
-        휴대폰
-      </label>
-      <input
-        aria-describedby={error ? "delivery-phoneNumber-error" : undefined}
-        aria-invalid={error ? true : undefined}
-        autoComplete="tel"
-        className={`${inputClassName} mt-1.5`}
-        id="delivery-phoneNumber"
-        inputMode="numeric"
-        maxLength={MAX_PHONE_NUMBER_LENGTH}
-        onBlur={() => onFieldBlur("phoneNumber")}
-        onChange={handleChange}
-        placeholder="010-0000-0000"
-        ref={inputRef}
-        required
-        type="tel"
-        value={value}
-      />
-      {error ? (
-        <p
-          className="mt-1 type-caption text-error"
-          id="delivery-phoneNumber-error"
-        >
           {error}
         </p>
       ) : null}
@@ -377,19 +293,13 @@ export function AddressSection({
             ) : (
               <>
                 <AddressField
-                  error={errors.recipientName}
-                  field="recipientName"
-                  label="받는 분"
+                  error={errors.label}
+                  field="label"
+                  label="배송지 이름"
                   onChange={onChange}
                   onFieldBlur={onFieldBlur}
                   required
-                  value={values.recipientName}
-                />
-                <PhoneNumberField
-                  error={errors.phoneNumber}
-                  onChange={onChange}
-                  onFieldBlur={onFieldBlur}
-                  value={values.phoneNumber}
+                  value={values.label}
                 />
                 <NewAddressFields
                   errors={errors}
@@ -401,29 +311,6 @@ export function AddressSection({
               </>
             )}
 
-            <div>
-              <label
-                className="type-caption font-medium text-text-secondary"
-                htmlFor="delivery-request"
-              >
-                배송 요청사항
-              </label>
-              <select
-                className={`${inputClassName} mt-1.5`}
-                id="delivery-request"
-                onChange={(event) =>
-                  onChange("deliveryRequest", event.target.value)
-                }
-                value={values.deliveryRequest}
-              >
-                <option value="">배송 요청사항 선택</option>
-                <option value="문 앞에 놓아주세요">문 앞에 놓아주세요</option>
-                <option value="부재 시 경비실에 맡겨주세요">
-                  부재 시 경비실에 맡겨주세요
-                </option>
-                <option value="직접 받을게요">직접 받을게요</option>
-              </select>
-            </div>
           </div>
         </>
       ) : null}

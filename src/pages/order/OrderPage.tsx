@@ -5,6 +5,7 @@ import { ArrowLeftIcon } from "@/common/components/AppIcons";
 import { Button } from "@/common/components/Button";
 import { Toast } from "@/common/components/Toast";
 import { useTransientNotice } from "@/common/hooks/useTransientNotice";
+import { registerUserAddress } from "@/features/address/api/addressApi";
 import { deleteCartItems } from "@/features/cart/api/cartApi";
 import { createOrder } from "@/features/order/api/orderApi";
 import { rememberOrderedCartItems } from "@/features/order/lib/orderedCartCleanup";
@@ -71,7 +72,7 @@ export function OrderPage() {
     isAddressReady &&
     !isSubmitting &&
     items.length > 0 &&
-    (!defaultAddress || Object.keys(currentErrors).length === 0);
+    Object.keys(currentErrors).length === 0;
 
   const handleBack = () => {
     if (location.key === "default") {
@@ -116,21 +117,39 @@ export function OrderPage() {
     }
 
     const errors = validateDeliveryForm(mode, formValues);
-    if (defaultAddress) {
-      setFormErrors(errors);
+    setFormErrors(errors);
 
-      if (Object.keys(errors).length > 0) {
-        return;
-      }
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
 
-      // Checkout uses the saved default address on the server, not the unsaved form values.
-      if (mode !== "default") {
-        showNotice(ORDER_UNAVAILABLE_NOTICE);
+    if (defaultAddress && mode !== "default") {
+      showNotice(ORDER_UNAVAILABLE_NOTICE);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    if (!defaultAddress) {
+      const addressResult = await registerUserAddress({
+        address: formValues.address.trim(),
+        detailAddress: formValues.detailAddress.trim() || null,
+        isDefault: true,
+        label: formValues.label.trim(),
+        postalCode: formValues.postalCode.trim(),
+      });
+
+      if (!addressResult.ok) {
+        setIsSubmitting(false);
+        showNotice(
+          addressResult.reason === "invalid-request"
+            ? "배송지를 저장하지 못했어요. 입력값을 확인해 주세요"
+            : "배송지를 저장하지 못했어요. 다시 시도해 주세요",
+        );
         return;
       }
     }
 
-    setIsSubmitting(true);
     const result = await createOrder({
       items: toCreateOrderItems(items),
     });
