@@ -36,6 +36,8 @@ import {
 
 const ORDER_UNAVAILABLE_NOTICE =
   "현재 주문을 진행할 수 없어요. 잠시 후 다시 시도해 주세요";
+const ORDER_ADDRESS_REQUIRED_NOTICE =
+  "주문을 완료하려면 배송지 입력이 필요해요. 배송지를 입력해 주세요";
 const ORDER_STOCK_NOTICE = "재고가 부족한 상품이 있어 주문하지 못했어요";
 const ORDER_FAILURE_NOTICE = "주문하지 못했어요. 다시 시도해 주세요";
 const POSTCODE_ERROR_NOTICE =
@@ -68,7 +70,7 @@ export function OrderPage() {
     isAddressReady &&
     !isSubmitting &&
     items.length > 0 &&
-    Object.keys(currentErrors).length === 0;
+    (!defaultAddress || Object.keys(currentErrors).length === 0);
 
   const handleBack = () => {
     if (location.key === "default") {
@@ -108,32 +110,45 @@ export function OrderPage() {
   };
 
   const handleSubmit = async () => {
-    const errors = validateDeliveryForm(mode, formValues);
-    setFormErrors(errors);
-
-    if (isSubmitting || items.length === 0 || Object.keys(errors).length > 0) {
+    if (isSubmitting || items.length === 0) {
       return;
     }
 
-    // POST /api/v1/orders needs a saved addressId; a new address cannot be registered and identified yet.
-    if (mode !== "default" || !defaultAddress) {
-      showNotice(ORDER_UNAVAILABLE_NOTICE);
-      return;
+    const errors = validateDeliveryForm(mode, formValues);
+    if (defaultAddress) {
+      setFormErrors(errors);
+
+      if (Object.keys(errors).length > 0) {
+        return;
+      }
+
+      // Checkout uses the saved default address on the server, not the unsaved form values.
+      if (mode !== "default") {
+        showNotice(ORDER_UNAVAILABLE_NOTICE);
+        return;
+      }
     }
 
     setIsSubmitting(true);
     const result = await createOrder({
-      addressId: defaultAddress.addressId,
       items: toCreateOrderItems(items),
     });
 
-    if (result.ok) {
+    if (result.ok && result.data.status === "ORDER_CREATED") {
       const cleanupResult =
         cartItemIds.length > 0 ? await deleteCartItems(cartItemIds) : null;
       const completeState: OrderCompleteNavigationState = {
         isCartCleanupFailed: cleanupResult !== null && !cleanupResult.ok,
       };
       navigate("/order/complete", { replace: true, state: completeState });
+      return;
+    }
+
+    if (result.ok && result.data.status === "NO_ADDRESS") {
+      setIsSubmitting(false);
+      setFormErrors(validateDeliveryForm("new", formValues));
+      showNotice(ORDER_ADDRESS_REQUIRED_NOTICE);
+      retry();
       return;
     }
 
