@@ -24,10 +24,13 @@
 
   --color-success: #4f765e;
   --color-error: #c84b55;
+
   --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
     "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif;
-  --font-display: "Gowun Dodum", "Pretendard Variable", Pretendard,
-    "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  --font-brand: "Song Myung", "Gowun Batang", serif;
+  --font-editorial: "Gowun Batang", "Song Myung", serif;
+  --font-hand: "Gaegu", "Pretendard Variable", Pretendard, sans-serif;
+
   --radius-cover: 0.125rem;
   --radius-control: 0.625rem;
   --radius-panel: 0.875rem;
@@ -81,7 +84,7 @@
   }
 
   .type-display {
-    font-family: var(--font-display);
+    font-family: var(--font-brand);
     font-size: 2rem;
     font-weight: 400;
     line-height: 2.5rem;
@@ -89,19 +92,19 @@
   }
 
   .type-section {
-    font-family: var(--font-display);
+    font-family: var(--font-editorial);
     font-size: 1.5rem;
-    font-weight: 400;
+    font-weight: 700;
     line-height: 2rem;
     letter-spacing: -0.035em;
   }
 
   .type-heading {
-    font-family: var(--font-display);
+    font-family: var(--font-sans);
     font-size: 1.25rem;
-    font-weight: 400;
+    font-weight: 700;
     line-height: 1.75rem;
-    letter-spacing: -0.025em;
+    letter-spacing: -0.02em;
   }
 
   .type-subheading {
@@ -134,6 +137,14 @@
     font-size: 0.8125rem;
     font-weight: 400;
     line-height: 1.125rem;
+  }
+
+  .type-handwriting {
+    font-family: var(--font-hand);
+    font-size: 1.125rem;
+    font-weight: 400;
+    line-height: 1.625rem;
+    letter-spacing: 0.01em;
   }
 
   .type-numeral {

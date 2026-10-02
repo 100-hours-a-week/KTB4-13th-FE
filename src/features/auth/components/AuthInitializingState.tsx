@@ -5,7 +5,7 @@ export function AuthInitializingState() {
       className="flex h-dvh flex-col items-center justify-center gap-3 bg-surface px-5 text-center"
       role="status"
     >
-      <p className="type-display font-serif font-semibold tracking-tighter text-text-primary">
+      <p className="type-display text-text-primary">
         북적북적
       </p>
       <p className="break-keep type-body leading-relaxed text-text-secondary">
