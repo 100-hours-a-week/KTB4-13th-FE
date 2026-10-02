@@ -24,7 +24,6 @@ export function CartButton({
 
   useEffect(() => {
     if (!countEnabled) {
-      setCount(null);
       return undefined;
     }
 

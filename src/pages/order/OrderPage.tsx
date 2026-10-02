@@ -134,7 +134,15 @@ export function OrderPage() {
       items: toCreateOrderItems(items),
     });
 
-    if (result.ok && result.data.status === "ORDER_CREATED") {
+    if (!result.ok) {
+      setIsSubmitting(false);
+      showNotice(
+        result.reason === "stock" ? ORDER_STOCK_NOTICE : ORDER_FAILURE_NOTICE,
+      );
+      return;
+    }
+
+    if (result.data.status === "ORDER_CREATED") {
       const cleanupResult =
         cartItemIds.length > 0 ? await deleteCartItems(cartItemIds) : null;
       const completeState: OrderCompleteNavigationState = {
@@ -144,16 +152,10 @@ export function OrderPage() {
       return;
     }
 
-    if (result.ok && result.data.status === "NO_ADDRESS") {
-      setIsSubmitting(false);
-      setFormErrors(validateDeliveryForm("new", formValues));
-      showNotice(ORDER_ADDRESS_REQUIRED_NOTICE);
-      retry();
-      return;
-    }
-
     setIsSubmitting(false);
-    showNotice(result.reason === "stock" ? ORDER_STOCK_NOTICE : ORDER_FAILURE_NOTICE);
+    setFormErrors(validateDeliveryForm("new", formValues));
+    showNotice(ORDER_ADDRESS_REQUIRED_NOTICE);
+    retry();
   };
 
   return (
