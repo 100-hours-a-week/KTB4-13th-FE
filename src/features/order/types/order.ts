@@ -7,7 +7,12 @@ export interface OrderItemViewModel {
 }
 
 export interface OrderNavigationState {
+  cartItemIds?: number[];
   items: OrderItemViewModel[];
+}
+
+export interface OrderCompleteNavigationState {
+  isCartCleanupFailed: boolean;
 }
 
 export interface CreateOrderItemRequestDto {

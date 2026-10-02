@@ -154,6 +154,7 @@ export function CartPage() {
     }
 
     const orderState: OrderNavigationState = {
+      cartItemIds: orderItems.map((item) => item.cartItemId),
       items: orderItems.map((item) => ({
         discountedPrice: item.unitPrice,
         itemName: item.itemName,

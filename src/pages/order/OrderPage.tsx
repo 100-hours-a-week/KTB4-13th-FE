@@ -5,11 +5,13 @@ import { ArrowLeftIcon } from "@/common/components/AppIcons";
 import { Button } from "@/common/components/Button";
 import { Toast } from "@/common/components/Toast";
 import { useTransientNotice } from "@/common/hooks/useTransientNotice";
+import { deleteCartItems } from "@/features/cart/api/cartApi";
 import { createOrder } from "@/features/order/api/orderApi";
 import {
   readOrderNavigationState,
   toCreateOrderItems,
 } from "@/features/order/lib/orderNavigation";
+import type { OrderCompleteNavigationState } from "@/features/order/types/order";
 import { AddressSection } from "@/pages/order/components/AddressSection";
 import { OrderItemsSection } from "@/pages/order/components/OrderItemsSection";
 import {
@@ -19,7 +21,6 @@ import {
 import { useAddresses } from "@/pages/order/hooks/useAddresses";
 import {
   EMPTY_DELIVERY_FORM,
-  getEffectiveDeliveryValues,
   validateDeliveryForm,
 } from "@/pages/order/lib/orderForm";
 import type {
@@ -47,6 +48,7 @@ export function OrderPage() {
   const { retry, state: addressesState } = useAddresses();
   const navigationState = readOrderNavigationState(location.state);
   const items = navigationState?.items ?? [];
+  const cartItemIds = navigationState?.cartItemIds ?? [];
   const totals = calculateOrderTotals(items);
   const defaultAddress =
     addressesState.kind === "ready"
@@ -60,12 +62,7 @@ export function OrderPage() {
   );
   const [formErrors, setFormErrors] = useState<DeliveryFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const effectiveValues = getEffectiveDeliveryValues(
-    mode,
-    formValues,
-    defaultAddress,
-  );
-  const currentErrors = validateDeliveryForm(effectiveValues);
+  const currentErrors = validateDeliveryForm(mode, formValues);
   const isAddressReady = addressesState.kind === "ready";
   const canSubmit =
     isAddressReady &&
@@ -95,7 +92,7 @@ export function OrderPage() {
   };
 
   const handleFieldBlur = (field: DeliveryFormField) => {
-    const error = validateDeliveryForm(effectiveValues)[field];
+    const error = validateDeliveryForm(mode, formValues)[field];
 
     setFormErrors((current) => {
       if (error) {
@@ -111,7 +108,7 @@ export function OrderPage() {
   };
 
   const handleSubmit = async () => {
-    const errors = validateDeliveryForm(effectiveValues);
+    const errors = validateDeliveryForm(mode, formValues);
     setFormErrors(errors);
 
     if (isSubmitting || items.length === 0 || Object.keys(errors).length > 0) {
@@ -129,13 +126,18 @@ export function OrderPage() {
       addressId: defaultAddress.addressId,
       items: toCreateOrderItems(items),
     });
-    setIsSubmitting(false);
 
     if (result.ok) {
-      navigate("/order/complete", { replace: true });
+      const cleanupResult =
+        cartItemIds.length > 0 ? await deleteCartItems(cartItemIds) : null;
+      const completeState: OrderCompleteNavigationState = {
+        isCartCleanupFailed: cleanupResult !== null && !cleanupResult.ok,
+      };
+      navigate("/order/complete", { replace: true, state: completeState });
       return;
     }
 
+    setIsSubmitting(false);
     showNotice(result.reason === "stock" ? ORDER_STOCK_NOTICE : ORDER_FAILURE_NOTICE);
   };
 
