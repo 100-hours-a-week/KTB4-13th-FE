@@ -15,6 +15,10 @@ export function OnboardingEntryGuard() {
   }
 
   if (status === "unauthenticated") {
+    if (location.pathname === "/") {
+      return <Navigate replace state={{ returnTo: "/" }} to="/login" />;
+    }
+
     return <Outlet />;
   }
 
