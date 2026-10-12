@@ -269,6 +269,12 @@ export function AddressSection({
             </button>
           </div>
 
+          {mode === "new" && defaultAddress ? (
+            <p className="rounded-control bg-muted px-4 py-3 type-body-small text-text-secondary">
+              입력한 주소를 새 기본 배송지로 등록한 뒤 주문합니다. 기존 기본 배송지는 변경됩니다.
+            </p>
+          ) : null}
+
           {!defaultAddress ? (
             <p className="rounded-control bg-muted px-4 py-3 type-body-small text-text-secondary">
               등록된 기본 배송지가 없어 새 배송지를 입력해 주세요
