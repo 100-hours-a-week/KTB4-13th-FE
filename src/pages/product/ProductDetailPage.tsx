@@ -198,6 +198,7 @@ export function ProductDetailPage() {
           isAddingToCart={pendingPurchaseAction === "cart"}
           isBuyingNow={pendingPurchaseAction === "buy-now"}
           isSoldOut={product.stockQuantity <= 0}
+          price={product.discountedPrice}
           onAddToCart={handleAddToCart}
           onBuyNow={handleBuyNow}
         />
