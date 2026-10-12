@@ -2,20 +2,22 @@ interface PurchaseBarProps {
   isAddingToCart: boolean;
   isBuyingNow: boolean;
   isSoldOut: boolean;
+  price: number;
   onAddToCart: () => void;
   onBuyNow: () => void;
 }
+
+const priceFormatter = new Intl.NumberFormat("ko-KR");
 
 export function PurchaseBar({
   isAddingToCart,
   isBuyingNow,
   isSoldOut,
+  price,
   onAddToCart,
   onBuyNow,
 }: PurchaseBarProps) {
   const isPending = isAddingToCart || isBuyingNow;
-  const buttonClassName =
-    "min-h-12 flex-1 rounded-control type-body-small font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-text-disabled";
 
   if (isSoldOut) {
     return (
@@ -26,7 +28,7 @@ export function PurchaseBar({
           disabled
           type="button"
         >
-          품절된 도서입니다
+          품절된 상품입니다
         </button>
       </div>
     );
@@ -38,7 +40,7 @@ export function PurchaseBar({
       className="flex shrink-0 gap-2 border-t border-hairline bg-surface px-5 py-3"
     >
       <button
-        className={`${buttonClassName} border border-border-strong bg-surface text-text-primary hover:bg-muted`}
+        className="min-h-12 w-[28%] shrink-0 rounded-control border border-border-strong bg-surface px-2 type-body-small font-semibold text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:bg-muted disabled:text-text-disabled"
         disabled={isPending}
         onClick={onAddToCart}
         type="button"
@@ -46,12 +48,12 @@ export function PurchaseBar({
         {isAddingToCart ? "담는 중" : "장바구니"}
       </button>
       <button
-        className={`${buttonClassName} bg-primary text-white hover:bg-primary-hover`}
+        className="min-h-12 min-w-0 flex-1 rounded-control bg-primary px-3 type-body-small font-semibold text-white hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:bg-muted disabled:text-text-disabled"
         disabled={isPending}
         onClick={onBuyNow}
         type="button"
       >
-        {isBuyingNow ? "담는 중" : "바로 구매"}
+        {isBuyingNow ? "담는 중" : `${priceFormatter.format(price)}원 · 바로 구매`}
       </button>
     </div>
   );
