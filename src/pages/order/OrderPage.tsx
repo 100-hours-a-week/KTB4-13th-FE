@@ -36,8 +36,6 @@ import {
   formatWon,
 } from "@/pages/order/lib/orderTotals";
 
-const ORDER_UNAVAILABLE_NOTICE =
-  "현재 주문을 진행할 수 없어요. 잠시 후 다시 시도해 주세요";
 const ORDER_ADDRESS_REQUIRED_NOTICE =
   "주문을 완료하려면 배송지 입력이 필요해요. 배송지를 입력해 주세요";
 const ORDER_STOCK_NOTICE = "재고가 부족한 상품이 있어 주문하지 못했어요";
@@ -123,14 +121,9 @@ export function OrderPage() {
       return;
     }
 
-    if (defaultAddress && mode !== "default") {
-      showNotice(ORDER_UNAVAILABLE_NOTICE);
-      return;
-    }
-
     setIsSubmitting(true);
 
-    if (!defaultAddress) {
+    if (mode === "new") {
       const addressResult = await registerUserAddress({
         address: formValues.address.trim(),
         detailAddress: formValues.detailAddress.trim() || null,
@@ -143,7 +136,7 @@ export function OrderPage() {
         setIsSubmitting(false);
         showNotice(
           addressResult.reason === "invalid-request"
-            ? "배송지를 저장하지 못했어요. 입력값을 확인해 주세요"
+            ? "배송지를 등록하지 못했어요. 중복 주소나 등록 한도를 확인해 주세요"
             : "배송지를 저장하지 못했어요. 다시 시도해 주세요",
         );
         return;
