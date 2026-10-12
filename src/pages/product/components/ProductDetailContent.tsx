@@ -7,32 +7,40 @@ const priceFormatter = new Intl.NumberFormat("ko-KR");
 
 function ProductPrice({ product }: { product: ProductDetail }) {
   const isSoldOut = product.stockQuantity <= 0;
-  const hasDiscount = product.discountedPrice !== product.salePrice;
-
-  if (isSoldOut) {
-    return (
-      <p
-        className="type-title font-bold text-error"
-        id="product-sold-out-reason"
-      >
-        일시 품절
-      </p>
-    );
-  }
+  const hasDiscount =
+    product.salePrice > 0 && product.discountedPrice < product.salePrice;
+  const discountRate = hasDiscount
+    ? Math.round(
+        ((product.salePrice - product.discountedPrice) / product.salePrice) * 100,
+      )
+    : 0;
 
   return (
-    <div className="flex flex-wrap items-baseline justify-center gap-x-2">
-      <p className="type-heading tabular-nums text-text-primary">
-        {priceFormatter.format(
-          hasDiscount ? product.discountedPrice : product.salePrice,
-        )}
-        원
+    <div className="space-y-2 text-center">
+      <div className="flex flex-wrap items-baseline justify-center gap-x-2">
+        {hasDiscount && discountRate > 0 ? (
+          <span className="type-title font-bold tabular-nums text-accent">
+            {discountRate}%
+          </span>
+        ) : null}
+        <p className="type-heading tabular-nums text-text-primary">
+          {priceFormatter.format(
+            hasDiscount ? product.discountedPrice : product.salePrice,
+          )}
+          원
+        </p>
+        {hasDiscount ? (
+          <del className="type-body-small tabular-nums text-text-tertiary">
+            {priceFormatter.format(product.salePrice)}원
+          </del>
+        ) : null}
+      </div>
+      <p
+        className={`type-body-small font-semibold ${isSoldOut ? "text-error" : "text-text-secondary"}`}
+        id={isSoldOut ? "product-sold-out-reason" : undefined}
+      >
+        {isSoldOut ? "일시 품절" : "재고 있음"}
       </p>
-      {hasDiscount ? (
-        <del className="type-body-small tabular-nums text-text-tertiary">
-          {priceFormatter.format(product.salePrice)}원
-        </del>
-      ) : null}
     </div>
   );
 }
