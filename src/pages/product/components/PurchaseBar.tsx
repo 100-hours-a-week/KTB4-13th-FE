@@ -46,9 +46,8 @@ export function PurchaseBar({
         {isAddingToCart ? "담는 중" : "장바구니"}
       </button>
       <button
-        aria-describedby={disabledDescription}
         className={`${buttonClassName} bg-primary text-white hover:bg-primary-hover`}
-        disabled={isSoldOut || isPending}
+        disabled={isPending}
         onClick={onBuyNow}
         type="button"
       >
