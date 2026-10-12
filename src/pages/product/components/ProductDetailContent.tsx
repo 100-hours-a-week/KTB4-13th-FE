@@ -16,31 +16,30 @@ function ProductPrice({ product }: { product: ProductDetail }) {
     : 0;
 
   return (
-    <div className="space-y-2 text-center">
-      <div className="flex flex-wrap items-baseline justify-center gap-x-2">
-        {hasDiscount && discountRate > 0 ? (
-          <span className="type-title font-bold tabular-nums text-accent">
-            {discountRate}%
-          </span>
-        ) : null}
-        <p className="type-heading tabular-nums text-text-primary">
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <p className="type-heading font-bold tabular-nums text-text-primary">
           {priceFormatter.format(
             hasDiscount ? product.discountedPrice : product.salePrice,
           )}
           원
         </p>
+        {hasDiscount && discountRate > 0 ? (
+          <span className="type-body-small font-semibold tabular-nums text-accent">
+            {discountRate}%
+          </span>
+        ) : null}
         {hasDiscount ? (
           <del className="type-body-small tabular-nums text-text-tertiary">
             {priceFormatter.format(product.salePrice)}원
           </del>
         ) : null}
       </div>
-      <p
-        className={`type-body-small font-semibold ${isSoldOut ? "text-error" : "text-text-secondary"}`}
-        id={isSoldOut ? "product-sold-out-reason" : undefined}
-      >
-        {isSoldOut ? "일시 품절" : "재고 있음"}
-      </p>
+      {isSoldOut ? (
+        <p className="type-body-small font-medium text-error" id="product-sold-out-reason">
+          현재 품절된 도서입니다
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -74,7 +73,7 @@ function BookDescription({ description }: { description: string | null }) {
   }
 
   return (
-    <section aria-labelledby="book-description-title" className="border-b border-hairline py-8">
+    <section aria-labelledby="book-description-title" className="border-b border-hairline py-7">
       <h2
         className="type-title text-text-primary"
         id="book-description-title"
@@ -116,33 +115,33 @@ export function ProductDetailContent({
 }: ProductDetailContentProps) {
   return (
     <article className="page-content">
-      <section className="flex flex-col items-center border-b border-hairline pb-8 pt-6">
-        <div className="w-[46%] max-w-48">
-          <BookCover
-            alt={`${product.itemName} 표지`}
-            fallbackTitle={product.itemName}
-            radius="cover"
-            thumbnailUrl={product.thumbnailUrl}
-          />
+      <section className="border-b border-hairline pb-7">
+        <div className="-mx-5 flex justify-center bg-muted px-5 py-7">
+          <div className="w-[42%] max-w-44">
+            <BookCover
+              alt={`${product.itemName} 표지`}
+              fallbackTitle={product.itemName}
+              radius="cover"
+              thumbnailUrl={product.thumbnailUrl}
+            />
+          </div>
         </div>
-        <div className="mt-7 w-full min-w-0 text-center">
+        <div className="min-w-0 pt-6">
           <p className="break-words type-caption text-text-tertiary">
             <span className="sr-only">분류 </span>
             {product.category}
           </p>
-          <h2 className="mt-1.5 break-words break-keep type-section text-text-primary">
+          <h2 className="mt-2 break-words break-keep type-section text-text-primary">
             {product.itemName}
           </h2>
-          <dl className="mt-3 space-y-0.5 text-text-secondary">
+          <dl className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-text-secondary">
             <div>
               <dt className="sr-only">저자</dt>
-              <dd className="break-words type-body-small">{product.author}</dd>
+              <dd className="type-body-small">{product.author}</dd>
             </div>
             <div>
               <dt className="sr-only">출판사</dt>
-              <dd className="break-words type-caption text-text-tertiary">
-                {product.publisher}
-              </dd>
+              <dd className="type-body-small">{product.publisher}</dd>
             </div>
             <div>
               <dt className="sr-only">출간일</dt>
@@ -151,7 +150,7 @@ export function ProductDetailContent({
               </dd>
             </div>
           </dl>
-          <div className="mt-5">
+          <div className="mt-6 border-t border-hairline pt-5">
             <ProductPrice product={product} />
           </div>
         </div>
