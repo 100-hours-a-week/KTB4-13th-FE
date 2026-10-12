@@ -26,8 +26,20 @@ if (sentryDsn) {
   });
 }
 
-createRoot(document.getElementById("root")!).render(
+const root = createRoot(document.getElementById("root")!);
+
+if (import.meta.env.DEV && window.location.pathname === "/dev/preview") {
+  void import("@/dev/DevPreviewApp").then(({ default: DevPreviewApp }) => {
+    root.render(
+      <StrictMode>
+        <DevPreviewApp />
+      </StrictMode>,
+    );
+  });
+} else {
+  root.render(
     <StrictMode>
-        <App />
+      <App />
     </StrictMode>,
-);
+  );
+}

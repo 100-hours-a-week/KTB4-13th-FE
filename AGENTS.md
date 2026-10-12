@@ -38,3 +38,10 @@ For every frontend task, read in this order:
 ## Backend boundary
 
 The sibling backend repository is read-only reference material during frontend work. Discover it with a relative sibling path; do not hardcode a personal absolute path. Never modify backend files, skills, `AGENTS.md`, or `.docs`; never format, test, install dependencies, stage, commit, push, or switch branches there. If work appears to need a cross-repository change, explain it and wait for the user rather than changing it.
+
+## Development-only UI previews
+
+- Use `/dev/preview` with `npm run dev` to inspect product detail states without AWS data.
+- Keep preview fixtures in `src/dev/`; they are illustrative and must never replace real API results or be enabled in production.
+- Reuse production components for visual checks. Preview routes must not trigger cart/order mutations.
+- Run lint and build before merging preview changes; preview checks do not substitute for real API integration tests.
