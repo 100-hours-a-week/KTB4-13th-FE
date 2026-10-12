@@ -16,7 +16,8 @@ function ProductPrice({ product }: { product: ProductDetail }) {
     : 0;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
+      <p className="type-caption text-text-secondary">판매가</p>
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
         <p className="type-heading font-bold tabular-nums text-text-primary">
           {priceFormatter.format(
@@ -45,7 +46,7 @@ function ProductPrice({ product }: { product: ProductDetail }) {
             품절
           </span>
           <p className="type-body-small leading-relaxed text-text-secondary">
-            현재 구매할 수 없는 도서입니다.
+            지금은 구매할 수 없어요.
           </p>
         </div>
       ) : null}
