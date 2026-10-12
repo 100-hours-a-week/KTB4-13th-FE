@@ -16,7 +16,7 @@ function ProductPrice({ product }: { product: ProductDetail }) {
     : 0;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
         <p className="type-heading font-bold tabular-nums text-text-primary">
           {priceFormatter.format(
@@ -36,9 +36,18 @@ function ProductPrice({ product }: { product: ProductDetail }) {
         ) : null}
       </div>
       {isSoldOut ? (
-        <p className="type-body-small font-medium text-error" id="product-sold-out-reason">
-          현재 품절된 도서입니다
-        </p>
+        <div
+          className="flex items-start gap-2 rounded-control bg-muted px-3 py-3"
+          id="product-sold-out-reason"
+          role="status"
+        >
+          <span className="shrink-0 rounded bg-surface px-2 py-0.5 type-caption font-semibold text-text-secondary">
+            품절
+          </span>
+          <p className="type-body-small leading-relaxed text-text-secondary">
+            현재 구매할 수 없는 도서입니다.
+          </p>
+        </div>
       ) : null}
     </div>
   );
@@ -73,7 +82,7 @@ function BookDescription({ description }: { description: string | null }) {
   }
 
   return (
-    <section aria-labelledby="book-description-title" className="border-b border-hairline py-7">
+    <section aria-labelledby="book-description-title" className="border-b border-hairline py-6">
       <h2
         className="type-title text-text-primary"
         id="book-description-title"
@@ -116,8 +125,8 @@ export function ProductDetailContent({
   return (
     <article className="page-content">
       <section className="border-b border-hairline pb-7">
-        <div className="-mx-5 flex justify-center bg-muted px-5 py-7">
-          <div className="w-[42%] max-w-44">
+        <div className="-mx-5 flex justify-center bg-muted px-5 py-8">
+          <div className="w-[44%] max-w-44">
             <BookCover
               alt={`${product.itemName} 표지`}
               fallbackTitle={product.itemName}
@@ -150,7 +159,7 @@ export function ProductDetailContent({
               </dd>
             </div>
           </dl>
-          <div className="mt-6 border-t border-hairline pt-5">
+          <div className="mt-5 border-t border-hairline pt-5">
             <ProductPrice product={product} />
           </div>
         </div>
@@ -161,7 +170,7 @@ export function ProductDetailContent({
       {recommendationReason ? (
         <section
           aria-labelledby="recommendation-reason-title"
-          className="border-b border-hairline py-8"
+          className="border-b border-hairline py-6"
         >
           <h2
             className="type-caption font-semibold text-accent"
