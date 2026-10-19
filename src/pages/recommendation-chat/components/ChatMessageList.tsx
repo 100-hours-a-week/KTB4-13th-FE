@@ -71,7 +71,7 @@ function RecommendationCard({
     <Link
       aria-label={`${recommendation.title} 상세 보기`}
       className="block h-full rounded-cover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-      to={`/products/${recommendation.productId}`}
+      to={`/products/${recommendation.productId}?recommendationCardId=${recommendation.id}`}
     >
       {card}
     </Link>

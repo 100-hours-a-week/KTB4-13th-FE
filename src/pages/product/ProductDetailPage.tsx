@@ -19,10 +19,11 @@ import { ProductDetailContent, ProductDetailSkeleton } from "@/pages/product/com
 import { ProductHeader } from "@/pages/product/components/ProductHeader";
 import { PurchaseBar } from "@/pages/product/components/PurchaseBar";
 import { useProductDetail } from "@/pages/product/hooks/useProductDetail";
+import { useRecommendationCardReason } from "@/pages/product/hooks/useRecommendationCardReason";
 
 const PURCHASE_QUANTITY = 1;
 
-function parseProductId(value: string | undefined) {
+function parsePositiveId(value: string | null | undefined) {
   if (!value) {
     return null;
   }
@@ -31,30 +32,26 @@ function parseProductId(value: string | undefined) {
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
-function readRecommendationReason(state: unknown) {
-  if (typeof state !== "object" || state === null) {
-    return null;
-  }
-
-  const reason = Reflect.get(state, "recommendationReason");
-  return typeof reason === "string" && reason.trim() ? reason.trim() : null;
-}
-
 export function ProductDetailPage() {
   const { productId: productIdParam } = useParams();
-  const productId = parseProductId(productIdParam);
+  const productId = parsePositiveId(productIdParam);
   const location = useLocation();
+  const recommendationCardId = parsePositiveId(
+    new URLSearchParams(location.search).get("recommendationCardId"),
+  );
   const navigate = useNavigate();
   const { status: authStatus } = useAuth();
   const { notice, showNotice } = useTransientNotice();
   const { retry, state } = useProductDetail(productId);
+  const recommendationReason = useRecommendationCardReason(
+    recommendationCardId,
+  );
   const [pendingPurchaseAction, setPendingPurchaseAction] = useState<
     "cart" | "buy-now" | null
   >(null);
   const [loginRequiredAction, setLoginRequiredAction] = useState<
     "cart" | "buy-now" | null
   >(null);
-  const recommendationReason = readRecommendationReason(location.state);
   const product = state.kind === "ready" ? state.data : null;
 
   const handleBack = () => {
