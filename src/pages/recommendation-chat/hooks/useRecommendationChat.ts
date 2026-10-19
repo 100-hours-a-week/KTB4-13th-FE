@@ -84,6 +84,8 @@ export function useRecommendationChat(
   const [isHistoryLoading, setIsHistoryLoading] = useState(
     initialSessionId !== null,
   );
+  const [historyError, setHistoryError] = useState(false);
+  const [historyRequestKey, setHistoryRequestKey] = useState(0);
   const [sessionsError, setSessionsError] = useState(false);
   const [status, setStatus] = useState<ChatPresentationStatus>("idle");
   const shownBookIdsRef = useRef<number[]>([]);
@@ -129,6 +131,7 @@ export function useRecommendationChat(
     void fetchChatHistory(sessionId, controller.signal).then((result) => {
       if (controller.signal.aborted) return;
       if (result.ok) {
+        setHistoryError(false);
         setMessages(toHistoryMessages(result.data));
         shownBookIdsRef.current = result.data.flatMap(
           (message) =>
@@ -136,16 +139,17 @@ export function useRecommendationChat(
         );
       } else {
         setMessages([]);
-        setStatus("error");
+        setHistoryError(true);
       }
       setIsHistoryLoading(false);
     });
     return () => controller.abort();
-  }, [sessionId]);
+  }, [historyRequestKey, sessionId]);
 
   const selectSession = (nextSessionId: number) => {
     if (isSendingRef.current || nextSessionId === sessionId) return;
     setIsHistoryLoading(true);
+    setHistoryError(false);
     setStatus("idle");
     setSessionId(nextSessionId);
     onSessionChange(nextSessionId);
@@ -157,6 +161,7 @@ export function useRecommendationChat(
     setMessages([]);
     setStatus("idle");
     setIsHistoryLoading(false);
+    setHistoryError(false);
     shownBookIdsRef.current = [];
     onSessionChange(null);
   };
@@ -286,10 +291,17 @@ export function useRecommendationChat(
   return {
     confirmProposal,
     declineProposal,
+    historyError,
     isHistoryLoading,
     loadSessions,
     messages,
     retry,
+    retryHistory: () => {
+      if (sessionId === null) return;
+      setHistoryError(false);
+      setIsHistoryLoading(true);
+      setHistoryRequestKey((value) => value + 1);
+    },
     selectSession,
     sendMessage,
     sessionId,

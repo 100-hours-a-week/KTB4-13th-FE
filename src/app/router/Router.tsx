@@ -15,7 +15,6 @@ import { MyPage } from "@/pages/my/MyPage";
 import { MyBenefitsPage } from "@/pages/my-benefits/MyBenefitsPage";
 import { NotificationPage } from "@/pages/notifications/NotificationPage";
 import { OnboardingPage } from "@/pages/onboarding/OnboardingPage";
-import { OrderCompletePage } from "@/pages/order-complete/OrderCompletePage";
 import { OrderHistoryPage } from "@/pages/order-history/OrderHistoryPage";
 import { OrderDetailPage } from "@/pages/order-detail/OrderDetailPage";
 import { OrderPage } from "@/pages/order/OrderPage";
@@ -72,7 +71,6 @@ export function Router() {
             <Route path="/payment" element={<PaymentPage />} />
             <Route path="/payment/success" element={<PaymentResultPage kind="success" />} />
             <Route path="/payment/fail" element={<PaymentResultPage kind="fail" />} />
-            <Route path="/order/complete" element={<OrderCompletePage />} />
             <Route path="/my/orders" element={<OrderHistoryPage />} />
             <Route path="/my/orders/:orderKey" element={<OrderDetailPage />} />
             <Route
