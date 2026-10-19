@@ -24,9 +24,7 @@ export function ChatComposer({
   const [draft, setDraft] = useState("");
   const isComposingRef = useRef(false);
   const isSending = status === "sending";
-  // A failed message must succeed through retry first so recentTurns matches the visible transcript.
-  const isLocked = status !== "idle";
-  const canSend = draft.trim().length > 0 && !isLocked;
+  const canSend = draft.trim().length > 0 && !isSending;
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -66,7 +64,7 @@ export function ChatComposer({
         <input
           autoComplete="off"
           className="min-h-11 w-full rounded-control border border-transparent bg-muted px-3 type-body-small text-text-primary outline-none placeholder:text-text-tertiary focus-visible:border-primary focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary disabled:cursor-not-allowed disabled:text-text-disabled disabled:opacity-60"
-          disabled={isLocked}
+          disabled={isSending}
           maxLength={MAX_MESSAGE_LENGTH}
           onChange={(event) => setDraft(event.target.value)}
           onCompositionEnd={() => {

@@ -6,7 +6,6 @@ import type {
   RecommendationChatTurn,
 } from "@/features/recommendation/types/recommendationChat";
 import type {
-  ChatErrorReason,
   ChatPresentationMessage,
   ChatPresentationStatus,
 } from "@/pages/recommendation-chat/types/chatPresentation";
@@ -27,8 +26,6 @@ const INITIAL_SPEC: RecommendationChatSpec = {
 export function useRecommendationChat() {
   const [messages, setMessages] = useState<ChatPresentationMessage[]>([]);
   const [status, setStatus] = useState<ChatPresentationStatus>("idle");
-  const [errorReason, setErrorReason] = useState<ChatErrorReason | null>(null);
-  const [failedMessage, setFailedMessage] = useState<string | null>(null);
   const specRef = useRef<RecommendationChatSpec>(INITIAL_SPEC);
   const turnsRef = useRef<RecommendationChatTurn[]>([]);
   const shownBookIdsRef = useRef<number[]>([]);
@@ -41,11 +38,16 @@ export function useRecommendationChat() {
     return id;
   };
 
-  const requestReply = async (message: string) => {
+  const requestReply = async (message: string, messageId: string) => {
     isSendingRef.current = true;
     setStatus("sending");
-    setErrorReason(null);
-    setFailedMessage(null);
+    setMessages((current) =>
+      current.map((currentMessage) =>
+        currentMessage.role === "user" && currentMessage.id === messageId
+          ? { content: currentMessage.content, id: currentMessage.id, role: "user" }
+          : currentMessage,
+      ),
+    );
 
     const result = await sendRecommendationChat({
       // TODO: Remove once the chat contract drops `consented`; V1 chat does not use it.
@@ -59,8 +61,13 @@ export function useRecommendationChat() {
     isSendingRef.current = false;
 
     if (!result.ok) {
-      setErrorReason(result.reason);
-      setFailedMessage(message);
+      setMessages((current) =>
+        current.map((currentMessage) =>
+          currentMessage.role === "user" && currentMessage.id === messageId
+            ? { ...currentMessage, errorReason: result.reason }
+            : currentMessage,
+        ),
+      );
       setStatus("error");
       return;
     }
@@ -106,21 +113,33 @@ export function useRecommendationChat() {
       return;
     }
 
+    const messageId = createMessageId("user");
     setMessages((current) => [
       ...current,
-      { content: message, id: createMessageId("user"), role: "user" },
+      { content: message, id: messageId, role: "user" },
     ]);
-    void requestReply(message);
+    void requestReply(message, messageId);
   };
 
   // Resends the failed message without adding a second user bubble.
-  const retry = () => {
-    if (failedMessage === null || isSendingRef.current) {
+  const retry = (messageId: string) => {
+    if (isSendingRef.current) {
       return;
     }
 
-    void requestReply(failedMessage);
+    const failedMessage = messages.find(
+      (message) =>
+        message.role === "user" &&
+        message.id === messageId &&
+        message.errorReason !== undefined,
+    );
+
+    if (failedMessage === undefined) {
+      return;
+    }
+
+    void requestReply(failedMessage.content, failedMessage.id);
   };
 
-  return { errorReason, messages, retry, sendMessage, status };
+  return { messages, retry, sendMessage, status };
 }

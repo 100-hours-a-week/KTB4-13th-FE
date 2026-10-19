@@ -130,14 +130,12 @@ function ChatBubble({ message }: { message: ChatPresentationMessage }) {
 }
 
 interface ChatMessageListProps {
-  errorReason: ChatErrorReason | null;
   messages: ChatPresentationMessage[];
-  onRetry: () => void;
+  onRetry: (messageId: string) => void;
   status: ChatPresentationStatus;
 }
 
 export function ChatMessageList({
-  errorReason,
   messages,
   onRetry,
   status,
@@ -154,6 +152,24 @@ export function ChatMessageList({
         {messages.map((message) => (
           <li key={message.id}>
             <ChatBubble message={message} />
+            {message.role === "user" && message.errorReason ? (
+              <div
+                className="mt-4 flex flex-wrap items-center gap-x-3"
+                role="alert"
+              >
+                <p className="type-body-small text-error">
+                  {ERROR_MESSAGES[message.errorReason]}
+                </p>
+                <button
+                  className="min-h-11 rounded-control px-2 type-body-small font-semibold text-text-primary underline underline-offset-2 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed"
+                  disabled={status === "sending"}
+                  onClick={() => onRetry(message.id)}
+                  type="button"
+                >
+                  다시 보내기
+                </button>
+              </div>
+            ) : null}
           </li>
         ))}
       </ol>
@@ -166,20 +182,6 @@ export function ChatMessageList({
         >
           추천을 준비하고 있어요
         </p>
-      ) : null}
-      {status === "error" ? (
-        <div className="mt-4 flex flex-wrap items-center gap-x-3" role="alert">
-          <p className="type-body-small text-error">
-            {ERROR_MESSAGES[errorReason ?? "error"]}
-          </p>
-          <button
-            className="min-h-11 rounded-control px-2 type-body-small font-semibold text-text-primary underline underline-offset-2 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-            onClick={onRetry}
-            type="button"
-          >
-            다시 보내기
-          </button>
-        </div>
       ) : null}
       <div ref={endRef} />
     </div>
