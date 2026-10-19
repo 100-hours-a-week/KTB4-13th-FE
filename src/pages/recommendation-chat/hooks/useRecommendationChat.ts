@@ -6,6 +6,7 @@ import {
   createChatSession,
   fetchChatHistory,
   fetchChatSessions,
+  fetchCartProposalStatus,
   sendSessionMessage,
 } from "@/features/recommendation/api/recommendationSessionApi";
 import type {
@@ -74,6 +75,22 @@ function toHistoryMessages(
   });
 }
 
+async function restoreProposalStatuses(
+  messages: ChatPresentationMessage[],
+  signal: AbortSignal,
+) {
+  return Promise.all(messages.map(async (message) => {
+    if (message.role !== "assistant" || message.executionStatus !== "pending") return message;
+    const proposalId = message.agentButtons?.find((button) => button.action === "confirm_selection")?.proposalId;
+    if (proposalId === null || proposalId === undefined) return message;
+    const proposalStatus = await fetchCartProposalStatus(proposalId, signal);
+    return {
+      ...message,
+      executionStatus: proposalStatus === "unavailable" ? "rejected" as const : proposalStatus,
+    };
+  }));
+}
+
 export function useRecommendationChat(
   initialSessionId: number | null,
   onSessionChange: (sessionId: number | null) => void,
@@ -128,11 +145,16 @@ export function useRecommendationChat(
       return undefined;
     }
     const controller = new AbortController();
-    void fetchChatHistory(sessionId, controller.signal).then((result) => {
+    void fetchChatHistory(sessionId, controller.signal).then(async (result) => {
       if (controller.signal.aborted) return;
       if (result.ok) {
         setHistoryError(false);
-        setMessages(toHistoryMessages(result.data));
+        const restoredMessages = await restoreProposalStatuses(
+          toHistoryMessages(result.data),
+          controller.signal,
+        );
+        if (controller.signal.aborted) return;
+        setMessages(restoredMessages);
         shownBookIdsRef.current = result.data.flatMap(
           (message) =>
             message.response?.cards.map((card) => card.bookId) ?? [],

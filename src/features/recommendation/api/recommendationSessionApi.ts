@@ -132,3 +132,22 @@ export async function confirmCartProposal(proposalId: number): Promise<{ data: A
     return { data: { executionId: result.data.executionId, proposalId: result.data.proposalId, rejectionCode: null, status: "executed" }, ok: true };
   } catch { return { ok: false, reason: "error" }; }
 }
+
+export async function fetchCartProposalStatus(
+  proposalId: number,
+  signal?: AbortSignal,
+): Promise<"pending" | "executed" | "unavailable"> {
+  try {
+    const result = await parseApiResponse(
+      await fetchWithAuth(`/api/v1/agent/cart/proposals/${proposalId}`, { signal }),
+    );
+    if (!result.ok || !isRecord(result.data) || typeof result.data.status !== "string") {
+      return "unavailable";
+    }
+    if (result.data.status === "pending") return "pending";
+    if (result.data.status === "executed") return "executed";
+    return "unavailable";
+  } catch {
+    return "unavailable";
+  }
+}
