@@ -3,46 +3,59 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
 import { Button } from "@/common/components/Button";
+import { Toast } from "@/common/components/Toast";
 import { AppPageHeader } from "@/features/navigation/components/AppPageHeader";
-import { getMyMockReview, saveMockReview } from "@/features/review/mock/mockReviewRepository";
+import { createProductReview } from "@/features/review/api/reviewApi";
 import { useProductDetail } from "@/pages/product/hooks/useProductDetail";
 import { StarRating } from "@/pages/reviews/components/StarRating";
 
 const MIN_LENGTH = 10;
-const MAX_LENGTH = 500;
+const MAX_LENGTH = 255;
 
 export function ReviewWritePage() {
   const value = useParams().productId;
   const productId = Number(value);
+  const isProductIdValid = Number.isSafeInteger(productId) && productId > 0;
   const navigate = useNavigate();
-  const existing = Number.isSafeInteger(productId) ? getMyMockReview(productId) : null;
-  const [rating, setRating] = useState(existing?.rating ?? 0);
-  const [content, setContent] = useState(existing?.content ?? "");
-  const [isSpoiler, setIsSpoiler] = useState(existing?.isSpoiler ?? false);
+  const [rating, setRating] = useState(0);
+  const [content, setContent] = useState("");
+  const [isSpoiler, setIsSpoiler] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const { state } = useProductDetail(Number.isSafeInteger(productId) ? productId : null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { state } = useProductDetail(isProductIdValid ? productId : null);
   const product = state.kind === "ready" ? state.data : null;
-  const isValid = rating > 0 && content.trim().length >= MIN_LENGTH;
+  const isValid = isProductIdValid && rating > 0 && content.trim().length >= MIN_LENGTH;
 
-  const submit = (event: FormEvent) => {
+  const submit = async (event: FormEvent) => {
     event.preventDefault();
     setSubmitted(true);
-    if (!isValid) return;
-    const result = saveMockReview(productId, { content: content.trim(), isSpoiler, rating });
-    navigate(`/products/${productId}/reviews`, { replace: true, state: { notice: result === "created" ? "리뷰를 등록했어요." : "리뷰를 수정했어요." } });
+    if (!isValid || isSubmitting) return;
+    setIsSubmitting(true);
+    setError(null);
+    const result = await createProductReview({
+      content: content.trim(),
+      isSpoiler,
+      productId,
+      rate: rating,
+    });
+    if (!result.ok) {
+      setIsSubmitting(false);
+      setError(result.reason === "invalid-request" ? "구매 내역이나 기존 리뷰를 확인해 주세요." : "리뷰를 등록하지 못했어요. 다시 시도해 주세요.");
+      return;
+    }
+    navigate(`/products/${productId}/reviews`, { replace: true, state: { notice: "리뷰를 등록했어요." } });
   };
 
   return (
     <form className="relative flex h-dvh flex-col bg-surface" onSubmit={submit}>
-      <AppPageHeader fallbackPath={`/products/${productId}/reviews`} title={existing ? "리뷰 수정" : "리뷰 쓰기"} />
+      <AppPageHeader fallbackPath={`/products/${productId}/reviews`} title="리뷰 쓰기" />
       <main className="min-h-0 flex-1 overflow-y-auto pb-24">
+        {error ? <div className="page-content pt-4"><Toast variant="error">{error}</Toast></div> : null}
         <section className="page-content flex gap-3 border-b border-hairline py-5">
           <div className="w-14 shrink-0"><BookCover alt="" fallbackTitle={product?.itemName ?? "도서"} thumbnailUrl={product?.thumbnailUrl ?? null} /></div>
           <div className="min-w-0 self-center"><span className="rounded-full bg-accent-soft px-2 py-1 type-caption font-semibold text-accent">구매한 책</span><h2 className="mt-2 line-clamp-2 type-title">{product?.itemName ?? "리뷰를 작성할 도서"}</h2></div>
         </section>
-        <p className="page-content border-b border-hairline py-3 type-caption text-text-tertiary">
-          현재 작성한 리뷰는 서버에 등록되지 않고 이 기기에 개발용 Mock으로만 저장돼요.
-        </p>
         <section className="page-content border-b border-hairline py-7 text-center">
           <h2 className="type-title">이 책은 어떠셨나요?</h2>
           <div className="mt-3 flex justify-center"><StarRating onChange={setRating} rating={rating} size="large" /></div>
@@ -55,7 +68,7 @@ export function ReviewWritePage() {
           <label className="mt-6 flex min-h-14 items-center justify-between border-y border-hairline py-2"><span><strong className="block type-body">스포일러 포함</strong><span className="type-caption text-text-tertiary">내용을 가려서 보여드려요.</span></span><input checked={isSpoiler} className="size-5 accent-accent" onChange={(event) => setIsSpoiler(event.target.checked)} type="checkbox" /></label>
         </section>
       </main>
-      <div className="safe-area-bottom page-content absolute inset-x-0 bottom-0 border-t border-hairline bg-surface pt-3"><Button className="w-full" type="submit">{existing ? "수정 완료" : "리뷰 등록"}</Button></div>
+      <div className="safe-area-bottom page-content absolute inset-x-0 bottom-0 border-t border-hairline bg-surface pt-3"><Button className="w-full" isLoading={isSubmitting} type="submit">리뷰 등록</Button></div>
     </form>
   );
 }
