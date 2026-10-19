@@ -21,7 +21,14 @@ export type ChatPresentationMessage =
       role: "user";
     }
   | {
+      agentButtons?: Array<{
+        action: string;
+        label: string;
+        proposalId: number | null;
+        target: string | null;
+      }>;
       content: string;
+      executionStatus?: "declined" | "error" | "executed" | "executing" | "pending" | "rejected";
       id: string;
       recommendations?: RecommendationCardViewModel[];
       role: "assistant";

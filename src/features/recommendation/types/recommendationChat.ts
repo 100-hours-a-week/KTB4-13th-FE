@@ -33,3 +33,40 @@ export interface RecommendationChatReply {
   reply: string;
   spec: RecommendationChatSpec;
 }
+
+export interface AgentButton {
+  action: string;
+  label: string;
+  proposalId: number | null;
+  target: string | null;
+}
+
+export interface AgentExecution {
+  executionId: number | null;
+  proposalId: number | null;
+  rejectionCode: string | null;
+  status: string;
+}
+
+export interface SessionChatReply {
+  buttons: AgentButton[];
+  cards: RecommendationChatCard[];
+  execution: AgentExecution | null;
+  followup: string | null;
+  reply: string;
+  route: "recommend" | "shop" | null;
+}
+
+export interface ChatSessionSummary {
+  createdAt: string;
+  sessionId: number;
+}
+
+export interface ChatHistoryMessage {
+  createdAt: string;
+  id: number;
+  response: SessionChatReply | null;
+  role: "assistant" | "user";
+  sequence: number;
+  text: string;
+}

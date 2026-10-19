@@ -106,7 +106,13 @@ function RecommendationCardList({
   );
 }
 
-function ChatBubble({ message }: { message: ChatPresentationMessage }) {
+interface ChatBubbleProps {
+  message: ChatPresentationMessage;
+  onConfirmProposal: (messageId: string, proposalId: number) => void;
+  onDeclineProposal: (messageId: string) => void;
+}
+
+function ChatBubble({ message, onConfirmProposal, onDeclineProposal }: ChatBubbleProps) {
   const isUser = message.role === "user";
 
   return (
@@ -124,6 +130,22 @@ function ChatBubble({ message }: { message: ChatPresentationMessage }) {
         {message.role === "assistant" && message.recommendations?.length ? (
           <RecommendationCardList recommendations={message.recommendations} />
         ) : null}
+        {message.role === "assistant" && message.agentButtons?.length ? (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {message.agentButtons.map((button) => {
+              if (button.action === "navigate") {
+                const target = button.target === "CART-001" ? "/cart" : button.target === "ORDER-LIST-001" ? "/my/orders" : null;
+                return target ? <Link className="inline-flex min-h-11 items-center rounded-control border border-border px-4 type-body-small font-semibold text-text-primary" key={`${button.action}-${button.label}`} to={target}>{button.label}</Link> : null;
+              }
+              if (button.action === "confirm_selection" && button.proposalId !== null) {
+                const disabled = message.executionStatus !== "pending";
+                return <span className="contents" key={`${button.action}-${button.proposalId}`}><button className="min-h-11 rounded-control bg-primary px-4 type-body-small font-semibold text-white disabled:opacity-50" disabled={disabled} onClick={() => onConfirmProposal(message.id, button.proposalId!)} type="button">{message.executionStatus === "pending" ? button.label : message.executionStatus === "executing" ? "반영 중" : "처리 완료"}</button><button className="min-h-11 rounded-control border border-border px-4 type-body-small font-semibold disabled:opacity-50" disabled={disabled} onClick={() => onDeclineProposal(message.id)} type="button">괜찮아요</button></span>;
+              }
+              return null;
+            })}
+          </div>
+        ) : null}
+        {message.role === "assistant" && message.executionStatus && message.executionStatus !== "pending" ? <p className={`mt-3 type-caption ${message.executionStatus === "executed" ? "text-success" : message.executionStatus === "declined" || message.executionStatus === "executing" ? "text-text-tertiary" : "text-error"}`} role="status">{message.executionStatus === "executed" ? "장바구니에 반영했어요" : message.executionStatus === "executing" ? "장바구니에 반영하고 있어요" : message.executionStatus === "declined" ? "제안을 적용하지 않았어요" : message.executionStatus === "rejected" ? "제안을 실행할 수 없어요" : "장바구니에 반영하지 못했어요"}</p> : null}
       </div>
     </div>
   );
@@ -131,12 +153,16 @@ function ChatBubble({ message }: { message: ChatPresentationMessage }) {
 
 interface ChatMessageListProps {
   messages: ChatPresentationMessage[];
+  onConfirmProposal: (messageId: string, proposalId: number) => void;
+  onDeclineProposal: (messageId: string) => void;
   onRetry: (messageId: string) => void;
   status: ChatPresentationStatus;
 }
 
 export function ChatMessageList({
   messages,
+  onConfirmProposal,
+  onDeclineProposal,
   onRetry,
   status,
 }: ChatMessageListProps) {
@@ -151,7 +177,7 @@ export function ChatMessageList({
       <ol aria-live="polite" className="flex flex-col gap-6">
         {messages.map((message) => (
           <li key={message.id}>
-            <ChatBubble message={message} />
+            <ChatBubble message={message} onConfirmProposal={onConfirmProposal} onDeclineProposal={onDeclineProposal} />
             {message.role === "user" && message.errorReason ? (
               <div
                 className="mt-4 flex flex-wrap items-center gap-x-3"

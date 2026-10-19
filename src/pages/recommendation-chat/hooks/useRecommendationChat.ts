@@ -1,118 +1,237 @@
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { sendRecommendationChat } from "@/features/recommendation/api/recommendationChatApi";
+import { notifyCartChanged } from "@/features/cart/lib/cartEvents";
+import {
+  confirmCartProposal,
+  createChatSession,
+  fetchChatHistory,
+  fetchChatSessions,
+  sendSessionMessage,
+} from "@/features/recommendation/api/recommendationSessionApi";
 import type {
-  RecommendationChatSpec,
-  RecommendationChatTurn,
+  ChatHistoryMessage,
+  ChatSessionSummary,
+  SessionChatReply,
 } from "@/features/recommendation/types/recommendationChat";
 import type {
   ChatPresentationMessage,
   ChatPresentationStatus,
 } from "@/pages/recommendation-chat/types/chatPresentation";
 
-const MAX_RECENT_TURNS = 20;
-const MAX_TURN_TEXT_LENGTH = 200;
+function replyContent(reply: SessionChatReply) {
+  return reply.followup ? `${reply.reply}\n\n${reply.followup}` : reply.reply;
+}
 
-// First-turn spec from the chat contract; later turns send back the spec the server returned.
-const INITIAL_SPEC: RecommendationChatSpec = {
-  anchor_book: null,
-  exact: { author: null, publisher: null, title: null },
-  exclude: [],
-  filters: {},
-  intent: "semantic",
-  semantic: null,
-};
+function toAssistantMessage(
+  id: string,
+  reply: SessionChatReply,
+): ChatPresentationMessage {
+  const executionStatus = reply.execution?.status;
+  return {
+    agentButtons: reply.buttons,
+    content: replyContent(reply),
+    executionStatus:
+      executionStatus === "rejected"
+        ? "rejected"
+        : executionStatus === "executed" || executionStatus === "applied"
+          ? "executed"
+          : reply.buttons.some((button) => button.action === "confirm_selection")
+            ? "pending"
+            : undefined,
+    id,
+    recommendations: reply.cards.map((card) => ({
+      author: card.author,
+      coverImageUrl: card.coverImageUrl,
+      id: String(card.recommendationCardId),
+      matchScore: card.matchScore,
+      price: card.price,
+      productId: card.productId,
+      reasonShort: card.reasonShort,
+      title: card.title,
+    })),
+    role: "assistant",
+  };
+}
 
-export function useRecommendationChat() {
+function toHistoryMessages(
+  history: ChatHistoryMessage[],
+): ChatPresentationMessage[] {
+  return history.map((message) => {
+    if (message.role === "user") {
+      return {
+        content: message.text,
+        id: `history-${message.id}`,
+        role: "user" as const,
+      };
+    }
+    return message.response
+      ? toAssistantMessage(`history-${message.id}`, message.response)
+      : {
+          content: message.text,
+          id: `history-${message.id}`,
+          role: "assistant" as const,
+        };
+  });
+}
+
+export function useRecommendationChat(
+  initialSessionId: number | null,
+  onSessionChange: (sessionId: number | null) => void,
+) {
   const [messages, setMessages] = useState<ChatPresentationMessage[]>([]);
+  const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
+  const [sessionId, setSessionId] = useState<number | null>(initialSessionId);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(
+    initialSessionId !== null,
+  );
+  const [sessionsError, setSessionsError] = useState(false);
   const [status, setStatus] = useState<ChatPresentationStatus>("idle");
-  const specRef = useRef<RecommendationChatSpec>(INITIAL_SPEC);
-  const turnsRef = useRef<RecommendationChatTurn[]>([]);
   const shownBookIdsRef = useRef<number[]>([]);
   const isSendingRef = useRef(false);
   const nextMessageIdRef = useRef(1);
+  const skipHistorySessionIdRef = useRef<number | null>(null);
 
-  const createMessageId = (role: "user" | "assistant") => {
-    const id = `${role}-${nextMessageIdRef.current}`;
-    nextMessageIdRef.current += 1;
-    return id;
+  const createMessageId = (role: "user" | "assistant") =>
+    `${role}-${nextMessageIdRef.current++}`;
+
+  const loadSessions = useCallback(async (signal?: AbortSignal) => {
+    const result = await fetchChatSessions(signal);
+    if (signal?.aborted) return;
+    if (result.ok) {
+      setSessions(result.data);
+      setSessionsError(false);
+    } else {
+      setSessionsError(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetchChatSessions(controller.signal).then((result) => {
+      if (controller.signal.aborted) return;
+      if (result.ok) {
+        setSessions(result.data);
+        setSessionsError(false);
+      } else {
+        setSessionsError(true);
+      }
+    });
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    if (sessionId === null) return undefined;
+    if (skipHistorySessionIdRef.current === sessionId) {
+      skipHistorySessionIdRef.current = null;
+      return undefined;
+    }
+    const controller = new AbortController();
+    void fetchChatHistory(sessionId, controller.signal).then((result) => {
+      if (controller.signal.aborted) return;
+      if (result.ok) {
+        setMessages(toHistoryMessages(result.data));
+        shownBookIdsRef.current = result.data.flatMap(
+          (message) =>
+            message.response?.cards.map((card) => card.bookId) ?? [],
+        );
+      } else {
+        setMessages([]);
+        setStatus("error");
+      }
+      setIsHistoryLoading(false);
+    });
+    return () => controller.abort();
+  }, [sessionId]);
+
+  const selectSession = (nextSessionId: number) => {
+    if (isSendingRef.current || nextSessionId === sessionId) return;
+    setIsHistoryLoading(true);
+    setStatus("idle");
+    setSessionId(nextSessionId);
+    onSessionChange(nextSessionId);
+  };
+
+  const startNewSession = () => {
+    if (isSendingRef.current) return;
+    setSessionId(null);
+    setMessages([]);
+    setStatus("idle");
+    setIsHistoryLoading(false);
+    shownBookIdsRef.current = [];
+    onSessionChange(null);
   };
 
   const requestReply = async (message: string, messageId: string) => {
     isSendingRef.current = true;
     setStatus("sending");
     setMessages((current) =>
-      current.map((currentMessage) =>
-        currentMessage.role === "user" && currentMessage.id === messageId
-          ? { content: currentMessage.content, id: currentMessage.id, role: "user" }
-          : currentMessage,
+      current.map((item) =>
+        item.role === "user" && item.id === messageId
+          ? { content: item.content, id: item.id, role: "user" }
+          : item,
       ),
     );
 
-    const result = await sendRecommendationChat({
-      // TODO: Remove once the chat contract drops `consented`; V1 chat does not use it.
-      consented: false,
-      excludeBookIds: shownBookIdsRef.current,
+    let activeSessionId = sessionId;
+    if (activeSessionId === null) {
+      const created = await createChatSession();
+      if (!created.ok) {
+        isSendingRef.current = false;
+        setMessages((current) =>
+          current.map((item) =>
+            item.role === "user" && item.id === messageId
+              ? { ...item, errorReason: created.reason }
+              : item,
+          ),
+        );
+        setStatus("error");
+        return;
+      }
+      activeSessionId = created.data;
+      skipHistorySessionIdRef.current = activeSessionId;
+      setSessionId(activeSessionId);
+      onSessionChange(activeSessionId);
+      void loadSessions();
+    }
+
+    const result = await sendSessionMessage(
+      activeSessionId,
       message,
-      recentTurns: turnsRef.current.slice(-MAX_RECENT_TURNS),
-      spec: specRef.current,
-    });
-
+      shownBookIdsRef.current,
+    );
     isSendingRef.current = false;
-
     if (!result.ok) {
       setMessages((current) =>
-        current.map((currentMessage) =>
-          currentMessage.role === "user" && currentMessage.id === messageId
-            ? { ...currentMessage, errorReason: result.reason }
-            : currentMessage,
+        current.map((item) =>
+          item.role === "user" && item.id === messageId
+            ? { ...item, errorReason: result.reason }
+            : item,
         ),
       );
       setStatus("error");
       return;
     }
 
-    const { cards, followup, reply, spec } = result.data;
-    const content = followup ? `${reply}\n\n${followup}` : reply;
-
-    specRef.current = spec;
-    turnsRef.current = [
-      ...turnsRef.current,
-      { role: "user" as const, text: message.slice(0, MAX_TURN_TEXT_LENGTH) },
-      { role: "assistant" as const, text: content.slice(0, MAX_TURN_TEXT_LENGTH) },
-    ].slice(-MAX_RECENT_TURNS);
     shownBookIdsRef.current = [
-      ...new Set([...shownBookIdsRef.current, ...cards.map((card) => card.bookId)]),
+      ...new Set([
+        ...shownBookIdsRef.current,
+        ...result.data.cards.map((card) => card.bookId),
+      ]),
     ];
-
+    if (result.data.execution?.status === "applied") {
+      notifyCartChanged({ animate: true });
+    }
     setMessages((current) => [
       ...current,
-      {
-        content,
-        id: createMessageId("assistant"),
-        recommendations: cards.map((card) => ({
-          author: card.author,
-          coverImageUrl: card.coverImageUrl,
-          id: String(card.recommendationCardId),
-          matchScore: card.matchScore,
-          price: card.price,
-          productId: card.productId,
-          reasonShort: card.reasonShort,
-          title: card.title,
-        })),
-        role: "assistant",
-      },
+      toAssistantMessage(createMessageId("assistant"), result.data),
     ]);
     setStatus("idle");
+    void loadSessions();
   };
 
   const sendMessage = (content: string) => {
     const message = content.trim();
-
-    if (!message || isSendingRef.current) {
-      return;
-    }
-
+    if (!message || isSendingRef.current) return;
     const messageId = createMessageId("user");
     setMessages((current) => [
       ...current,
@@ -121,25 +240,62 @@ export function useRecommendationChat() {
     void requestReply(message, messageId);
   };
 
-  // Resends the failed message without adding a second user bubble.
   const retry = (messageId: string) => {
-    if (isSendingRef.current) {
-      return;
-    }
-
+    if (isSendingRef.current) return;
     const failedMessage = messages.find(
       (message) =>
         message.role === "user" &&
         message.id === messageId &&
         message.errorReason !== undefined,
     );
-
-    if (failedMessage === undefined) {
-      return;
-    }
-
-    void requestReply(failedMessage.content, failedMessage.id);
+    if (failedMessage) void requestReply(failedMessage.content, failedMessage.id);
   };
 
-  return { messages, retry, sendMessage, status };
+  const confirmProposal = async (messageId: string, proposalId: number) => {
+    setMessages((current) =>
+      current.map((message) =>
+        message.role === "assistant" && message.id === messageId
+          ? { ...message, executionStatus: "executing" }
+          : message,
+      ),
+    );
+    const result = await confirmCartProposal(proposalId);
+    setMessages((current) =>
+      current.map((message) =>
+        message.role === "assistant" && message.id === messageId
+          ? {
+              ...message,
+              executionStatus: result.ok ? "executed" : "error",
+            }
+          : message,
+      ),
+    );
+    if (result.ok) notifyCartChanged({ animate: true });
+  };
+
+  const declineProposal = (messageId: string) => {
+    setMessages((current) =>
+      current.map((message) =>
+        message.role === "assistant" && message.id === messageId
+          ? { ...message, executionStatus: "declined" }
+          : message,
+      ),
+    );
+  };
+
+  return {
+    confirmProposal,
+    declineProposal,
+    isHistoryLoading,
+    loadSessions,
+    messages,
+    retry,
+    selectSession,
+    sendMessage,
+    sessionId,
+    sessions,
+    sessionsError,
+    startNewSession,
+    status,
+  };
 }
