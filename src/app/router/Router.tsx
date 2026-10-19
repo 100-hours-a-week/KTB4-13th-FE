@@ -7,16 +7,25 @@ import { CartPage } from "@/pages/cart/CartPage";
 import { CatalogPage } from "@/pages/catalog/CatalogPage";
 import { HomePage } from "@/pages/home/HomePage";
 import { LoginPage } from "@/pages/login/LoginPage";
+import { LibraryPage } from "@/pages/library/LibraryPage";
 import { MyAddressCreatePage } from "@/pages/my-addresses/MyAddressCreatePage";
 import { MyAddressEditPage } from "@/pages/my-addresses/MyAddressEditPage";
 import { MyAddressesPage } from "@/pages/my-addresses/MyAddressesPage";
 import { MyPage } from "@/pages/my/MyPage";
+import { NotificationPage } from "@/pages/notifications/NotificationPage";
 import { OnboardingPage } from "@/pages/onboarding/OnboardingPage";
 import { OrderCompletePage } from "@/pages/order-complete/OrderCompletePage";
+import { OrderHistoryPage } from "@/pages/order-history/OrderHistoryPage";
 import { OrderPage } from "@/pages/order/OrderPage";
 import { ProductDetailPage } from "@/pages/product/ProductDetailPage";
+import { ProfileEditPage } from "@/pages/profile/ProfileEditPage";
+import { PreferenceEditPage } from "@/pages/preferences/PreferenceEditPage";
+import { PhotoSearchPage } from "@/pages/photo-search/PhotoSearchPage";
 import { AiRecommendationChatPage } from "@/pages/recommendation-chat/AiRecommendationChatPage";
 import { SearchResultsPage } from "@/pages/search/SearchResultsPage";
+import { ReviewListPage } from "@/pages/reviews/ReviewListPage";
+import { ReviewWritePage } from "@/pages/reviews/ReviewWritePage";
+import { WithdrawPage } from "@/pages/withdraw/WithdrawPage";
 
 export function Router() {
   return (
@@ -27,6 +36,7 @@ export function Router() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/" element={<HomePage />} />
           <Route path="/products/:productId" element={<ProductDetailPage />} />
+          <Route path="/products/:productId/reviews" element={<ReviewListPage />} />
           <Route
             path="/catalog/ranking"
             element={<CatalogPage mode="ranking" />}
@@ -35,6 +45,11 @@ export function Router() {
           <Route element={<RequireAuth />}>
             <Route path="/cart" element={<CartPage />} />
             <Route path="/my" element={<MyPage />} />
+            <Route path="/my/profile" element={<ProfileEditPage />} />
+            <Route path="/my/preferences" element={<PreferenceEditPage />} />
+            <Route path="/my/library" element={<LibraryPage />} />
+            <Route path="/my/withdraw" element={<WithdrawPage />} />
+            <Route path="/notifications" element={<NotificationPage />} />
             <Route path="/my/addresses" element={<MyAddressesPage />} />
             <Route
               path="/my/addresses/new"
@@ -50,10 +65,13 @@ export function Router() {
             />
             <Route path="/order" element={<OrderPage />} />
             <Route path="/order/complete" element={<OrderCompletePage />} />
+            <Route path="/my/orders" element={<OrderHistoryPage />} />
             <Route
               path="/recommendations/chat"
               element={<AiRecommendationChatPage />}
             />
+            <Route path="/recommendations/scan" element={<PhotoSearchPage />} />
+            <Route path="/products/:productId/reviews/new" element={<ReviewWritePage />} />
           </Route>
         </Route>
         <Route element={<RequireAuth />}>

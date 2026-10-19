@@ -3,11 +3,159 @@ import { fetchWithAuth } from "@/features/auth/lib/httpClient";
 import type {
   CreateOrderRequestDto,
   CreateOrderResponseDto,
+  OrderHistoryEntry,
+  OrderHistoryItem,
+  OrderHistoryPage,
+  OrderStatus,
 } from "@/features/order/types/order";
 
 export type CreateOrderResult =
   | { data: CreateOrderResponseDto; ok: true }
   | { ok: false; reason: "unauthorized" | "stock" | "error" };
+
+export type OrderHistoryResult =
+  | { data: OrderHistoryPage; ok: true }
+  | { ok: false; reason: "unauthorized" | "error" };
+
+const ORDER_STATUSES: OrderStatus[] = [
+  "CREATED",
+  "PAID",
+  "PARTIAL_CANCELED",
+  "CANCELED",
+];
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isOrderStatus(value: unknown): value is OrderStatus {
+  return ORDER_STATUSES.some((status) => status === value);
+}
+
+function parseOrderHistoryItem(value: unknown): OrderHistoryItem | null {
+  if (
+    !isRecord(value) ||
+    typeof value.itemId !== "number" ||
+    typeof value.itemName !== "string" ||
+    (value.thumbnailUrl !== null && typeof value.thumbnailUrl !== "string") ||
+    typeof value.author !== "string" ||
+    typeof value.quantity !== "number" ||
+    typeof value.unitPrice !== "number" ||
+    typeof value.totalPrice !== "number"
+  ) {
+    return null;
+  }
+
+  return {
+    author: value.author,
+    itemName: value.itemName,
+    productId: value.itemId,
+    quantity: value.quantity,
+    thumbnailUrl: value.thumbnailUrl,
+    totalPrice: value.totalPrice,
+    unitPrice: value.unitPrice,
+  };
+}
+
+function parseOrderHistoryEntry(value: unknown): OrderHistoryEntry | null {
+  if (
+    !isRecord(value) ||
+    typeof value.key !== "string" ||
+    typeof value.name !== "string" ||
+    typeof value.totalPrice !== "number" ||
+    !isOrderStatus(value.status) ||
+    !Array.isArray(value.items) ||
+    typeof value.createdAt !== "string"
+  ) {
+    return null;
+  }
+
+  const items = value.items.map(parseOrderHistoryItem);
+  if (items.some((item) => item === null)) {
+    return null;
+  }
+
+  return {
+    createdAt: value.createdAt,
+    items: items.filter((item): item is OrderHistoryItem => item !== null),
+    key: value.key,
+    name: value.name,
+    status: value.status,
+    totalPrice: value.totalPrice,
+  };
+}
+
+async function fetchOrderDetail(
+  orderKey: string,
+  signal?: AbortSignal,
+): Promise<OrderHistoryEntry | null> {
+  const result = await parseApiResponse(
+    await fetchWithAuth(`/api/v1/orders/${encodeURIComponent(orderKey)}`, {
+      signal,
+    }),
+  );
+
+  return result.ok ? parseOrderHistoryEntry(result.data) : null;
+}
+
+export async function fetchOrderHistory(
+  cursor?: string,
+  signal?: AbortSignal,
+): Promise<OrderHistoryResult> {
+  const searchParams = new URLSearchParams({ limit: "20" });
+  if (cursor) {
+    searchParams.set("cursor", cursor);
+  }
+
+  try {
+    const result = await parseApiResponse(
+      await fetchWithAuth(`/api/v1/orders?${searchParams.toString()}`, {
+        signal,
+      }),
+    );
+
+    if (!result.ok) {
+      return {
+        ok: false,
+        reason: result.status === 401 ? "unauthorized" : "error",
+      };
+    }
+    if (!isRecord(result.data) || !Array.isArray(result.data.orders)) {
+      return { ok: false, reason: "error" };
+    }
+
+    const keys = result.data.orders.flatMap((order) =>
+      isRecord(order) && typeof order.key === "string" ? [order.key] : [],
+    );
+    if (keys.length !== result.data.orders.length) {
+      return { ok: false, reason: "error" };
+    }
+
+    const orders = await Promise.all(
+      keys.map((key) => fetchOrderDetail(key, signal)),
+    );
+    if (orders.some((order) => order === null)) {
+      return { ok: false, reason: "error" };
+    }
+
+    const nextCursor = result.data.nextCursor;
+    if (nextCursor !== null && typeof nextCursor !== "string") {
+      return { ok: false, reason: "error" };
+    }
+
+    return {
+      data: {
+        nextCursor,
+        orders: orders.filter(
+          (order): order is OrderHistoryEntry => order !== null,
+        ),
+      },
+      ok: true,
+    };
+  } catch {
+    return { ok: false, reason: "error" };
+  }
+}
 
 function isCreateOrderItemResponse(value: unknown) {
   return (

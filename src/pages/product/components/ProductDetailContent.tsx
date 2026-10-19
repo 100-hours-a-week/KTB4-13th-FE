@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
 import type { ProductDetail } from "@/features/product/types/product";
@@ -167,6 +168,17 @@ export function ProductDetailContent({
       </section>
 
       <BookDescription description={product.description} />
+
+      <section className="border-b border-hairline py-7" aria-labelledby="product-review-title">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="type-title" id="product-review-title">리뷰</h2>
+          <Link className="inline-flex min-h-11 items-center type-body-small font-semibold text-text-secondary" to={`/products/${product.productId}/reviews`}>전체 보기 ›</Link>
+        </div>
+        <Link className="mt-2 flex min-h-16 items-center justify-between rounded-panel bg-muted px-4 focus-visible:outline-2 focus-visible:outline-primary" to={`/products/${product.productId}/reviews`}>
+          <span className="flex items-center gap-2"><span aria-hidden="true" className="text-[#f2b84b]">★</span><strong className="type-heading tabular-nums">{product.reviewRate.toFixed(1)}</strong></span>
+          <span className="type-body-small text-text-secondary">{product.reviewCount.toLocaleString("ko-KR")}개의 리뷰</span>
+        </Link>
+      </section>
 
       {recommendationReason ? (
         <section

@@ -9,6 +9,8 @@ const baseProduct: ProductDetail = {
   productId: 1,
   publishedAt: "2026-01-01",
   publisher: "테스트 출판사",
+  reviewCount: 128,
+  reviewRate: 4.7,
   salePrice: 20000,
   stockQuantity: 10,
   thumbnailUrl: null,

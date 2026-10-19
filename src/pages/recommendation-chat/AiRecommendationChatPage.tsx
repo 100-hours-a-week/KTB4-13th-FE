@@ -1,8 +1,6 @@
 import { useNavigate } from "react-router-dom";
 
 import { BottomNavigation } from "@/common/components/BottomNavigation";
-import { Toast } from "@/common/components/Toast";
-import { useTransientNotice } from "@/common/hooks/useTransientNotice";
 import { ChatComposer } from "@/pages/recommendation-chat/components/ChatComposer";
 import { ChatHeader } from "@/pages/recommendation-chat/components/ChatHeader";
 import { ChatMessageList } from "@/pages/recommendation-chat/components/ChatMessageList";
@@ -10,7 +8,6 @@ import { useRecommendationChat } from "@/pages/recommendation-chat/hooks/useReco
 
 export function AiRecommendationChatPage() {
   const navigate = useNavigate();
-  const { notice, showNotice } = useTransientNotice();
   const { errorReason, messages, retry, sendMessage, status } =
     useRecommendationChat();
 
@@ -50,16 +47,8 @@ export function AiRecommendationChatPage() {
         />
       </main>
 
-      {notice ? (
-        <div className="page-content pointer-events-none absolute inset-x-0 bottom-36 z-10">
-          <Toast>{notice}</Toast>
-        </div>
-      ) : null}
-
       <ChatComposer
-        onAttachClick={() =>
-          showNotice("이미지 첨부 기능을 준비하고 있어요")
-        }
+        onAttachClick={() => navigate("/recommendations/scan")}
         onSend={sendMessage}
         status={status}
       />

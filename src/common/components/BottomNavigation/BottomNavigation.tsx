@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 import {
+  BellIcon,
   HomeIcon,
   SparkleIcon,
   UserIcon,
@@ -11,6 +12,7 @@ import { useAuth } from "@/features/auth/context/useAuth";
 
 const AI_RECOMMENDATION_PATH = "/recommendations/chat";
 const MY_PATH = "/my";
+const NOTIFICATION_PATH = "/notifications";
 
 const tabClassName =
   "relative flex min-h-14 w-full flex-col items-center justify-center gap-0.5 type-caption transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary";
@@ -38,8 +40,10 @@ export function BottomNavigation() {
   const [loginPrompt, setLoginPrompt] = useState<LoginPrompt | null>(null);
   const isAiRecommendationActive = pathname === AI_RECOMMENDATION_PATH;
   const isMyActive = pathname === MY_PATH || pathname.startsWith(`${MY_PATH}/`);
+  const isNotificationActive = pathname === NOTIFICATION_PATH;
   // Home stays highlighted on every screen not owned by another available tab.
-  const isHomeActive = !isAiRecommendationActive && !isMyActive;
+  const isHomeActive =
+    !isAiRecommendationActive && !isMyActive && !isNotificationActive;
 
   const isGuest = status === "unauthenticated";
 
@@ -49,7 +53,7 @@ export function BottomNavigation() {
         aria-label="주요 메뉴"
         className="w-full min-w-0 shrink-0 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]"
       >
-        <ul className="grid grid-cols-3">
+        <ul className="grid grid-cols-4">
           <li>
             <Link
               aria-current={isHomeActive ? "page" : undefined}
@@ -90,6 +94,32 @@ export function BottomNavigation() {
                 {isAiRecommendationActive ? <ActiveIndicator /> : null}
                 <SparkleIcon className="size-6" />
                 AI 추천
+              </Link>
+            )}
+          </li>
+          <li>
+            {isGuest ? (
+              <button
+                className={inactiveTabClassName}
+                onClick={() =>
+                  setLoginPrompt({
+                    description: "로그인하면 주문과 추천 소식을 확인할 수 있어요.",
+                    returnTo: NOTIFICATION_PATH,
+                    title: "알림은 로그인 후 확인할 수 있어요",
+                  })
+                }
+                type="button"
+              >
+                <BellIcon className="size-6" />알림
+              </button>
+            ) : (
+              <Link
+                aria-current={isNotificationActive ? "page" : undefined}
+                className={isNotificationActive ? activeTabClassName : inactiveTabClassName}
+                to={NOTIFICATION_PATH}
+              >
+                {isNotificationActive ? <ActiveIndicator /> : null}
+                <BellIcon className="size-6" />알림
               </Link>
             )}
           </li>

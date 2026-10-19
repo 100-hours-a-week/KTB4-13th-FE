@@ -41,3 +41,29 @@ export interface CreateOrderResponseDto {
   status: "ORDER_CREATED" | "NO_ADDRESS";
   totalPrice: number;
 }
+
+export type OrderStatus = "CREATED" | "PAID" | "PARTIAL_CANCELED" | "CANCELED";
+
+export interface OrderHistoryItem {
+  author: string;
+  itemName: string;
+  productId: number;
+  quantity: number;
+  thumbnailUrl: string | null;
+  totalPrice: number;
+  unitPrice: number;
+}
+
+export interface OrderHistoryEntry {
+  createdAt: string;
+  items: OrderHistoryItem[];
+  key: string;
+  name: string;
+  status: OrderStatus;
+  totalPrice: number;
+}
+
+export interface OrderHistoryPage {
+  nextCursor: string | null;
+  orders: OrderHistoryEntry[];
+}

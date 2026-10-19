@@ -23,6 +23,8 @@ export interface ProductDetail {
   productId: number;
   publishedAt: string;
   publisher: string;
+  reviewCount: number;
+  reviewRate: number;
   salePrice: number;
   stockQuantity: number;
   thumbnailUrl: string | null;

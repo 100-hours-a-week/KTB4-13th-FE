@@ -36,6 +36,8 @@ function parseProductDetail(data: unknown): ProductDetail | null {
     typeof data.category !== "string" ||
     typeof data.salePrice !== "number" ||
     typeof data.discountedPrice !== "number" ||
+    typeof data.reviewCount !== "number" ||
+    typeof data.reviewRate !== "number" ||
     typeof data.stockQuantity !== "number"
   ) {
     return null;
@@ -50,6 +52,8 @@ function parseProductDetail(data: unknown): ProductDetail | null {
     productId: data.productId,
     publishedAt: data.publishedAt,
     publisher: data.publisher,
+    reviewCount: data.reviewCount,
+    reviewRate: data.reviewRate,
     salePrice: data.salePrice,
     stockQuantity: data.stockQuantity,
     thumbnailUrl: data.thumbnailUrl,

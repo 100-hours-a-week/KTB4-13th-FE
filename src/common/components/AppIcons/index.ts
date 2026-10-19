@@ -1,5 +1,7 @@
 export {
   ArrowLeftIcon,
+  BellIcon,
+  CameraIcon,
   CartIcon,
   HomeIcon,
   SearchIcon,
