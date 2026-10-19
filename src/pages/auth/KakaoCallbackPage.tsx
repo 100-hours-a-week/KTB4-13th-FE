@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 
-import { loginWithKakao } from "@/features/auth/api/kakaoLoginApi";
+import { authenticateWithKakao } from "@/features/auth/api/kakaoLoginApi";
 import { useAuth } from "@/features/auth/context/useAuth";
+import { startKakaoAuthorization } from "@/features/auth/lib/startKakaoAuthorization";
 import {
   clearKakaoLoginTransaction,
   readKakaoLoginTransaction,
@@ -81,13 +82,22 @@ export function KakaoCallbackPage() {
 
       clearKakaoLoginTransaction();
 
-      const result = await loginWithKakao({
+      const result = await authenticateWithKakao({
         authorizationCode,
         codeVerifier: transaction.codeVerifier,
         nonce: transaction.nonce,
-      });
+      }, transaction.mode);
 
       if (!result.ok) {
+        if (result.reason === "signup-required") {
+          setMessage("회원가입을 위해 카카오 인증을 계속할게요");
+          try {
+            await startKakaoAuthorization("signup");
+          } catch {
+            fail(callbackMessages.server);
+          }
+          return;
+        }
         clearLoginReturnTo();
         setMessage(
           result.reason === "network-error"

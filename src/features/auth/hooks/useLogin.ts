@@ -1,15 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { getAuthConfig } from "@/features/auth/config/authConfig";
-import {
-  createCodeVerifier,
-  createKakaoAuthorizationUrl,
-  createS256CodeChallenge,
-  createSecureRandomValue,
-} from "@/features/auth/lib/kakaoAuthorization";
+import { startKakaoAuthorization } from "@/features/auth/lib/startKakaoAuthorization";
 import {
   clearKakaoLoginTransaction,
-  saveKakaoLoginTransaction,
 } from "@/features/auth/storage/kakaoLoginTransaction";
 import {
   clearLoginReturnTo,
@@ -45,24 +38,8 @@ export function useLogin() {
     setStatus("loading");
 
     try {
-      const { kakaoRedirectUri, kakaoRestApiKey } = getAuthConfig();
-      const state = createSecureRandomValue();
-      const nonce = createSecureRandomValue();
-      const codeVerifier = createCodeVerifier();
-      const codeChallenge = await createS256CodeChallenge(codeVerifier);
-
-      saveKakaoLoginTransaction({ codeVerifier, nonce, state });
       saveLoginReturnTo(returnTo);
-
-      window.location.assign(
-        createKakaoAuthorizationUrl({
-          clientId: kakaoRestApiKey,
-          codeChallenge,
-          nonce,
-          redirectUri: kakaoRedirectUri,
-          state,
-        }),
-      );
+      await startKakaoAuthorization("login");
     } catch {
       clearKakaoLoginTransaction();
       clearLoginReturnTo();
