@@ -130,6 +130,7 @@ export function MyPage() {
           </h2>
           <div className="mt-2 border-y border-hairline">
             <MenuLink label="주문내역" to="/my/orders" />
+            <MenuLink description="보유 쿠폰과 포인트 내역" label="쿠폰·포인트" to="/my/benefits" />
             <MenuLink description="내가 담아둔 책 모아보기" label="나의 도서관" to="/my/library" />
             <MenuLink description="AI가 기억한 독서 취향 관리" label="취향 정보 수정" to="/my/preferences" />
           </div>

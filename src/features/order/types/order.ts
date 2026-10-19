@@ -15,6 +15,36 @@ export interface OrderCompleteNavigationState {
   isCartCleanupFailed: boolean;
 }
 
+export interface OrderAddress {
+  address: string;
+  detailAddress: string | null;
+  postalCode: string;
+}
+
+export interface OrderPayment {
+  cancellablePaidAmount: number;
+  cancelledPaidAmount: number;
+  couponDiscount: number;
+  method: string;
+  paidAmount: number;
+  paidAt: string;
+  usedPoint: number;
+}
+
+export interface OrderCancellationItem {
+  itemName: string;
+  orderItemId: number;
+  productId: number;
+  quantity: number;
+}
+
+export interface OrderCancellation {
+  canceledAt: string;
+  items: OrderCancellationItem[];
+  refundedAmount: number;
+  type: string;
+}
+
 export interface CreateOrderItemRequestDto {
   itemId: number;
   quantity: number;
@@ -58,9 +88,12 @@ export interface OrderHistoryItem {
 }
 
 export interface OrderHistoryEntry {
+  address: OrderAddress | null;
+  cancellations: OrderCancellation[];
   createdAt: string;
   items: OrderHistoryItem[];
   key: string;
+  payment: OrderPayment | null;
   status: OrderStatus;
   totalPrice: number;
 }

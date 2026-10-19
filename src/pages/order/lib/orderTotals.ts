@@ -1,26 +1,31 @@
 import type { OrderItemViewModel } from "@/features/order/types/order";
 
-const FREE_SHIPPING_THRESHOLD = 20_000;
-const SHIPPING_FEE = 3_000;
-
 export interface OrderTotals {
+  couponDiscount: number;
+  pointDiscount: number;
   shippingFee: number;
   subtotal: number;
   total: number;
 }
 
-export function calculateOrderTotals(items: OrderItemViewModel[]): OrderTotals {
+export function calculateOrderTotals(
+  items: OrderItemViewModel[],
+  couponDiscount = 0,
+  pointDiscount = 0,
+): OrderTotals {
   const subtotal = items.reduce(
     (sum, item) => sum + item.discountedPrice * item.quantity,
     0,
   );
-  const shippingFee =
-    subtotal === 0 || subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
+  // Backend main currently has no shipping-fee field or policy in the order total.
+  const shippingFee = 0;
 
   return {
+    couponDiscount,
+    pointDiscount,
     shippingFee,
     subtotal,
-    total: subtotal + shippingFee,
+    total: Math.max(0, subtotal + shippingFee - couponDiscount - pointDiscount),
   };
 }
 

@@ -94,6 +94,7 @@ function OrderCard({ order }: { order: OrderHistoryEntry }) {
           {priceFormatter.format(order.totalPrice)}원
         </strong>
       </div>
+      <Link className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-control border border-border type-body-small font-semibold text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" to={`/my/orders/${encodeURIComponent(order.key)}`}>주문 상세 보기</Link>
     </article>
   );
 }

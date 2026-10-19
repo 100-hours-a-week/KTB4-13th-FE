@@ -6,21 +6,21 @@ import { Button } from "@/common/components/Button";
 import { Toast } from "@/common/components/Toast";
 import { useTransientNotice } from "@/common/hooks/useTransientNotice";
 import { registerUserAddress } from "@/features/address/api/addressApi";
-import { deleteCartItems } from "@/features/cart/api/cartApi";
 import { createOrder } from "@/features/order/api/orderApi";
-import { rememberOrderedCartItems } from "@/features/order/lib/orderedCartCleanup";
 import {
   readOrderNavigationState,
   toCreateOrderItems,
 } from "@/features/order/lib/orderNavigation";
-import type { OrderCompleteNavigationState } from "@/features/order/types/order";
+import type { OwnedCoupon } from "@/features/benefit/types/benefit";
 import { AddressSection } from "@/pages/order/components/AddressSection";
 import { OrderItemsSection } from "@/pages/order/components/OrderItemsSection";
 import {
   PaymentMethodSection,
   PaymentSummary,
+  BenefitSection,
 } from "@/pages/order/components/PaymentDetails";
 import { useAddresses } from "@/pages/order/hooks/useAddresses";
+import { useOrderBenefits } from "@/pages/order/hooks/useOrderBenefits";
 import {
   EMPTY_DELIVERY_FORM,
   validateDeliveryForm,
@@ -51,7 +51,16 @@ export function OrderPage() {
   const navigationState = readOrderNavigationState(location.state);
   const items = navigationState?.items ?? [];
   const cartItemIds = navigationState?.cartItemIds ?? [];
-  const totals = calculateOrderTotals(items);
+  const benefits = useOrderBenefits();
+  const [selectedCouponId, setSelectedCouponId] = useState<number | null>(null);
+  const [pointAmount, setPointAmount] = useState(0);
+  const selectedCoupon = benefits.state.kind === "ready"
+    ? benefits.state.coupons.find((coupon) => coupon.id === selectedCouponId) ?? null
+    : null;
+  const subtotal = calculateOrderTotals(items).subtotal;
+  const couponDiscount = getCouponDiscount(selectedCoupon, subtotal);
+  const appliedPoint = Math.min(pointAmount, Math.max(0, subtotal - couponDiscount));
+  const totals = calculateOrderTotals(items, couponDiscount, appliedPoint);
   const defaultAddress =
     addressesState.kind === "ready"
       ? (addressesState.addresses.find((address) => address.isDefault) ?? null)
@@ -156,19 +165,11 @@ export function OrderPage() {
     }
 
     if (result.data.status === "ORDER_CREATED") {
-      rememberOrderedCartItems(
-        result.data.items.map((item) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-        })),
-      );
-
-      const cleanupResult =
-        cartItemIds.length > 0 ? await deleteCartItems(cartItemIds) : null;
-      const completeState: OrderCompleteNavigationState = {
-        isCartCleanupFailed: cleanupResult !== null && !cleanupResult.ok,
-      };
-      navigate("/order/complete", { replace: true, state: completeState });
+      const searchParams = new URLSearchParams({ orderKey: result.data.orderKey });
+      if (selectedCouponId !== null) searchParams.set("couponId", String(selectedCouponId));
+      if (appliedPoint > 0) searchParams.set("point", String(appliedPoint));
+      if (cartItemIds.length > 0) searchParams.set("cartItemIds", cartItemIds.join(","));
+      navigate(`/payment?${searchParams.toString()}`, { replace: true });
       return;
     }
 
@@ -208,6 +209,15 @@ export function OrderPage() {
             values={formValues}
           />
           <OrderItemsSection items={items} />
+          <BenefitSection
+            onPointChange={setPointAmount}
+            onRetry={benefits.retry}
+            onSelectCoupon={setSelectedCouponId}
+            pointAmount={appliedPoint}
+            selectedCouponId={selectedCouponId}
+            state={benefits.state}
+            subtotal={subtotal}
+          />
           <PaymentMethodSection />
           <PaymentSummary totals={totals} />
         </div>
@@ -227,9 +237,16 @@ export function OrderPage() {
             void handleSubmit();
           }}
         >
-          {formatWon(totals.total)} 결제하기
+          {formatWon(totals.total)} 주문 만들기
         </Button>
       </div>
     </div>
   );
+}
+
+function getCouponDiscount(coupon: OwnedCoupon | null, subtotal: number) {
+  if (!coupon || coupon.state !== "ISSUED" || subtotal < coupon.minOrderAmount) return 0;
+  if (coupon.type === "FIXED_AMOUNT") return coupon.discount;
+  if (coupon.type === "PERCENT_RATE") return subtotal * coupon.discount;
+  return 0;
 }

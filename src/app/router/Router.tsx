@@ -12,11 +12,15 @@ import { MyAddressCreatePage } from "@/pages/my-addresses/MyAddressCreatePage";
 import { MyAddressEditPage } from "@/pages/my-addresses/MyAddressEditPage";
 import { MyAddressesPage } from "@/pages/my-addresses/MyAddressesPage";
 import { MyPage } from "@/pages/my/MyPage";
+import { MyBenefitsPage } from "@/pages/my-benefits/MyBenefitsPage";
 import { NotificationPage } from "@/pages/notifications/NotificationPage";
 import { OnboardingPage } from "@/pages/onboarding/OnboardingPage";
 import { OrderCompletePage } from "@/pages/order-complete/OrderCompletePage";
 import { OrderHistoryPage } from "@/pages/order-history/OrderHistoryPage";
+import { OrderDetailPage } from "@/pages/order-detail/OrderDetailPage";
 import { OrderPage } from "@/pages/order/OrderPage";
+import { PaymentPage } from "@/pages/payment/PaymentPage";
+import { PaymentResultPage } from "@/pages/payment-result/PaymentResultPage";
 import { ProductDetailPage } from "@/pages/product/ProductDetailPage";
 import { ProfileEditPage } from "@/pages/profile/ProfileEditPage";
 import { PreferenceEditPage } from "@/pages/preferences/PreferenceEditPage";
@@ -45,6 +49,7 @@ export function Router() {
           <Route element={<RequireAuth />}>
             <Route path="/cart" element={<CartPage />} />
             <Route path="/my" element={<MyPage />} />
+            <Route path="/my/benefits" element={<MyBenefitsPage />} />
             <Route path="/my/profile" element={<ProfileEditPage />} />
             <Route path="/my/preferences" element={<PreferenceEditPage />} />
             <Route path="/my/library" element={<LibraryPage />} />
@@ -64,8 +69,12 @@ export function Router() {
               element={<CatalogPage mode="recommendation" />}
             />
             <Route path="/order" element={<OrderPage />} />
+            <Route path="/payment" element={<PaymentPage />} />
+            <Route path="/payment/success" element={<PaymentResultPage kind="success" />} />
+            <Route path="/payment/fail" element={<PaymentResultPage kind="fail" />} />
             <Route path="/order/complete" element={<OrderCompletePage />} />
             <Route path="/my/orders" element={<OrderHistoryPage />} />
+            <Route path="/my/orders/:orderKey" element={<OrderDetailPage />} />
             <Route
               path="/recommendations/chat"
               element={<AiRecommendationChatPage />}
