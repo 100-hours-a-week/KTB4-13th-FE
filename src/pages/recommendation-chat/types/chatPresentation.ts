@@ -16,6 +16,7 @@ export interface RecommendationCardViewModel {
 export type ChatPresentationMessage =
   | {
       content: string;
+      errorReason?: ChatErrorReason;
       id: string;
       role: "user";
     }

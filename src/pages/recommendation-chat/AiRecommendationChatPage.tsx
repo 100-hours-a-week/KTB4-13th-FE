@@ -8,8 +8,7 @@ import { useRecommendationChat } from "@/pages/recommendation-chat/hooks/useReco
 
 export function AiRecommendationChatPage() {
   const navigate = useNavigate();
-  const { errorReason, messages, retry, sendMessage, status } =
-    useRecommendationChat();
+  const { messages, retry, sendMessage, status } = useRecommendationChat();
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -40,7 +39,6 @@ export function AiRecommendationChatPage() {
 
       <main className="min-h-0 flex-1 overflow-y-auto">
         <ChatMessageList
-          errorReason={errorReason}
           messages={messages}
           onRetry={retry}
           status={status}
