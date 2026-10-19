@@ -55,7 +55,7 @@ function OrderCard({ order }: { order: OrderHistoryEntry }) {
 
       <ul className="mt-3 divide-y divide-hairline">
         {order.items.map((item) => (
-          <li className="py-3 first:pt-0 last:pb-0" key={`${order.key}-${item.productId}`}>
+          <li className="py-3 first:pt-0 last:pb-0" key={item.orderItemId}>
             <div className="flex gap-3">
               <div className="w-14 shrink-0">
                 <BookCover

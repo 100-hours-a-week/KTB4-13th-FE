@@ -35,11 +35,14 @@ function isOrderStatus(value: unknown): value is OrderStatus {
 function parseOrderHistoryItem(value: unknown): OrderHistoryItem | null {
   if (
     !isRecord(value) ||
-    typeof value.itemId !== "number" ||
+    typeof value.orderItemId !== "number" ||
+    typeof value.productId !== "number" ||
     typeof value.itemName !== "string" ||
     (value.thumbnailUrl !== null && typeof value.thumbnailUrl !== "string") ||
     typeof value.author !== "string" ||
     typeof value.quantity !== "number" ||
+    typeof value.canceledQuantity !== "number" ||
+    !isOrderStatus(value.status) ||
     typeof value.unitPrice !== "number" ||
     typeof value.totalPrice !== "number"
   ) {
@@ -48,9 +51,12 @@ function parseOrderHistoryItem(value: unknown): OrderHistoryItem | null {
 
   return {
     author: value.author,
+    canceledQuantity: value.canceledQuantity,
     itemName: value.itemName,
-    productId: value.itemId,
+    orderItemId: value.orderItemId,
+    productId: value.productId,
     quantity: value.quantity,
+    status: value.status,
     thumbnailUrl: value.thumbnailUrl,
     totalPrice: value.totalPrice,
     unitPrice: value.unitPrice,
@@ -60,8 +66,7 @@ function parseOrderHistoryItem(value: unknown): OrderHistoryItem | null {
 function parseOrderHistoryEntry(value: unknown): OrderHistoryEntry | null {
   if (
     !isRecord(value) ||
-    typeof value.key !== "string" ||
-    typeof value.name !== "string" ||
+    typeof value.orderKey !== "string" ||
     typeof value.totalPrice !== "number" ||
     !isOrderStatus(value.status) ||
     !Array.isArray(value.items) ||
@@ -78,8 +83,7 @@ function parseOrderHistoryEntry(value: unknown): OrderHistoryEntry | null {
   return {
     createdAt: value.createdAt,
     items: items.filter((item): item is OrderHistoryItem => item !== null),
-    key: value.key,
-    name: value.name,
+    key: value.orderKey,
     status: value.status,
     totalPrice: value.totalPrice,
   };
@@ -125,7 +129,9 @@ export async function fetchOrderHistory(
     }
 
     const keys = result.data.orders.flatMap((order) =>
-      isRecord(order) && typeof order.key === "string" ? [order.key] : [],
+      isRecord(order) && typeof order.orderKey === "string"
+        ? [order.orderKey]
+        : [],
     );
     if (keys.length !== result.data.orders.length) {
       return { ok: false, reason: "error" };

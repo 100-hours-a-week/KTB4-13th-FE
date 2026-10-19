@@ -46,9 +46,12 @@ export type OrderStatus = "CREATED" | "PAID" | "PARTIAL_CANCELED" | "CANCELED";
 
 export interface OrderHistoryItem {
   author: string;
+  canceledQuantity: number;
   itemName: string;
+  orderItemId: number;
   productId: number;
   quantity: number;
+  status: OrderStatus;
   thumbnailUrl: string | null;
   totalPrice: number;
   unitPrice: number;
@@ -58,7 +61,6 @@ export interface OrderHistoryEntry {
   createdAt: string;
   items: OrderHistoryItem[];
   key: string;
-  name: string;
   status: OrderStatus;
   totalPrice: number;
 }
