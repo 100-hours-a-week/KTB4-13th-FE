@@ -1,21 +1,36 @@
-import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/common/components/Button";
 import { Toast } from "@/common/components/Toast";
 import { AppPageHeader } from "@/features/navigation/components/AppPageHeader";
-import { getMockProfile, isMockNicknameAvailable, saveMockProfile } from "@/features/profile/mock/mockProfileRepository";
+import { fetchMyProfile, updateMyProfile } from "@/features/profile/api/profileApi";
+import { getProfileImage, saveProfileImage } from "@/features/profile/lib/profileImageStore";
 
 export function ProfileEditPage() {
   const navigate = useNavigate();
-  const initial = getMockProfile();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [nickname, setNickname] = useState(initial.nickname);
-  const [imageDataUrl, setImageDataUrl] = useState(initial.imageDataUrl);
-  const [checkState, setCheckState] = useState<"idle" | "available" | "unavailable">("available");
+  const [nickname, setNickname] = useState("");
+  const [imageDataUrl, setImageDataUrl] = useState(getProfileImage);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const normalized = nickname.trim();
-  const isNicknameValid = normalized.length >= 2 && normalized.length <= 10;
+  const isNicknameValid = normalized.length >= 2 && normalized.length <= 20;
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetchMyProfile(controller.signal).then((result) => {
+      if (controller.signal.aborted) return;
+      if (result.ok) {
+        setNickname(result.nickname);
+      } else {
+        setError("내 정보를 불러오지 못했어요. 다시 들어와 주세요.");
+      }
+      setIsLoading(false);
+    });
+    return () => controller.abort();
+  }, []);
 
   const selectImage = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -25,10 +40,17 @@ export function ProfileEditPage() {
     reader.onload = () => { if (typeof reader.result === "string") { setImageDataUrl(reader.result); setError(null); } };
     reader.readAsDataURL(file);
   };
-  const submit = (event: FormEvent) => {
+  const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!isNicknameValid || checkState !== "available") { setError("닉네임 중복 확인을 완료해 주세요."); return; }
-    saveMockProfile({ imageDataUrl, nickname: normalized });
+    if (!isNicknameValid || isSubmitting) { setError("2~20자의 닉네임을 입력해 주세요."); return; }
+    setIsSubmitting(true);
+    const result = await updateMyProfile(normalized);
+    if (!result.ok) {
+      setIsSubmitting(false);
+      setError(result.reason === "invalid-nickname" ? "2~20자의 닉네임을 입력해 주세요." : "프로필을 저장하지 못했어요. 다시 시도해 주세요.");
+      return;
+    }
+    saveProfileImage(imageDataUrl);
     navigate("/my", { replace: true, state: { notice: "프로필을 저장했어요." } });
   };
   return <form className="relative flex h-dvh flex-col bg-surface" onSubmit={submit}>
@@ -39,8 +61,8 @@ export function ProfileEditPage() {
         <button aria-label="프로필 사진 변경" className="relative size-28 overflow-hidden rounded-full bg-accent-soft focus-visible:outline-2 focus-visible:outline-primary" onClick={() => inputRef.current?.click()} type="button">{imageDataUrl ? <img alt="선택한 프로필" className="size-full object-cover" src={imageDataUrl} /> : <span className="font-brand text-4xl text-accent">{normalized.slice(0, 1) || "책"}</span>}<span className="absolute inset-x-0 bottom-0 bg-black/55 py-1 type-caption text-white">사진 변경</span></button>
         <input accept="image/*" aria-label="프로필 사진 파일 선택" className="sr-only" onChange={selectImage} ref={inputRef} type="file" />
       </div>
-      <section className="mt-10"><label className="type-title" htmlFor="nickname">닉네임</label><div className="mt-3 flex gap-2"><input className="min-h-12 min-w-0 flex-1 rounded-control border border-border px-3 outline-none focus:border-primary focus:outline-2 focus:outline-primary" id="nickname" maxLength={10} onChange={(event) => { setNickname(event.target.value); setCheckState("idle"); }} value={nickname} /><Button disabled={!isNicknameValid} onClick={() => setCheckState(isMockNicknameAvailable(normalized) ? "available" : "unavailable")} variant="secondary">중복 확인</Button></div><p className={`mt-2 type-caption ${checkState === "unavailable" ? "text-error" : checkState === "available" ? "text-success" : "text-text-tertiary"}`}>{checkState === "available" ? "사용할 수 있는 닉네임이에요." : checkState === "unavailable" ? "이미 사용 중인 닉네임이에요." : "2~10자의 닉네임을 입력해 주세요."}</p></section>
+      <section className="mt-10"><label className="type-title" htmlFor="nickname">닉네임</label><div className="mt-3"><input className="min-h-12 w-full rounded-control border border-border px-3 outline-none focus:border-primary focus:outline-2 focus:outline-primary" disabled={isLoading} id="nickname" maxLength={20} onChange={(event) => { setNickname(event.target.value); setError(null); }} value={nickname} /></div><p className="mt-2 type-caption text-text-tertiary">2~20자의 닉네임을 입력해 주세요.</p></section>
     </main>
-    <div className="safe-area-bottom page-content border-t border-hairline bg-surface pt-3"><Button className="w-full" type="submit">저장하기</Button></div>
+    <div className="safe-area-bottom page-content border-t border-hairline bg-surface pt-3"><Button className="w-full" disabled={isLoading || !isNicknameValid} isLoading={isSubmitting} type="submit">저장하기</Button></div>
   </form>;
 }
