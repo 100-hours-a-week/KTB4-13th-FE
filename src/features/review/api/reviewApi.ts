@@ -1,5 +1,4 @@
 import { parseApiResponse } from "@/common/api/apiResponse";
-import { fetchPublic } from "@/common/api/httpClient";
 import { fetchWithAuth } from "@/features/auth/lib/httpClient";
 import type {
   CreateProductReviewRequest,
@@ -9,7 +8,7 @@ import type {
 
 export type ReviewListResult =
   | { data: ProductReviewPage; ok: true }
-  | { ok: false };
+  | { ok: false; reason: "unauthorized" | "error" };
 
 export type ReviewMutationResult =
   | { reviewId: number; ok: true }
@@ -68,13 +67,18 @@ export async function fetchProductReviews(
 
   try {
     const result = await parseApiResponse(
-      await fetchPublic(`/api/v1/reviews?${params.toString()}`, { signal }),
+      await fetchWithAuth(`/api/v1/reviews?${params.toString()}`, { signal }),
     );
-    if (!result.ok) return { ok: false };
+    if (!result.ok) {
+      return {
+        ok: false,
+        reason: result.status === 401 ? "unauthorized" : "error",
+      };
+    }
     const data = parseReviewPage(result.data);
-    return data ? { data, ok: true } : { ok: false };
+    return data ? { data, ok: true } : { ok: false, reason: "error" };
   } catch {
-    return { ok: false };
+    return { ok: false, reason: "error" };
   }
 }
 

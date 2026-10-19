@@ -27,6 +27,7 @@ export function ReviewListPage() {
   const product = useProductDetail(productId);
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [listStatus, setListStatus] = useState<"loading" | "ready" | "error" | "loadingMore">("loading");
+  const [listError, setListError] = useState("리뷰를 불러오지 못했어요");
   const [hasNext, setHasNext] = useState(false);
   const [hasLoadMoreError, setHasLoadMoreError] = useState(false);
   const [requestKey, setRequestKey] = useState(0);
@@ -42,6 +43,11 @@ export function ReviewListPage() {
         setHasNext(result.data.hasNext);
         setListStatus("ready");
       } else {
+        setListError(
+          result.reason === "unauthorized"
+            ? "로그인하면 리뷰를 확인할 수 있어요"
+            : "리뷰를 불러오지 못했어요",
+        );
         setListStatus("error");
       }
     });
@@ -100,7 +106,7 @@ export function ReviewListPage() {
           </div>
         </section>
         {listStatus === "loading" ? <div aria-busy="true" className="page-content space-y-4 py-5"><p className="sr-only" role="status">리뷰를 불러오는 중이에요</p>{Array.from({ length: 3 }, (_, index) => <div aria-hidden="true" className="h-32 animate-pulse rounded-panel bg-muted" key={index} />)}</div> : null}
-        {listStatus === "error" ? <div className="page-content py-5"><Toast action={<RetryButton onClick={() => { setListStatus("loading"); setRequestKey((current) => current + 1); }} />} variant="error">리뷰를 불러오지 못했어요</Toast></div> : null}
+        {listStatus === "error" ? <div className="page-content py-5"><Toast action={listError.startsWith("로그인하면") ? <button className="shrink-0 font-semibold text-accent focus-visible:outline-2 focus-visible:outline-primary" onClick={() => navigate("/login", { state: { returnTo: location.pathname } })} type="button">로그인</button> : <RetryButton onClick={() => { setListStatus("loading"); setRequestKey((current) => current + 1); }} />} variant="error">{listError}</Toast></div> : null}
         {listStatus !== "loading" && listStatus !== "error" && reviews.length === 0 ? (
           <section className="page-content flex min-h-64 flex-col items-center justify-center text-center"><h2 className="type-title">첫 리뷰를 남겨주세요</h2><p className="mt-2 type-body-small text-text-secondary">이 책을 고민하는 독자에게 도움이 돼요.</p></section>
         ) : null}
