@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { ConfirmDialog } from "@/common/components/ConfirmDialog/ConfirmDialog";
 import { RetryButton } from "@/common/components/RetryButton";
@@ -20,6 +20,7 @@ export function PreferenceEditPage() {
   const [state, setState] = useState<PageState>({ kind: "loading" });
   const [requestKey, setRequestKey] = useState(0);
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
+  const isDeletingRef = useRef(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -44,7 +45,8 @@ export function PreferenceEditPage() {
 
   const remove = async (item: UserMemoryGroup) => {
     const key = item.memoryIds.join(",");
-    if (deletingKey !== null) return;
+    if (isDeletingRef.current) return;
+    isDeletingRef.current = true;
     setDeletingKey(key);
     setNotice(null);
     const result = await deleteMyMemories(item.memoryIds);
@@ -63,11 +65,13 @@ export function PreferenceEditPage() {
     } else {
       setNotice("취향 정보를 삭제하지 못했어요. 다시 시도해 주세요.");
     }
+    isDeletingRef.current = false;
     setDeletingKey(null);
   };
 
   const clearAll = async () => {
-    if (deletingKey !== null) return;
+    if (isDeletingRef.current) return;
+    isDeletingRef.current = true;
     setDeletingKey("all");
     setNotice(null);
     const result = await deleteAllMyMemories();
@@ -77,6 +81,7 @@ export function PreferenceEditPage() {
     } else {
       setNotice("취향 정보를 삭제하지 못했어요. 다시 시도해 주세요.");
     }
+    isDeletingRef.current = false;
     setDeletingKey(null);
     setIsConfirming(false);
   };

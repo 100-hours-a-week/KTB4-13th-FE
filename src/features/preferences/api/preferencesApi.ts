@@ -19,7 +19,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isNumberArray(value: unknown): value is number[] {
-  return Array.isArray(value) && value.every((item) => typeof item === "number");
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.every((item) => Number.isSafeInteger(item) && item > 0)
+  );
 }
 
 function isStringArray(value: unknown): value is string[] {
