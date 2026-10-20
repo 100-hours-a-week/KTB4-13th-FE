@@ -20,7 +20,7 @@ export function ChatHeader({ onBack, onCartClick }: ChatHeaderProps) {
       >
         <ArrowLeftIcon className="size-6" />
       </button>
-      <h1 className="text-center type-title text-text-primary">도서 쇼핑 도우미</h1>
+      <h1 className="text-center type-title text-text-primary">AI 책 추천</h1>
       <CartButton
         className={`${iconButtonClassName} -mr-2`}
         countEnabled

@@ -6,9 +6,8 @@ import {
 } from "react";
 
 import { Button } from "@/common/components/Button";
+import { MAX_CHAT_MESSAGE_LENGTH } from "@/pages/recommendation-chat/lib/chatMessage";
 import type { ChatPresentationStatus } from "@/pages/recommendation-chat/types/chatPresentation";
-
-const MAX_MESSAGE_LENGTH = 200;
 
 interface ChatComposerProps {
   onAttachClick: () => void;
@@ -65,7 +64,7 @@ export function ChatComposer({
           autoComplete="off"
           className="min-h-11 w-full rounded-control border border-transparent bg-muted px-3 type-body-small text-text-primary outline-none placeholder:text-text-tertiary focus-visible:border-primary focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary disabled:cursor-not-allowed disabled:text-text-disabled disabled:opacity-60"
           disabled={isSending}
-          maxLength={MAX_MESSAGE_LENGTH}
+          maxLength={MAX_CHAT_MESSAGE_LENGTH}
           onChange={(event) => setDraft(event.target.value)}
           onCompositionEnd={() => {
             isComposingRef.current = false;

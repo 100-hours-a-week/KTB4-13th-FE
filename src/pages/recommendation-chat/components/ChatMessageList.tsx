@@ -1,8 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
 import { ProductAvailabilityBadge } from "@/common/components/ProductAvailabilityBadge";
+import { MAX_CHAT_MESSAGE_LENGTH } from "@/pages/recommendation-chat/lib/chatMessage";
 import type {
   CartProposalItemViewModel,
   CartProposalViewModel,
@@ -44,11 +45,13 @@ function executionMessageClassName(status: ProposalExecutionStatus) {
 
 function RecommendationCard({
   isSending,
-  onRequestCart,
+  isSelected,
+  onToggle,
   recommendation,
 }: {
   isSending: boolean;
-  onRequestCart: (title: string) => void;
+  isSelected: boolean;
+  onToggle: () => void;
   recommendation: RecommendationCardViewModel;
 }) {
   const hasProduct = recommendation.productId !== null;
@@ -65,7 +68,13 @@ function RecommendationCard({
   );
 
   return (
-    <article className="flex h-full flex-col">
+    <article
+      className={`flex h-full flex-col rounded-control border p-2 transition-colors ${
+        isSelected
+          ? "border-accent bg-accent-soft"
+          : "border-transparent bg-surface"
+      }`}
+    >
       {detailPath ? (
         <Link
           aria-label={`${recommendation.title} 상세 보기`}
@@ -75,18 +84,16 @@ function RecommendationCard({
           {cover}
         </Link>
       ) : cover}
-      {detailPath ? (
-        <Link
-          className="mt-2 line-clamp-2 rounded-sm type-body-small font-semibold text-text-primary underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          to={detailPath}
-        >
-          {recommendation.title}
-        </Link>
-      ) : (
-        <h3 className="mt-2 line-clamp-2 type-body-small font-semibold text-text-primary">
-          {recommendation.title}
-        </h3>
-      )}
+      <h3 className="mt-2 line-clamp-2 type-body-small font-semibold text-text-primary">
+        {detailPath ? (
+          <Link
+            className="rounded-sm underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            to={detailPath}
+          >
+            {recommendation.title}
+          </Link>
+        ) : recommendation.title}
+      </h3>
       {recommendation.author ? (
         <p className="mt-0.5 truncate type-caption text-text-tertiary">
           {recommendation.author}
@@ -111,12 +118,17 @@ function RecommendationCard({
         </div>
       ) : null}
       <button
-        className="mt-3 min-h-11 w-full rounded-control border border-border px-2 type-caption font-semibold text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:text-text-disabled"
+        aria-pressed={hasProduct ? isSelected : undefined}
+        className={`mt-3 min-h-11 w-full rounded-control border px-2 type-caption font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:border-border disabled:text-text-disabled ${
+          isSelected
+            ? "border-accent bg-accent text-white"
+            : "border-border bg-surface text-text-primary hover:bg-muted"
+        }`}
         disabled={!hasProduct || isSending}
-        onClick={() => onRequestCart(recommendation.title)}
+        onClick={onToggle}
         type="button"
       >
-        {hasProduct ? "장바구니에 담기" : "구매할 수 없어요"}
+        {hasProduct ? (isSelected ? "선택됨" : "선택") : "구매할 수 없어요"}
       </button>
     </article>
   );
@@ -132,28 +144,82 @@ function RecommendationCardList({
   recommendations: RecommendationCardViewModel[];
 }) {
   const visibleRecommendations = recommendations.slice(0, MAX_RECOMMENDATIONS);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const selectedRecommendations = visibleRecommendations.filter(
+    (recommendation) => selectedIds.has(recommendation.id),
+  );
+  const cartRequest = `이 책들을 각 1권씩 장바구니에 담는 제안을 보여줘: ${selectedRecommendations
+    .map((recommendation) => `『${recommendation.title}』`)
+    .join(", ")}`;
+  const isRequestTooLong = cartRequest.length > MAX_CHAT_MESSAGE_LENGTH;
+
+  const handleToggle = (recommendationId: string) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(recommendationId)) {
+        next.delete(recommendationId);
+      } else {
+        next.add(recommendationId);
+      }
+      return next;
+    });
+  };
+
+  const handleRequestCart = () => {
+    if (
+      selectedRecommendations.length === 0 ||
+      isSending ||
+      isRequestTooLong
+    ) return;
+    onRequestCart(cartRequest);
+    setSelectedIds(new Set());
+  };
 
   return (
-    <div
-      aria-label="AI 추천 도서 목록"
-      className="-mx-5 mt-3 overflow-x-auto px-5 pb-1 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
-      role="region"
-      tabIndex={0}
-    >
-      <ul className="flex items-stretch gap-4">
-        {visibleRecommendations.map((recommendation) => (
-          <li
-            className="w-[calc(42%-22px)] shrink-0 min-[360px]:w-[42%]"
-            key={recommendation.id}
-          >
-            <RecommendationCard
-              isSending={isSending}
-              onRequestCart={onRequestCart}
-              recommendation={recommendation}
-            />
-          </li>
-        ))}
-      </ul>
+    <div className="mt-3">
+      <div
+        aria-label="AI 추천 도서 목록"
+        className="-mx-5 overflow-x-auto px-5 pb-1 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+        role="region"
+        tabIndex={0}
+      >
+        <ul className="flex items-stretch gap-4">
+          {visibleRecommendations.map((recommendation) => (
+            <li
+              className="w-[calc(42%-22px)] shrink-0 min-[360px]:w-[42%]"
+              key={recommendation.id}
+            >
+              <RecommendationCard
+                isSending={isSending}
+                isSelected={selectedIds.has(recommendation.id)}
+                onToggle={() => handleToggle(recommendation.id)}
+                recommendation={recommendation}
+              />
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="mt-3 flex min-h-11 items-center justify-between gap-3 border-t border-hairline pt-3">
+        <p className="type-caption text-text-secondary" role="status">
+          {selectedRecommendations.length > 0
+            ? isRequestTooLong
+              ? "제목이 길어 선택을 줄여 주세요"
+              : `${selectedRecommendations.length}권 선택 · 각 1권`
+            : "담을 책을 선택해 주세요"}
+        </p>
+        <button
+          className="min-h-11 shrink-0 rounded-control bg-primary px-4 type-body-small font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:bg-border-strong disabled:text-text-tertiary"
+          disabled={
+            selectedRecommendations.length === 0 ||
+            isSending ||
+            isRequestTooLong
+          }
+          onClick={handleRequestCart}
+          type="button"
+        >
+          선택한 책 담기 요청
+        </button>
+      </div>
     </div>
   );
 }
@@ -284,9 +350,7 @@ function ChatBubble({
           <>
             <RecommendationCardList
               isSending={status === "sending"}
-              onRequestCart={(title) =>
-                onQuickMessage(`『${title}』 1권을 장바구니에 담아줘`)
-              }
+              onRequestCart={onQuickMessage}
               recommendations={message.recommendations}
             />
             <button
@@ -415,34 +479,28 @@ export function ChatMessageList({
       {messages.length === 0 && status !== "sending" ? (
         <section
           aria-labelledby="chat-start-title"
-          className="rounded-panel border border-border bg-muted p-5"
+          className="py-3"
         >
-          <p className="type-caption font-semibold text-accent">
-            AI 도서 쇼핑 도우미
-          </p>
-          <h2 className="mt-1 type-heading" id="chat-start-title">
+          <h2 className="type-title" id="chat-start-title">
             어떤 책을 찾고 계세요?
           </h2>
-          <p className="mt-2 type-body-small text-text-secondary">
-            추천부터 장바구니까지 편하게 말해 주세요.
-          </p>
-          <div className="mt-4 grid gap-2">
+          <div className="mt-3 flex flex-wrap gap-2">
             <button
-              className="min-h-12 rounded-control border border-border bg-surface px-4 text-left type-body-small font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="min-h-11 rounded-control border border-border bg-surface px-3 type-body-small text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               onClick={() => onQuickMessage("내 독서 취향에 맞는 책을 추천해줘")}
               type="button"
             >
               취향에 맞는 책 추천받기
             </button>
             <button
-              className="min-h-12 rounded-control border border-border bg-surface px-4 text-left type-body-small font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="min-h-11 rounded-control border border-border bg-surface px-3 type-body-small text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               onClick={() => onQuickMessage("부담 없이 가볍게 읽을 수 있는 책을 추천해줘")}
               type="button"
             >
               가볍게 읽을 책 찾기
             </button>
             <button
-              className="min-h-12 rounded-control border border-border bg-surface px-4 text-left type-body-small font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="min-h-11 rounded-control border border-border bg-surface px-3 type-body-small text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               onClick={() => onNavigate("/cart")}
               type="button"
             >

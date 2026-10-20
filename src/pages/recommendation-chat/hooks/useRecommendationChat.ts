@@ -22,6 +22,7 @@ import type {
   CartProposalViewModel,
   ProposalExecutionStatus,
 } from "@/pages/recommendation-chat/types/chatPresentation";
+import { MAX_CHAT_MESSAGE_LENGTH } from "@/pages/recommendation-chat/lib/chatMessage";
 
 const DECLINED_PROPOSALS_STORAGE_KEY = "bookjeok-chat-declined-proposals";
 
@@ -348,7 +349,11 @@ export function useRecommendationChat(
 
   const sendMessage = (content: string) => {
     const message = content.trim();
-    if (!message || isSendingRef.current) return;
+    if (
+      !message ||
+      message.length > MAX_CHAT_MESSAGE_LENGTH ||
+      isSendingRef.current
+    ) return;
     const messageId = createMessageId("user");
     setMessages((current) => [
       ...current,
