@@ -137,7 +137,7 @@ export function PaymentPage() {
         {state.kind === "ready" ? (
           <div className="space-y-7">
             <section className="rounded-panel border border-border p-5" aria-labelledby="payment-order-title">
-              <div className="flex items-center justify-between gap-3"><h2 className="type-title" id="payment-order-title">주문 정보</h2><span className="type-caption text-text-tertiary">{state.data.status === "CREATED" ? "결제 대기" : state.data.status}</span></div>
+              <div className="flex items-center justify-between gap-3"><h2 className="type-title" id="payment-order-title">주문 정보</h2><span className="type-caption text-text-tertiary">{state.data.status === "CREATED" ? "결제 대기" : state.data.status === "EXPIRED" ? "주문 만료" : state.data.status}</span></div>
               <ul className="mt-4 space-y-2 type-body-small text-text-secondary">{state.data.items.map((item) => <li className="flex justify-between gap-4" key={item.orderItemId}><span className="line-clamp-1">{item.itemName} · {item.quantity}권</span><span className="shrink-0 tabular-nums">{formatWon(item.totalPrice)}</span></li>)}</ul>
               <dl className="mt-4 space-y-2 border-t border-hairline pt-4 type-body-small">
                 <div className="flex justify-between text-text-secondary"><dt>상품 금액</dt><dd className="tabular-nums">{formatWon(state.data.totalPrice)}</dd></div>
