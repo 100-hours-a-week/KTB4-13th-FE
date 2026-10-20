@@ -18,6 +18,7 @@ const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
 const STATUS_LABELS: Record<OrderStatus, string> = {
   CANCELED: "주문 취소",
   CREATED: "주문 접수",
+  EXPIRED: "주문 만료",
   PAID: "결제 완료",
   PARTIAL_CANCELED: "부분 취소",
 };

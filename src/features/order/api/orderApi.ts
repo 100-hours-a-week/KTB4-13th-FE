@@ -25,6 +25,7 @@ const ORDER_STATUSES: OrderStatus[] = [
   "PAID",
   "PARTIAL_CANCELED",
   "CANCELED",
+  "EXPIRED",
 ];
 
 function isRecord(value: unknown): value is Record<string, unknown> {

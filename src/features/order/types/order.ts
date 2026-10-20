@@ -72,7 +72,12 @@ export interface CreateOrderResponseDto {
   totalPrice: number;
 }
 
-export type OrderStatus = "CREATED" | "PAID" | "PARTIAL_CANCELED" | "CANCELED";
+export type OrderStatus =
+  | "CREATED"
+  | "PAID"
+  | "PARTIAL_CANCELED"
+  | "CANCELED"
+  | "EXPIRED";
 
 export interface OrderHistoryItem {
   author: string;

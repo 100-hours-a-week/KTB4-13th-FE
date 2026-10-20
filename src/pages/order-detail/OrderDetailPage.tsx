@@ -17,6 +17,7 @@ import { formatWon } from "@/pages/order/lib/orderTotals";
 const STATUS_LABELS: Record<OrderStatus, string> = {
   CANCELED: "주문 취소",
   CREATED: "결제 대기",
+  EXPIRED: "주문 만료",
   PAID: "결제 완료",
   PARTIAL_CANCELED: "부분 취소",
 };
