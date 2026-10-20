@@ -105,6 +105,7 @@ export function ReviewListPage() {
     }
     setReviews((current) => current.filter((review) => review.id !== reviewToDelete.id));
     setReviewToDelete(null);
+    product.retry();
   };
 
   return (
