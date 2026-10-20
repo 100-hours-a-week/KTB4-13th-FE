@@ -23,7 +23,6 @@ import { PaymentResultPage } from "@/pages/payment-result/PaymentResultPage";
 import { ProductDetailPage } from "@/pages/product/ProductDetailPage";
 import { ProfileEditPage } from "@/pages/profile/ProfileEditPage";
 import { PreferenceEditPage } from "@/pages/preferences/PreferenceEditPage";
-import { PhotoSearchPage } from "@/pages/photo-search/PhotoSearchPage";
 import { AiRecommendationChatPage } from "@/pages/recommendation-chat/AiRecommendationChatPage";
 import { SearchResultsPage } from "@/pages/search/SearchResultsPage";
 import { ReviewListPage } from "@/pages/reviews/ReviewListPage";
@@ -81,7 +80,6 @@ export function Router() {
               path="/recommendations/chat"
               element={<AiRecommendationChatPage />}
             />
-            <Route path="/recommendations/scan" element={<PhotoSearchPage />} />
             <Route path="/products/:productId/reviews/new" element={<ReviewWritePage />} />
           </Route>
         </Route>

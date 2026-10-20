@@ -16,6 +16,7 @@ export function AiRecommendationChatPage() {
   const parsedSessionId = Number(new URLSearchParams(location.search).get("sessionId"));
   const initialSessionId = Number.isSafeInteger(parsedSessionId) && parsedSessionId > 0 ? parsedSessionId : null;
   const [isSessionListOpen, setIsSessionListOpen] = useState(false);
+  const [attachmentNotice, setAttachmentNotice] = useState(false);
   const chat = useRecommendationChat(initialSessionId, (sessionId) => {
     navigate(sessionId ? `/recommendations/chat?sessionId=${sessionId}` : "/recommendations/chat", { replace: true });
   });
@@ -79,8 +80,13 @@ export function AiRecommendationChatPage() {
         )}
       </main>
 
+      {attachmentNotice ? (
+        <div className="page-content shrink-0 pb-2">
+          <Toast>사진으로 책 찾기는 아직 지원하지 않아요. 제목이나 작가를 입력해 주세요.</Toast>
+        </div>
+      ) : null}
       <ChatComposer
-        onAttachClick={() => navigate("/recommendations/scan")}
+        onAttachClick={() => setAttachmentNotice(true)}
         onSend={chat.sendMessage}
         status={chat.status}
       />
