@@ -10,14 +10,17 @@ import {
 import type { NotificationItem } from "@/features/notification/types/notification";
 import { AppPageHeader } from "@/features/navigation/components/AppPageHeader";
 
-const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
-  dateStyle: "medium",
-  timeStyle: "short",
-});
+const timeFormatter = new Intl.DateTimeFormat("ko-KR", { timeStyle: "short" });
+const dayFormatter = new Intl.DateTimeFormat("ko-KR", { day: "numeric", month: "long" });
+const fullDateFormatter = new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" });
 
+// Today shows the time, this year the date, older items the full date.
 function formatCreatedAt(value: string) {
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "" : dateFormatter.format(date);
+  if (Number.isNaN(date.getTime())) return "";
+  const now = new Date();
+  if (date.toDateString() === now.toDateString()) return timeFormatter.format(date);
+  return date.getFullYear() === now.getFullYear() ? dayFormatter.format(date) : fullDateFormatter.format(date);
 }
 
 export function NotificationPage() {
@@ -67,15 +70,16 @@ export function NotificationPage() {
     <div className="flex h-dvh flex-col bg-surface">
       <AppPageHeader fallbackPath="/" title="알림" />
       <main className="min-h-0 flex-1 overflow-y-auto">
-        <div className="page-content flex min-h-14 items-center justify-between border-b border-hairline">
-          <strong className="type-body">최근 알림</strong>
+        <div className="mx-auto w-full max-w-2xl">
+        <div className="page-content flex min-h-11 items-center justify-between border-b border-hairline">
+          <strong className="type-body-small font-semibold">최근 알림</strong>
           {status === "ready" ? <span className="type-caption text-text-tertiary">읽지 않음 {unreadCount}</span> : null}
         </div>
         {readError ? <div className="page-content pt-4"><Toast variant="error">알림을 읽음 처리하지 못했어요.</Toast></div> : null}
         {status === "loading" ? (
-          <div aria-busy="true" className="page-content space-y-3 py-5" role="status">
+          <div aria-busy="true" className="divide-y divide-hairline" role="status">
             <span className="sr-only">알림을 불러오는 중이에요</span>
-            {Array.from({ length: 4 }, (_, index) => <div className="h-24 animate-pulse rounded-panel bg-muted" key={index} />)}
+            {Array.from({ length: 6 }, (_, index) => <div aria-hidden="true" className="page-content space-y-2 py-3.5" key={index}><div className="h-4 w-2/5 animate-pulse rounded bg-muted" /><div className="h-4 w-4/5 animate-pulse rounded bg-muted" /></div>)}
           </div>
         ) : null}
         {status === "error" ? (
@@ -99,27 +103,33 @@ export function NotificationPage() {
               return (
                 <li key={notification.notificationId}>
                   <button
-                    aria-label={`${notification.title}${isUnread ? ", 읽음 처리" : ", 읽음"}`}
-                    className={`page-content w-full py-5 text-left transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary ${isUnread ? "bg-accent-soft/50" : "bg-surface"}`}
+                    className="page-content block w-full py-3.5 text-left transition-colors hover:bg-muted/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary disabled:cursor-default disabled:hover:bg-transparent"
                     disabled={!isUnread || isReading}
                     onClick={() => { void handleRead(notification); }}
                     type="button"
                   >
-                    <span className="flex items-start gap-3">
-                      <span aria-hidden="true" className={`mt-2 size-2 shrink-0 rounded-full ${isUnread ? "bg-accent" : "bg-transparent"}`} />
+                    <span className="flex items-start gap-2.5">
+                      <span aria-hidden="true" className={`mt-1.5 size-1.5 shrink-0 rounded-full ${isUnread ? "bg-accent" : "bg-transparent"}`} />
                       <span className="min-w-0 flex-1">
-                        <strong className="block type-body">{notification.title}</strong>
-                        <span className="mt-1 block whitespace-pre-wrap type-body-small text-text-secondary">{notification.body}</span>
-                        <span className="mt-2 block type-caption text-text-tertiary">{formatCreatedAt(notification.createdAt)}</span>
+                        <span className="flex items-baseline gap-2">
+                          <strong className={`min-w-0 flex-1 break-words type-body-small ${isUnread ? "font-semibold text-text-primary" : "font-medium text-text-secondary"}`}>
+                            <span className="sr-only">{isUnread ? "읽지 않음, " : "읽음, "}</span>
+                            {notification.title}
+                          </strong>
+                          <time className="shrink-0 type-caption text-text-tertiary" dateTime={notification.createdAt}>{formatCreatedAt(notification.createdAt)}</time>
+                        </span>
+                        <span className={`mt-0.5 block whitespace-pre-wrap break-words type-caption ${isUnread ? "text-text-secondary" : "text-text-tertiary"}`}>{notification.body}</span>
                       </span>
-                      {isReading ? <span aria-hidden="true" className="mt-1 size-4 animate-spin rounded-full border-2 border-accent border-t-transparent" /> : null}
+                      {isReading ? <span aria-hidden="true" className="mt-0.5 size-4 shrink-0 animate-spin rounded-full border-2 border-accent border-t-transparent" /> : null}
                     </span>
+                    {isReading ? <span className="sr-only" role="status">읽음 처리 중</span> : null}
                   </button>
                 </li>
               );
             })}
           </ul>
         ) : null}
+        </div>
       </main>
       <BottomNavigation />
     </div>
