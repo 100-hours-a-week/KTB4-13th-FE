@@ -71,7 +71,6 @@ export function AiRecommendationChatPage() {
             messages={chat.messages}
             onConfirmProposal={chat.confirmProposal}
             onDeclineProposal={chat.declineProposal}
-            onNavigate={navigate}
             onQuickMessage={chat.sendMessage}
             onRetry={chat.retry}
             onRetryProposal={chat.retryProposal}

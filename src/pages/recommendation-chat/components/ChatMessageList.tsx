@@ -447,11 +447,44 @@ function ChatBubble({
   );
 }
 
+const STARTER_QUESTIONS = [
+  "내 독서 취향에 맞는 책을 추천해줘",
+  "기분 전환이 필요할 때 읽을 책 있을까?",
+  "출퇴근길에 가볍게 읽을 책을 찾아줘",
+];
+
+// FE-only greeting shown before the first message; it is never sent to or stored by the server.
+function WelcomeMessage({
+  onQuickMessage,
+}: {
+  onQuickMessage: (message: string) => void;
+}) {
+  return (
+    <section aria-label="AI 첫 인사" className="mb-6">
+      <p className="w-fit max-w-[85%] whitespace-pre-line rounded-control bg-muted px-3.5 py-2.5 type-body-small text-text-primary">
+        {"안녕하세요, 북적북적 AI예요.\n요즘 취향이나 기분, 책을 읽을 상황을 알려주시면 어울리는 책을 골라드릴게요."}
+      </p>
+      <ul aria-label="추천 질문" className="mt-3 flex flex-wrap gap-2">
+        {STARTER_QUESTIONS.map((question) => (
+          <li key={question}>
+            <button
+              className="min-h-10 rounded-full border border-border bg-surface px-3.5 type-body-small text-text-primary transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              onClick={() => onQuickMessage(question)}
+              type="button"
+            >
+              {question}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 interface ChatMessageListProps {
   messages: ChatPresentationMessage[];
   onConfirmProposal: (messageId: string, proposalId: number) => void;
   onDeclineProposal: (messageId: string, proposalId: number) => void;
-  onNavigate: (path: string) => void;
   onQuickMessage: (message: string) => void;
   onRetry: (messageId: string) => void;
   onRetryProposal: (messageId: string, proposalId: number) => void;
@@ -462,7 +495,6 @@ export function ChatMessageList({
   messages,
   onConfirmProposal,
   onDeclineProposal,
-  onNavigate,
   onQuickMessage,
   onRetry,
   onRetryProposal,
@@ -477,37 +509,7 @@ export function ChatMessageList({
   return (
     <div className="page-content py-5">
       {messages.length === 0 && status !== "sending" ? (
-        <section
-          aria-labelledby="chat-start-title"
-          className="py-3"
-        >
-          <h2 className="type-title" id="chat-start-title">
-            어떤 책을 찾고 계세요?
-          </h2>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              className="min-h-11 rounded-control border border-border bg-surface px-3 type-body-small text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              onClick={() => onQuickMessage("내 독서 취향에 맞는 책을 추천해줘")}
-              type="button"
-            >
-              취향에 맞는 책 추천받기
-            </button>
-            <button
-              className="min-h-11 rounded-control border border-border bg-surface px-3 type-body-small text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              onClick={() => onQuickMessage("부담 없이 가볍게 읽을 수 있는 책을 추천해줘")}
-              type="button"
-            >
-              가볍게 읽을 책 찾기
-            </button>
-            <button
-              className="min-h-11 rounded-control border border-border bg-surface px-3 type-body-small text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              onClick={() => onNavigate("/cart")}
-              type="button"
-            >
-              장바구니 확인하기
-            </button>
-          </div>
-        </section>
+        <WelcomeMessage onQuickMessage={onQuickMessage} />
       ) : null}
       <ol aria-live="polite" className="flex flex-col gap-6">
         {messages.map((message) => (
