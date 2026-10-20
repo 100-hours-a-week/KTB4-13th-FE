@@ -4,6 +4,7 @@ import type {
   CreateProductReviewRequest,
   ProductReview,
   ProductReviewPage,
+  UpdateProductReviewRequest,
 } from "@/features/review/types/review";
 
 export type ReviewListResult =
@@ -26,7 +27,8 @@ function parseReview(value: unknown): ProductReview | null {
     typeof value.targetId !== "number" ||
     typeof value.rate !== "number" ||
     typeof value.content !== "string" ||
-    typeof value.isSpoiler !== "boolean"
+    typeof value.isSpoiler !== "boolean" ||
+    typeof value.isMyReview !== "boolean"
   ) {
     return null;
   }
@@ -34,6 +36,7 @@ function parseReview(value: unknown): ProductReview | null {
   return {
     content: value.content,
     id: value.id,
+    isMyReview: value.isMyReview,
     isSpoiler: value.isSpoiler,
     productId: value.targetId,
     rate: value.rate,
@@ -110,6 +113,59 @@ export async function createProductReview(
       };
     }
 
+    return typeof result.data === "number"
+      ? { ok: true, reviewId: result.data }
+      : { ok: false, reason: "error" };
+  } catch {
+    return { ok: false, reason: "error" };
+  }
+}
+
+export async function updateProductReview(
+  reviewId: number,
+  request: UpdateProductReviewRequest,
+): Promise<ReviewMutationResult> {
+  try {
+    const result = await parseApiResponse(
+      await fetchWithAuth(`/api/v1/reviews/${reviewId}`, {
+        body: JSON.stringify(request),
+        headers: { "Content-Type": "application/json" },
+        method: "PATCH",
+      }),
+    );
+    if (!result.ok) {
+      if (result.status === 400 || result.status === 403 || result.status === 404) {
+        return { ok: false, reason: "invalid-request" };
+      }
+      return {
+        ok: false,
+        reason: result.status === 401 ? "unauthorized" : "error",
+      };
+    }
+    return typeof result.data === "number"
+      ? { ok: true, reviewId: result.data }
+      : { ok: false, reason: "error" };
+  } catch {
+    return { ok: false, reason: "error" };
+  }
+}
+
+export async function deleteProductReview(
+  reviewId: number,
+): Promise<ReviewMutationResult> {
+  try {
+    const result = await parseApiResponse(
+      await fetchWithAuth(`/api/v1/reviews/${reviewId}`, { method: "DELETE" }),
+    );
+    if (!result.ok) {
+      if (result.status === 403 || result.status === 404) {
+        return { ok: false, reason: "invalid-request" };
+      }
+      return {
+        ok: false,
+        reason: result.status === 401 ? "unauthorized" : "error",
+      };
+    }
     return typeof result.data === "number"
       ? { ok: true, reviewId: result.data }
       : { ok: false, reason: "error" };

@@ -1,11 +1,15 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
 import { Button } from "@/common/components/Button";
 import { Toast } from "@/common/components/Toast";
 import { AppPageHeader } from "@/features/navigation/components/AppPageHeader";
-import { createProductReview } from "@/features/review/api/reviewApi";
+import {
+  createProductReview,
+  updateProductReview,
+} from "@/features/review/api/reviewApi";
+import type { ProductReview } from "@/features/review/types/review";
 import { useProductDetail } from "@/pages/product/hooks/useProductDetail";
 import { StarRating } from "@/pages/reviews/components/StarRating";
 
@@ -13,13 +17,29 @@ const MIN_LENGTH = 10;
 const MAX_LENGTH = 255;
 
 export function ReviewWritePage() {
-  const value = useParams().productId;
+  const { productId: value, reviewId: reviewIdValue } = useParams();
   const productId = Number(value);
   const isProductIdValid = Number.isSafeInteger(productId) && productId > 0;
+  const reviewId = Number(reviewIdValue);
+  const isEditing = reviewIdValue !== undefined;
   const navigate = useNavigate();
-  const [rating, setRating] = useState(0);
-  const [content, setContent] = useState("");
-  const [isSpoiler, setIsSpoiler] = useState(false);
+  const location = useLocation();
+  const review =
+    typeof location.state === "object" &&
+    location.state !== null &&
+    typeof Reflect.get(location.state, "review") === "object"
+      ? (Reflect.get(location.state, "review") as ProductReview)
+      : null;
+  const canEdit =
+    isEditing &&
+    Number.isSafeInteger(reviewId) &&
+    reviewId > 0 &&
+    review?.id === reviewId &&
+    review.productId === productId &&
+    review.isMyReview;
+  const [rating, setRating] = useState(canEdit ? review.rate : 0);
+  const [content, setContent] = useState(canEdit ? review.content : "");
+  const [isSpoiler, setIsSpoiler] = useState(canEdit ? review.isSpoiler : false);
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,23 +53,45 @@ export function ReviewWritePage() {
     if (!isValid || isSubmitting) return;
     setIsSubmitting(true);
     setError(null);
-    const result = await createProductReview({
-      content: content.trim(),
-      isSpoiler,
-      productId,
-      rate: rating,
-    });
+    const result = canEdit
+      ? await updateProductReview(reviewId, {
+          content: content.trim(),
+          isSpoiler,
+          rate: rating,
+        })
+      : await createProductReview({
+          content: content.trim(),
+          isSpoiler,
+          productId,
+          rate: rating,
+        });
     if (!result.ok) {
       setIsSubmitting(false);
-      setError(result.reason === "invalid-request" ? "구매 내역이나 기존 리뷰를 확인해 주세요." : "리뷰를 등록하지 못했어요. 다시 시도해 주세요.");
+      setError(result.reason === "invalid-request" ? "구매 내역이나 기존 리뷰를 확인해 주세요." : `리뷰를 ${canEdit ? "수정" : "등록"}하지 못했어요. 다시 시도해 주세요.`);
       return;
     }
-    navigate(`/products/${productId}/reviews`, { replace: true, state: { notice: "리뷰를 등록했어요." } });
+    navigate(`/products/${productId}/reviews`, {
+      replace: true,
+      state: { notice: isEditing ? "리뷰를 수정했어요." : "리뷰를 등록했어요." },
+    });
   };
+
+  if (isEditing && !canEdit) {
+    return (
+      <div className="flex h-dvh flex-col bg-surface">
+        <AppPageHeader fallbackPath={`/products/${productId}/reviews`} title="리뷰 수정" />
+        <main className="page-content flex flex-1 flex-col items-center justify-center text-center">
+          <h2 className="type-title">수정할 리뷰 정보를 찾지 못했어요</h2>
+          <p className="mt-2 type-body-small text-text-tertiary">리뷰 목록에서 다시 선택해 주세요.</p>
+          <Button className="mt-5" onClick={() => navigate(`/products/${productId}/reviews`, { replace: true })}>리뷰 목록으로</Button>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <form className="relative flex h-dvh flex-col bg-surface" onSubmit={submit}>
-      <AppPageHeader fallbackPath={`/products/${productId}/reviews`} title="리뷰 쓰기" />
+      <AppPageHeader fallbackPath={`/products/${productId}/reviews`} title={isEditing ? "리뷰 수정" : "리뷰 쓰기"} />
       <main className="min-h-0 flex-1 overflow-y-auto pb-24">
         {error ? <div className="page-content pt-4"><Toast variant="error">{error}</Toast></div> : null}
         <section className="page-content flex gap-3 border-b border-hairline py-5">
@@ -68,7 +110,7 @@ export function ReviewWritePage() {
           <label className="mt-6 flex min-h-14 items-center justify-between border-y border-hairline py-2"><span><strong className="block type-body">스포일러 포함</strong><span className="type-caption text-text-tertiary">내용을 가려서 보여드려요.</span></span><input checked={isSpoiler} className="size-5 accent-accent" onChange={(event) => setIsSpoiler(event.target.checked)} type="checkbox" /></label>
         </section>
       </main>
-      <div className="safe-area-bottom page-content absolute inset-x-0 bottom-0 border-t border-hairline bg-surface pt-3"><Button className="w-full" isLoading={isSubmitting} type="submit">리뷰 등록</Button></div>
+      <div className="safe-area-bottom page-content absolute inset-x-0 bottom-0 border-t border-hairline bg-surface pt-3"><Button className="w-full" isLoading={isSubmitting} type="submit">{isEditing ? "리뷰 수정" : "리뷰 등록"}</Button></div>
     </form>
   );
 }

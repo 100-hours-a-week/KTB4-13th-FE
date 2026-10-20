@@ -2,11 +2,15 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { Button } from "@/common/components/Button";
+import { ConfirmDialog } from "@/common/components/ConfirmDialog/ConfirmDialog";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
 import { useAuth } from "@/features/auth/context/useAuth";
 import { AppPageHeader } from "@/features/navigation/components/AppPageHeader";
-import { fetchProductReviews } from "@/features/review/api/reviewApi";
+import {
+  deleteProductReview,
+  fetchProductReviews,
+} from "@/features/review/api/reviewApi";
 import type { ProductReview } from "@/features/review/types/review";
 import { useProductDetail } from "@/pages/product/hooks/useProductDetail";
 import { StarRating } from "@/pages/reviews/components/StarRating";
@@ -32,6 +36,9 @@ export function ReviewListPage() {
   const [hasLoadMoreError, setHasLoadMoreError] = useState(false);
   const [requestKey, setRequestKey] = useState(0);
   const [visibleSpoilers, setVisibleSpoilers] = useState<number[]>([]);
+  const [reviewToDelete, setReviewToDelete] = useState<ProductReview | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [mutationError, setMutationError] = useState<string | null>(null);
 
   useEffect(() => {
     if (productId === null) return;
@@ -85,11 +92,27 @@ export function ReviewListPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!reviewToDelete || isDeleting) return;
+    setIsDeleting(true);
+    setMutationError(null);
+    const result = await deleteProductReview(reviewToDelete.id);
+    setIsDeleting(false);
+    if (!result.ok) {
+      setReviewToDelete(null);
+      setMutationError("리뷰를 삭제하지 못했어요. 다시 시도해 주세요.");
+      return;
+    }
+    setReviews((current) => current.filter((review) => review.id !== reviewToDelete.id));
+    setReviewToDelete(null);
+  };
+
   return (
     <div className="relative flex h-dvh flex-col bg-surface">
       <AppPageHeader fallbackPath={`/products/${productId}`} title={`리뷰 ${reviewCount}`} />
       <main className="min-h-0 flex-1 overflow-y-auto pb-24">
         {notice ? <div className="page-content pt-4"><Toast>{notice}</Toast></div> : null}
+        {mutationError ? <div className="page-content pt-4"><Toast variant="error">{mutationError}</Toast></div> : null}
         <section className="page-content border-b border-hairline py-6" aria-label="리뷰 별점 요약">
           <div className="flex items-center gap-5">
             <div className="min-w-24 text-center">
@@ -117,7 +140,27 @@ export function ReviewListPage() {
               <div className="flex items-start gap-3">
                 <div aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent-soft font-brand text-accent">책</div>
                 <div className="min-w-0 flex-1">
-                  <strong className="type-body-small">구매자 리뷰</strong>
+                  <div className="flex min-h-8 items-start justify-between gap-3">
+                    <strong className="type-body-small">{review.isMyReview ? "내 리뷰" : "구매자 리뷰"}</strong>
+                    {review.isMyReview ? (
+                      <span className="flex shrink-0 items-center gap-3 type-caption font-semibold">
+                        <button
+                          className="min-h-8 text-text-secondary focus-visible:outline-2 focus-visible:outline-primary"
+                          onClick={() => navigate(`/products/${productId}/reviews/${review.id}/edit`, { state: { review } })}
+                          type="button"
+                        >
+                          수정
+                        </button>
+                        <button
+                          className="min-h-8 text-error focus-visible:outline-2 focus-visible:outline-primary"
+                          onClick={() => { setMutationError(null); setReviewToDelete(review); }}
+                          type="button"
+                        >
+                          삭제
+                        </button>
+                      </span>
+                    ) : null}
+                  </div>
                   <div className="mt-1"><StarRating rating={review.rate} /></div>
                   {isVisible ? <p className="mt-3 whitespace-pre-wrap type-body text-text-primary">{review.content}</p> : <button className="mt-3 min-h-11 rounded-control bg-muted px-4 type-body-small font-semibold" onClick={() => setVisibleSpoilers((ids) => [...ids, review.id])} type="button">스포일러가 포함된 리뷰예요 · 보기</button>}
                 </div>
@@ -130,6 +173,14 @@ export function ReviewListPage() {
       <div className="safe-area-bottom page-content absolute inset-x-0 bottom-0 border-t border-hairline bg-surface pt-3">
         <Button className="w-full" onClick={() => status === "authenticated" ? navigate(writePath) : navigate("/login", { state: { returnTo: writePath } })}>리뷰 쓰기</Button>
       </div>
+      <ConfirmDialog
+        confirmLabel={isDeleting ? "삭제 중" : "삭제"}
+        description="삭제한 리뷰는 복구할 수 없어요."
+        isOpen={reviewToDelete !== null}
+        onCancel={() => { if (!isDeleting) setReviewToDelete(null); }}
+        onConfirm={() => { void handleDelete(); }}
+        title="리뷰를 삭제할까요?"
+      />
     </div>
   );
 }

@@ -81,6 +81,7 @@ export function Router() {
               element={<AiRecommendationChatPage />}
             />
             <Route path="/products/:productId/reviews/new" element={<ReviewWritePage />} />
+            <Route path="/products/:productId/reviews/:reviewId/edit" element={<ReviewWritePage />} />
           </Route>
         </Route>
         <Route element={<RequireAuth />}>

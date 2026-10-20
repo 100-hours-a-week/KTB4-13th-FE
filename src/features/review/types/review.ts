@@ -1,6 +1,7 @@
 export interface ProductReview {
   content: string;
   id: number;
+  isMyReview: boolean;
   isSpoiler: boolean;
   productId: number;
   rate: number;
@@ -15,5 +16,11 @@ export interface CreateProductReviewRequest {
   content: string;
   isSpoiler: boolean;
   productId: number;
+  rate: number;
+}
+
+export interface UpdateProductReviewRequest {
+  content: string;
+  isSpoiler: boolean;
   rate: number;
 }
