@@ -24,7 +24,8 @@ const consentDetails = [
 
 interface ReadingTimeStepProps {
   hasAgreedToPersonalization: boolean;
-  onSetHasAgreedToPersonalization: (value: boolean) => void;
+  // Omitted when the consent section is not shown, e.g. while editing a completed onboarding.
+  onSetHasAgreedToPersonalization?: (value: boolean) => void;
   onToggleOption: (optionId: number) => void;
   question: OnboardingQuestion;
   selectedOptionIds: number[];
@@ -51,50 +52,52 @@ export function ReadingTimeStep({
         selectedIds={selectedOptionIds}
       />
 
-      <div className="border-t border-hairline pt-6">
-        <h3 className="type-title text-text-primary">맞춤 추천을 위한 정보 활용</h3>
-        <label className="mt-3 flex items-start gap-2.5">
-          <input
-            checked={hasAgreedToPersonalization}
-            className="mt-0.5 size-4 accent-primary"
-            onChange={(event) =>
-              onSetHasAgreedToPersonalization(event.target.checked)
-            }
-            type="checkbox"
-          />
-          <span className="flex flex-col gap-1">
-            <span className="type-body-small font-medium text-text-primary">
-              개인화 도서 추천을 위한 정보 수집·이용에 동의합니다
+      {onSetHasAgreedToPersonalization ? (
+        <div className="border-t border-hairline pt-6">
+          <h3 className="type-title text-text-primary">맞춤 추천을 위한 정보 활용</h3>
+          <label className="mt-3 flex items-start gap-2.5">
+            <input
+              checked={hasAgreedToPersonalization}
+              className="mt-0.5 size-4 accent-primary"
+              onChange={(event) =>
+                onSetHasAgreedToPersonalization(event.target.checked)
+              }
+              type="checkbox"
+            />
+            <span className="flex flex-col gap-1">
+              <span className="type-body-small font-medium text-text-primary">
+                개인화 도서 추천을 위한 정보 수집·이용에 동의합니다
+              </span>
+              <span className="type-caption text-text-secondary">
+                동의하지 않으면 개인화 추천 없이 홈으로 이동할 수 있어요.
+              </span>
             </span>
-            <span className="type-caption text-text-secondary">
-              동의하지 않으면 개인화 추천 없이 홈으로 이동할 수 있어요.
-            </span>
-          </span>
-        </label>
-        <button
-          aria-controls="personalization-consent-detail"
-          aria-expanded={isDetailOpen}
-          className="mt-1 inline-flex min-h-11 items-center type-caption font-semibold text-text-secondary underline underline-offset-4 transition-colors hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          onClick={() => setIsDetailOpen((current) => !current)}
-          type="button"
-        >
-          수집·이용 내용 자세히 보기 →
-        </button>
-        <dl
-          className="mt-1 flex flex-col gap-1.5 rounded-control bg-muted px-3 py-2.5 type-caption"
-          hidden={!isDetailOpen}
-          id="personalization-consent-detail"
-        >
-          {consentDetails.map(({ description, term }) => (
-            <div className="flex gap-2" key={term}>
-              <dt className="w-24 shrink-0 font-semibold text-text-secondary">
-                {term}
-              </dt>
-              <dd className="text-text-tertiary">{description}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
+          </label>
+          <button
+            aria-controls="personalization-consent-detail"
+            aria-expanded={isDetailOpen}
+            className="mt-1 inline-flex min-h-11 items-center type-caption font-semibold text-text-secondary underline underline-offset-4 transition-colors hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            onClick={() => setIsDetailOpen((current) => !current)}
+            type="button"
+          >
+            수집·이용 내용 자세히 보기 →
+          </button>
+          <dl
+            className="mt-1 flex flex-col gap-1.5 rounded-control bg-muted px-3 py-2.5 type-caption"
+            hidden={!isDetailOpen}
+            id="personalization-consent-detail"
+          >
+            {consentDetails.map(({ description, term }) => (
+              <div className="flex gap-2" key={term}>
+                <dt className="w-24 shrink-0 font-semibold text-text-secondary">
+                  {term}
+                </dt>
+                <dd className="text-text-tertiary">{description}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      ) : null}
     </div>
   );
 }

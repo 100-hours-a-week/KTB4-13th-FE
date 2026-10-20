@@ -51,6 +51,10 @@ export function Router() {
             <Route path="/my/benefits" element={<MyBenefitsPage />} />
             <Route path="/my/profile" element={<ProfileEditPage />} />
             <Route path="/my/preferences" element={<PreferenceEditPage />} />
+            <Route
+              path="/my/preferences/onboarding"
+              element={<OnboardingPage mode="edit" />}
+            />
             <Route path="/my/library" element={<LibraryPage />} />
             <Route path="/my/withdraw" element={<WithdrawPage />} />
             <Route path="/notifications" element={<NotificationPage />} />

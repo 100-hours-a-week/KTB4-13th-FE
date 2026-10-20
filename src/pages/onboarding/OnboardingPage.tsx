@@ -13,9 +13,17 @@ import { ReadingTimeStep } from "@/features/onboarding/components/ReadingTimeSte
 import { RetryButton } from "@/common/components/RetryButton";
 import { SubcategoryStep } from "@/features/onboarding/components/SubcategoryStep";
 import { useOnboardingFlow } from "@/features/onboarding/hooks/useOnboardingFlow";
+import type { OnboardingFlowMode } from "@/features/onboarding/hooks/useOnboardingFlow";
 import { usePersonalizationConsent } from "@/features/onboarding/hooks/usePersonalizationConsent";
 
-export function OnboardingPage() {
+const PREFERENCES_PATH = "/my/preferences";
+
+interface OnboardingPageProps {
+  mode?: OnboardingFlowMode;
+}
+
+export function OnboardingPage({ mode = "initial" }: OnboardingPageProps) {
+  const isEditMode = mode === "edit";
   const navigate = useNavigate();
   const consentActionRef = useRef(false);
   const [isSubmittingConsent, setIsSubmittingConsent] = useState(false);
@@ -49,7 +57,7 @@ export function OnboardingPage() {
     toggleBook,
     toggleOption,
     totalSteps,
-  } = useOnboardingFlow();
+  } = useOnboardingFlow(mode);
 
   const handleBack = () => {
     if (step > 1) {
@@ -62,11 +70,12 @@ export function OnboardingPage() {
       return;
     }
 
-    navigate("/login");
+    navigate(isEditMode ? PREFERENCES_PATH : "/login");
   };
 
   const handleSaveAnswersAndGoNext = async () => {
-    if (step !== 1) {
+    // Consent was already recorded during the initial onboarding.
+    if (step !== 1 || isEditMode) {
       await saveAnswersAndGoNext();
       return;
     }
@@ -90,13 +99,27 @@ export function OnboardingPage() {
   const handleCompleteOnboarding = async () => {
     const isSaved = await saveBooksAndComplete();
 
-    if (isSaved) {
-      navigate("/");
+    if (!isSaved) {
+      return;
     }
+
+    if (isEditMode) {
+      navigate(PREFERENCES_PATH, {
+        replace: true,
+        state: { notice: "온보딩 취향 정보를 저장했어요." },
+      });
+      return;
+    }
+
+    navigate("/");
   };
 
   if (progressStatus === "completed") {
     return <Navigate replace to="/" />;
+  }
+
+  if (progressStatus === "incomplete") {
+    return <Navigate replace to="/onboarding" />;
   }
 
   if (progressStatus !== "ready") {
@@ -124,14 +147,15 @@ export function OnboardingPage() {
   }
 
   const canGoNext =
-    isSelectionValid && (step !== 1 || hasAgreedToPersonalization);
+    isSelectionValid &&
+    (step !== 1 || isEditMode || hasAgreedToPersonalization);
   const isConsentBusy = isSubmittingConsent || isSavingConsent;
 
   return (
     <main className="flex h-dvh flex-col overflow-hidden bg-surface">
       <OnboardingHeader
         action={
-          step === 5 ? (
+          step === 5 && !isEditMode ? (
             <button
               aria-busy={isSaving || undefined}
               className="type-body-small font-semibold text-text-secondary transition-colors hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:text-text-disabled"
@@ -182,7 +206,9 @@ export function OnboardingPage() {
         {step === 1 && question ? (
           <ReadingTimeStep
             hasAgreedToPersonalization={hasAgreedToPersonalization}
-            onSetHasAgreedToPersonalization={setHasAgreedToPersonalization}
+            onSetHasAgreedToPersonalization={
+              isEditMode ? undefined : setHasAgreedToPersonalization
+            }
             onToggleOption={toggleOption}
             question={question}
             selectedOptionIds={selectedOptionIds}
@@ -232,7 +258,9 @@ export function OnboardingPage() {
                 선택할 수 있는 책이 아직 없어요
               </p>
               <p className="mt-1 type-caption text-text-secondary">
-                상단의 홈으로 이동을 눌러 온보딩을 완료해 주세요.
+                {isEditMode
+                  ? "책을 고르지 않고 저장할 수 있어요."
+                  : "상단의 홈으로 이동을 눌러 온보딩을 완료해 주세요."}
               </p>
             </div>
           ) : (
@@ -249,7 +277,9 @@ export function OnboardingPage() {
         {hasSaveError ? (
           <Toast variant="error">
             {step === 5
-              ? "선택한 책을 저장하지 못했어요. 다시 시도해 주세요"
+              ? isEditMode
+                ? "취향 정보를 저장하지 못했어요. 다시 시도해 주세요"
+                : "선택한 책을 저장하지 못했어요. 다시 시도해 주세요"
               : "답변을 저장하지 못했어요. 다시 시도해 주세요"}
           </Toast>
         ) : null}
@@ -267,18 +297,19 @@ export function OnboardingPage() {
             }
             onClick={handleSaveAnswersAndGoNext}
           >
-            {step === 1 ? "동의하고 다음" : "다음"}
+            {step === 1 && !isEditMode ? "동의하고 다음" : "다음"}
           </Button>
         ) : (
           <Button
             className="w-full"
             disabled={
-              bookCandidatesStatus !== "ready" || selectedBookIds.length === 0
+              bookCandidatesStatus !== "ready" ||
+              (!isEditMode && selectedBookIds.length === 0)
             }
             isLoading={isSaving}
             onClick={handleCompleteOnboarding}
           >
-            내 서재에 담고 취향 확인하기
+            {isEditMode ? "취향 정보 저장하기" : "내 서재에 담고 취향 확인하기"}
           </Button>
         )}
       </OnboardingActions>

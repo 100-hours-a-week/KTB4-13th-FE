@@ -3,6 +3,7 @@ import type { ApiResult } from "@/common/api/apiResponse";
 import { fetchWithAuth } from "@/features/auth/lib/httpClient";
 import type {
   BookCandidate,
+  OnboardingAnswerGroup,
   OnboardingProgress,
   OnboardingQuestion,
 } from "@/features/onboarding/types/onboarding";
@@ -113,11 +114,17 @@ export async function fetchOnboardingProgress(): Promise<OnboardingProgressResul
     : { kind: "error" };
 }
 
+// parentOptionIds filters child options by unsaved parent selections; without it the backend
+// filters by the user's saved answers.
 export async function fetchOnboardingQuestion(
   questionId: number,
+  parentOptionIds?: number[],
 ): Promise<OnboardingQuestion | null> {
+  const query = parentOptionIds
+    ? `?parentOptionIds=${parentOptionIds.join(",")}`
+    : "";
   const result = await requestOnboardingApi(
-    `/api/v1/onboarding/questions/${questionId}`,
+    `/api/v1/onboarding/questions/${questionId}${query}`,
   );
 
   return result?.ok && isOnboardingQuestion(result.data) ? result.data : null;
@@ -163,6 +170,20 @@ export async function saveOnboardingBooks(bookIds: number[]) {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ bookIds }),
+  });
+
+  return result?.ok === true;
+}
+
+// Mirrors backend PutOnboardingPreferencesRequest: every question needs an answer, and bookIds may be empty.
+export async function updateOnboardingPreferences(
+  answers: OnboardingAnswerGroup[],
+  bookIds: number[],
+) {
+  const result = await requestOnboardingApi("/api/v1/onboarding/preferences", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ answers, bookIds }),
   });
 
   return result?.ok === true;

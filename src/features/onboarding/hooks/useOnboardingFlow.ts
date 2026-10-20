@@ -6,6 +6,7 @@ import {
   fetchOnboardingQuestion,
   saveOnboardingAnswers,
   saveOnboardingBooks,
+  updateOnboardingPreferences,
 } from "@/features/onboarding/api/onboardingApi";
 import {
   QUESTION_ID_BY_STEP,
@@ -30,9 +31,15 @@ function hasSameOptionIds(selectedOptionIds: number[], savedOptionIds: number[])
 }
 
 type LoadStatus = "loading" | "error" | "ready";
-type ProgressStatus = LoadStatus | "completed";
+// "completed" ends the initial flow; "incomplete" means edit mode has no completed onboarding to edit.
+type ProgressStatus = LoadStatus | "completed" | "incomplete";
 
-export function useOnboardingFlow() {
+// "edit" re-runs every step from the saved answers and saves them all at once at the end,
+// so leaving midway changes nothing on the server.
+export type OnboardingFlowMode = "initial" | "edit";
+
+export function useOnboardingFlow(mode: OnboardingFlowMode = "initial") {
+  const isEditMode = mode === "edit";
   const [progressStatus, setProgressStatus] =
     useState<ProgressStatus>("loading");
   const [progressRequestKey, setProgressRequestKey] = useState(0);
@@ -63,6 +70,12 @@ export function useOnboardingFlow() {
   const selectedOptionIds = question
     ? (selectedOptionIdsByQuestion[question.questionId] ?? [])
     : [];
+  // Q3 changes are not saved until the end in edit mode, so Q4 options are filtered by the
+  // current Q3 selection instead of the saved one. Q3 cannot change while Q4 or Q5 is shown.
+  const editParentOptionKey =
+    isEditMode && step >= 4
+      ? (selectedOptionIdsByQuestion[QUESTION_ID_BY_STEP[3]] ?? []).join(",")
+      : null;
 
   useEffect(() => {
     if (!limitNotice) {
@@ -86,6 +99,28 @@ export function useOnboardingFlow() {
 
       if (result.kind === "error") {
         setProgressStatus("error");
+        return;
+      }
+
+      if (isEditMode) {
+        if (
+          result.kind !== "found" ||
+          result.progress.status !== "COMPLETED"
+        ) {
+          setProgressStatus("incomplete");
+          return;
+        }
+
+        setSelectedOptionIdsByQuestion(
+          Object.fromEntries(
+            result.progress.answers.map((answer) => [
+              answer.questionId,
+              answer.optionIds,
+            ]),
+          ),
+        );
+        setSelectedBookIds(result.progress.bookIds);
+        setProgressStatus("ready");
         return;
       }
 
@@ -113,7 +148,7 @@ export function useOnboardingFlow() {
     return () => {
       isActive = false;
     };
-  }, [progressRequestKey]);
+  }, [isEditMode, progressRequestKey]);
 
   useEffect(() => {
     if (progressStatus !== "ready" || questionId === null) {
@@ -121,6 +156,10 @@ export function useOnboardingFlow() {
     }
 
     let isActive = true;
+    const parentOptionIds =
+      editParentOptionKey === null
+        ? undefined
+        : editParentOptionKey.split(",").map(Number);
 
     const parentQuestionPromise =
       questionId === QUESTION_ID_BY_STEP[4]
@@ -128,7 +167,10 @@ export function useOnboardingFlow() {
         : Promise.resolve(null);
 
     void Promise.all([
-      fetchOnboardingQuestion(questionId),
+      fetchOnboardingQuestion(
+        questionId,
+        questionId === QUESTION_ID_BY_STEP[4] ? parentOptionIds : undefined,
+      ),
       parentQuestionPromise,
     ]).then(([loadedQuestion, parentQuestion]) => {
       if (!isActive) {
@@ -169,7 +211,7 @@ export function useOnboardingFlow() {
     return () => {
       isActive = false;
     };
-  }, [progressStatus, questionId, questionRequestKey]);
+  }, [editParentOptionKey, progressStatus, questionId, questionRequestKey]);
 
   useEffect(() => {
     if (progressStatus !== "ready" || step !== 5) {
@@ -183,7 +225,12 @@ export function useOnboardingFlow() {
 
     // Rebuilt from the saved Q4 answer and the server's Q4 options on every load and retry,
     // so a refresh or re-entry at step 5 sends the same codes as the first visit.
-    void fetchOnboardingQuestion(subcategoryQuestionId).then(
+    void fetchOnboardingQuestion(
+      subcategoryQuestionId,
+      isEditMode
+        ? (selectedOptionIdsByQuestion[QUESTION_ID_BY_STEP[3]] ?? [])
+        : undefined,
+    ).then(
       async (subcategoryQuestion) => {
         const subcategoryCodes = subcategoryQuestion
           ? toSubcategoryCodes(subcategoryQuestion, selectedSubcategoryOptionIds)
@@ -201,6 +248,13 @@ export function useOnboardingFlow() {
           return;
         }
 
+        if (isEditMode) {
+          // Saves only books the user can see, so books outside the new subcategories are dropped.
+          const offeredBookIds = new Set(loadedBooks.map((book) => book.bookId));
+          setSelectedBookIds((current) =>
+            current.filter((bookId) => offeredBookIds.has(bookId)),
+          );
+        }
         setBookCandidates(loadedBooks);
         setBookCandidatesStatus("ready");
       },
@@ -209,7 +263,13 @@ export function useOnboardingFlow() {
     return () => {
       isActive = false;
     };
-  }, [bookCandidatesRequestKey, progressStatus, selectedOptionIdsByQuestion, step]);
+  }, [
+    bookCandidatesRequestKey,
+    isEditMode,
+    progressStatus,
+    selectedOptionIdsByQuestion,
+    step,
+  ]);
 
   const moveToStep = (nextStep: OnboardingStep) => {
     setStep(nextStep);
@@ -276,6 +336,12 @@ export function useOnboardingFlow() {
     }
 
     const nextStep = Math.min(step + 1, TOTAL_STEPS) as OnboardingStep;
+
+    if (isEditMode) {
+      moveToStep(nextStep);
+      return;
+    }
+
     const savedOptionIds = savedOptionIdsByQuestion[question.questionId] ?? [];
 
     // The backend rejects re-saving an answer it already holds, and nothing would change anyway.
@@ -331,7 +397,15 @@ export function useOnboardingFlow() {
     setIsSaving(true);
     setHasSaveError(false);
 
-    const isSaved = await saveOnboardingBooks(selectedBookIds);
+    const isSaved = isEditMode
+      ? await updateOnboardingPreferences(
+          Object.values(QUESTION_ID_BY_STEP).map((questionId) => ({
+            optionIds: selectedOptionIdsByQuestion[questionId] ?? [],
+            questionId,
+          })),
+          selectedBookIds,
+        )
+      : await saveOnboardingBooks(selectedBookIds);
 
     isSavingRef.current = false;
     setIsSaving(false);

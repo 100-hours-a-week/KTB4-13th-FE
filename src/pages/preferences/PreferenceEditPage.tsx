@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 
 import { ConfirmDialog } from "@/common/components/ConfirmDialog/ConfirmDialog";
 import { RetryButton } from "@/common/components/RetryButton";
@@ -22,7 +23,12 @@ export function PreferenceEditPage() {
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
   const isDeletingRef = useRef(false);
   const [isConfirming, setIsConfirming] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
+  const location = useLocation();
+  // Set by the onboarding edit flow after a successful save.
+  const [notice, setNotice] = useState<string | null>(() => {
+    const state: unknown = location.state;
+    return typeof state === "object" && state !== null && "notice" in state && typeof state.notice === "string" ? state.notice : null;
+  });
 
   useEffect(() => {
     const controller = new AbortController();
@@ -91,6 +97,7 @@ export function PreferenceEditPage() {
   return <div className="relative flex h-dvh flex-col bg-surface">
     <AppPageHeader fallbackPath="/my" title="취향 정보 수정" />
     <main className="page-content min-h-0 flex-1 overflow-y-auto py-6">
+      <Link className="mb-8 flex min-h-16 items-center gap-3 rounded-panel border border-border p-4 focus-visible:outline-2 focus-visible:outline-primary" to="/my/preferences/onboarding"><span className="min-w-0 flex-1"><strong className="block type-title">온보딩 답변 다시 설정하기</strong><span className="mt-1 block type-caption text-text-secondary">처음 답한 질문부터 다시 골라 취향을 바꿀 수 있어요.</span></span><span aria-hidden="true" className="text-text-tertiary">›</span></Link>
       <h2 className="type-section">북적북적이 기억한<br />나의 독서 취향</h2><p className="mt-2 type-body-small text-text-secondary">원하지 않는 기억은 언제든 지울 수 있어요.</p>
       {notice ? <div className="mt-5"><Toast variant={notice.includes("못했어요") ? "error" : "default"}>{notice}</Toast></div> : null}
       {state.kind === "loading" ? <div aria-busy="true" className="mt-7 space-y-3"><p className="sr-only" role="status">취향 정보를 불러오는 중이에요</p>{Array.from({ length: 3 }, (_, index) => <div aria-hidden="true" className="h-24 animate-pulse rounded-panel border border-border bg-muted" key={index} />)}</div> : null}
