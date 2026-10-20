@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Button } from "@/common/components/Button";
 import { ConfirmDialog } from "@/common/components/ConfirmDialog/ConfirmDialog";
 import { Toast } from "@/common/components/Toast";
-import { clearMockValues } from "@/common/mock/localMockStore";
 import { useLogout } from "@/features/auth/hooks/useLogout";
 import { AppPageHeader } from "@/features/navigation/components/AppPageHeader";
 import { requestMyProfileDeletion } from "@/features/profile/api/profileApi";
@@ -28,7 +27,6 @@ export function WithdrawPage() {
       setError("탈퇴 처리에 실패했어요. 다시 시도해 주세요.");
       return;
     }
-    clearMockValues();
     clearProfileImage();
     setIsDone(true);
     setIsConfirming(false);

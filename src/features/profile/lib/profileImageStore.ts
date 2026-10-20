@@ -33,4 +33,5 @@ export function saveProfileImage(imageDataUrl: string | null) {
 
 export function clearProfileImage() {
   window.localStorage.removeItem(STORAGE_KEY);
+  window.localStorage.removeItem(LEGACY_STORAGE_KEY);
 }
