@@ -7,7 +7,10 @@ import { RetryButton } from "@/common/components/RetryButton";
 import { CartButton } from "@/features/cart/components/CartButton";
 import { useLogout } from "@/features/auth/hooks/useLogout";
 import { fetchMyProfile } from "@/features/profile/api/profileApi";
-import { getProfileImage } from "@/features/profile/lib/profileImageStore";
+import {
+  DEFAULT_PROFILE_IMAGE_URL,
+  getProfileImage,
+} from "@/features/profile/lib/profileImageStore";
 import { LogoutDialog } from "@/pages/my/components/LogoutDialog";
 
 interface MenuLinkProps {
@@ -44,7 +47,7 @@ export function MyPage() {
   const [nickname, setNickname] = useState("");
   const [profileError, setProfileError] = useState(false);
   const [profileRequestKey, setProfileRequestKey] = useState(0);
-  const [imageDataUrl] = useState(getProfileImage);
+  const [imageDataUrl, setImageDataUrl] = useState(getProfileImage);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
   const isLogoutRequestedRef = useRef(false);
@@ -104,12 +107,14 @@ export function MyPage() {
           aria-labelledby="my-profile-title"
           className="flex items-center gap-3 rounded-panel border border-border p-4"
         >
-          {imageDataUrl ? <img alt="프로필" className="size-12 shrink-0 rounded-full object-cover" src={imageDataUrl} /> : <div
-            aria-hidden="true"
-            className="flex size-12 shrink-0 items-center justify-center rounded-full bg-accent-soft font-brand text-lg text-accent"
-          >
-            {nickname.slice(0, 1) || "책"}
-          </div>}
+          <img
+            alt="프로필"
+            className={`size-12 shrink-0 rounded-full bg-accent-soft ${imageDataUrl ? "object-cover" : "object-contain p-0.5"}`}
+            onError={() => {
+              if (imageDataUrl) setImageDataUrl(null);
+            }}
+            src={imageDataUrl ?? DEFAULT_PROFILE_IMAGE_URL}
+          />
           <div className="min-w-0">
             <h2 className="type-title text-text-primary" id="my-profile-title">
               {nickname ? `${nickname}님` : "내 정보를 불러오는 중이에요"}

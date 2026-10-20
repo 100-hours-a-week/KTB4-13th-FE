@@ -1,6 +1,8 @@
 const STORAGE_KEY = "bookjeok:profile-image";
 const LEGACY_STORAGE_KEY = "bookjeok:mock:profile";
 
+export const DEFAULT_PROFILE_IMAGE_URL = `${import.meta.env.BASE_URL}assets/(nobg)bookjeok-character.png`;
+
 export function getProfileImage() {
   const stored = window.localStorage.getItem(STORAGE_KEY);
   if (stored !== null) return stored;

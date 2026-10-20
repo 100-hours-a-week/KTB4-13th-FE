@@ -5,7 +5,11 @@ import { Button } from "@/common/components/Button";
 import { Toast } from "@/common/components/Toast";
 import { AppPageHeader } from "@/features/navigation/components/AppPageHeader";
 import { fetchMyProfile, updateMyProfile } from "@/features/profile/api/profileApi";
-import { getProfileImage, saveProfileImage } from "@/features/profile/lib/profileImageStore";
+import {
+  DEFAULT_PROFILE_IMAGE_URL,
+  getProfileImage,
+  saveProfileImage,
+} from "@/features/profile/lib/profileImageStore";
 
 export function ProfileEditPage() {
   const navigate = useNavigate();
@@ -58,7 +62,7 @@ export function ProfileEditPage() {
     <main className="page-content min-h-0 flex-1 overflow-y-auto py-8">
       {error ? <div className="mb-5"><Toast variant="error">{error}</Toast></div> : null}
       <div className="flex flex-col items-center">
-        <button aria-label="프로필 사진 변경" className="relative size-28 overflow-hidden rounded-full bg-accent-soft focus-visible:outline-2 focus-visible:outline-primary" onClick={() => inputRef.current?.click()} type="button">{imageDataUrl ? <img alt="선택한 프로필" className="size-full object-cover" src={imageDataUrl} /> : <span className="font-brand text-4xl text-accent">{normalized.slice(0, 1) || "책"}</span>}<span className="absolute inset-x-0 bottom-0 bg-black/55 py-1 type-caption text-white">사진 변경</span></button>
+        <button aria-label="프로필 사진 변경" className="relative size-28 overflow-hidden rounded-full bg-accent-soft focus-visible:outline-2 focus-visible:outline-primary" onClick={() => inputRef.current?.click()} type="button"><img alt="선택한 프로필" className={`size-full ${imageDataUrl ? "object-cover" : "object-contain p-1"}`} onError={() => { if (imageDataUrl) setImageDataUrl(null); }} src={imageDataUrl ?? DEFAULT_PROFILE_IMAGE_URL} /><span className="absolute inset-x-0 bottom-0 bg-black/55 py-1 type-caption text-white">사진 변경</span></button>
         <input accept="image/*" aria-label="프로필 사진 파일 선택" className="sr-only" onChange={selectImage} ref={inputRef} type="file" />
       </div>
       <section className="mt-10"><label className="type-title" htmlFor="nickname">닉네임</label><div className="mt-3"><input className="min-h-12 w-full rounded-control border border-border px-3 outline-none focus:border-primary focus:outline-2 focus:outline-primary" disabled={isLoading} id="nickname" maxLength={20} onChange={(event) => { setNickname(event.target.value); setError(null); }} value={nickname} /></div><p className="mt-2 type-caption text-text-tertiary">2~20자의 닉네임을 입력해 주세요.</p></section>
