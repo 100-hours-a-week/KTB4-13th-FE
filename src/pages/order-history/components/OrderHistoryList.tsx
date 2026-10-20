@@ -39,6 +39,9 @@ function formatOrderDate(createdAt: string) {
 }
 
 function OrderCard({ order }: { order: OrderHistoryEntry }) {
+  const currentPaidAmount = order.payment
+    ? Math.max(0, order.payment.paidAmount - order.payment.cancelledPaidAmount)
+    : order.totalPrice;
   return (
     <article className="rounded-panel border border-border bg-surface p-4">
       <div className="flex items-center justify-between gap-3">
@@ -89,9 +92,9 @@ function OrderCard({ order }: { order: OrderHistoryEntry }) {
       </ul>
 
       <div className="mt-4 flex items-center justify-between border-t border-hairline pt-4">
-        <span className="type-body-small text-text-secondary">총 결제금액</span>
+        <span className="type-body-small text-text-secondary">{order.payment ? "현재 결제금액" : "주문 금액"}</span>
         <strong className="type-title tabular-nums text-text-primary">
-          {priceFormatter.format(order.totalPrice)}원
+          {priceFormatter.format(currentPaidAmount)}원
         </strong>
       </div>
       <Link className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-control border border-border type-body-small font-semibold text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" to={`/my/orders/${encodeURIComponent(order.key)}`}>주문 상세 보기</Link>

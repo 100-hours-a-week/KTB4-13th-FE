@@ -39,6 +39,14 @@ function cancellableQuantity(item: OrderHistoryItem) {
   return Math.max(0, item.quantity - item.canceledQuantity);
 }
 
+function actualCouponDiscount(
+  totalPrice: number,
+  paidAmount: number,
+  usedPoint: number,
+) {
+  return Math.max(0, totalPrice - paidAmount - usedPoint);
+}
+
 export function OrderDetailPage() {
   const { orderKey = "" } = useParams();
   const { retry, state } = useOrderDetail(orderKey || null);
@@ -110,7 +118,7 @@ export function OrderDetailPage() {
               <div className="mt-2 flex justify-between border-t border-hairline pt-4 type-title"><span>주문 금액</span><strong>{formatWon(state.data.totalPrice)}</strong></div>
             </section>
 
-            {state.data.payment ? <section><h2 className="type-title">결제 정보</h2><dl className="mt-3 space-y-2 type-body-small text-text-secondary"><div className="flex justify-between"><dt>결제 수단</dt><dd>{state.data.payment.method}</dd></div><div className="flex justify-between"><dt>결제 일시</dt><dd>{formatDate(state.data.payment.paidAt)}</dd></div><div className="flex justify-between"><dt>쿠폰 할인</dt><dd>-{formatWon(state.data.payment.couponDiscount)}</dd></div><div className="flex justify-between"><dt>포인트 사용</dt><dd>-{formatWon(state.data.payment.usedPoint)}</dd></div>{state.data.payment.cancelledPaidAmount > 0 ? <div className="flex justify-between text-accent"><dt>취소 금액</dt><dd>-{formatWon(state.data.payment.cancelledPaidAmount)}</dd></div> : null}<div className="flex justify-between font-semibold text-text-primary"><dt>결제 금액</dt><dd>{formatWon(state.data.payment.paidAmount)}</dd></div></dl></section> : null}
+            {state.data.payment ? <section><h2 className="type-title">결제 정보</h2><dl className="mt-3 space-y-2 type-body-small text-text-secondary"><div className="flex justify-between"><dt>결제 수단</dt><dd>{state.data.payment.method}</dd></div><div className="flex justify-between"><dt>결제 일시</dt><dd>{formatDate(state.data.payment.paidAt)}</dd></div><div className="flex justify-between"><dt>쿠폰 할인</dt><dd>-{formatWon(actualCouponDiscount(state.data.totalPrice, state.data.payment.paidAmount, state.data.payment.usedPoint))}</dd></div><div className="flex justify-between"><dt>포인트 사용</dt><dd>-{formatWon(state.data.payment.usedPoint)}</dd></div>{state.data.payment.cancelledPaidAmount > 0 ? <div className="flex justify-between text-accent"><dt>취소 금액</dt><dd>-{formatWon(state.data.payment.cancelledPaidAmount)}</dd></div> : null}<div className="flex justify-between font-semibold text-text-primary"><dt>결제 금액</dt><dd>{formatWon(state.data.payment.paidAmount)}</dd></div></dl></section> : null}
             {state.data.address ? <section><h2 className="type-title">배송지</h2><p className="mt-3 type-body-small text-text-secondary">[{state.data.address.postalCode}] {state.data.address.address} {state.data.address.detailAddress ?? ""}</p></section> : null}
 
             {state.data.cancellations.length > 0 ? <section><h2 className="type-title">취소 내역</h2><ul className="mt-3 space-y-3">{state.data.cancellations.map((cancellation, index) => <li className="rounded-panel bg-muted p-4 type-body-small" key={`${cancellation.canceledAt}-${index}`}><div className="flex justify-between gap-3"><span className="font-semibold">{cancellation.type === "FULL" ? "전체 취소" : "부분 취소"}</span><strong className="tabular-nums">{formatWon(cancellation.refundedAmount)}</strong></div><p className="mt-1 type-caption text-text-tertiary">{formatDate(cancellation.canceledAt)}</p>{cancellation.items.length > 0 ? <ul className="mt-3 space-y-1 border-t border-hairline pt-3 text-text-secondary">{cancellation.items.map((item) => <li className="flex justify-between gap-3" key={`${item.orderItemId}-${item.quantity}`}><span className="line-clamp-1">{item.itemName}</span><span className="shrink-0">{item.quantity}권</span></li>)}</ul> : null}</li>)}</ul></section> : null}
