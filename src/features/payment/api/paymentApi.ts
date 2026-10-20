@@ -26,7 +26,7 @@ export async function createPayment(
           ...(request.useOwnedCouponId !== null
             ? { useOwnedCouponId: request.useOwnedCouponId }
             : {}),
-          ...(request.usePoint > 0 ? { usePoint: request.usePoint } : {}),
+          usePoint: request.usePoint,
         }),
         headers: { "Content-Type": "application/json" },
         method: "POST",
