@@ -1,6 +1,15 @@
 export type CouponType = "NONE" | "FIXED_AMOUNT" | "PERCENT_RATE";
 export type OwnedCouponStatus = "ISSUED" | "USED";
 
+export interface Coupon {
+  discount: number;
+  expiredAt: string;
+  id: number;
+  minOrderAmount: number;
+  name: string;
+  type: CouponType;
+}
+
 export interface OwnedCoupon {
   discount: number;
   expiredAt: string;

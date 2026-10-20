@@ -1,7 +1,9 @@
 import { parseApiResponse } from "@/common/api/apiResponse";
+import { fetchPublic } from "@/common/api/httpClient";
 import { fetchWithAuth } from "@/features/auth/lib/httpClient";
 import type {
   CouponType,
+  Coupon,
   OwnedCoupon,
   OwnedCouponStatus,
   PointHistory,
@@ -44,6 +46,21 @@ function parseOwnedCoupon(value: unknown): OwnedCoupon | null {
   return value as unknown as OwnedCoupon;
 }
 
+function parseCoupon(value: unknown): Coupon | null {
+  if (
+    !isRecord(value) ||
+    !Number.isSafeInteger(value.id) ||
+    typeof value.name !== "string" ||
+    !COUPON_TYPES.includes(value.type as CouponType) ||
+    !isFiniteNumber(value.discount) ||
+    !isFiniteNumber(value.minOrderAmount) ||
+    typeof value.expiredAt !== "string"
+  ) {
+    return null;
+  }
+  return value as unknown as Coupon;
+}
+
 function parsePointHistory(value: unknown): PointHistory | null {
   if (
     !isRecord(value) ||
@@ -80,6 +97,42 @@ export async function fetchOwnedCoupons(
       : { ok: false, reason: "error" };
   } catch {
     return { ok: false, reason: "error" };
+  }
+}
+
+export async function fetchCoupons(
+  couponIds: number[],
+  signal?: AbortSignal,
+): Promise<BenefitResult<Coupon[]>> {
+  if (couponIds.length === 0) return { data: [], ok: true };
+  const params = new URLSearchParams();
+  couponIds.forEach((id) => params.append("ids", String(id)));
+  try {
+    const result = await parseApiResponse(
+      await fetchPublic(`/api/v1/coupons?${params.toString()}`, { signal }),
+    );
+    if (!result.ok || !Array.isArray(result.data)) {
+      return { ok: false, reason: "error" };
+    }
+    const coupons = result.data.map(parseCoupon);
+    return coupons.every((coupon): coupon is Coupon => coupon !== null)
+      ? { data: coupons, ok: true }
+      : { ok: false, reason: "error" };
+  } catch {
+    return { ok: false, reason: "error" };
+  }
+}
+
+export async function issueCoupon(couponId: number) {
+  try {
+    const result = await parseApiResponse(
+      await fetchWithAuth(`/api/v1/coupons/${couponId}/issue`, { method: "POST" }),
+    );
+    return result.ok
+      ? { ok: true as const }
+      : { message: result.error?.message?.trim() || null, ok: false as const };
+  } catch {
+    return { message: null, ok: false as const };
   }
 }
 

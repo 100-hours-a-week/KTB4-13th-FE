@@ -51,7 +51,7 @@ export function OrderPage() {
   const navigationState = readOrderNavigationState(location.state);
   const items = navigationState?.items ?? [];
   const cartItemIds = navigationState?.cartItemIds ?? [];
-  const benefits = useOrderBenefits();
+  const benefits = useOrderBenefits(items.map((item) => item.productId).join(","));
   const [selectedCouponId, setSelectedCouponId] = useState<number | null>(null);
   const [pointAmount, setPointAmount] = useState(0);
   const selectedCoupon = benefits.state.kind === "ready"
@@ -167,7 +167,9 @@ export function OrderPage() {
     if (result.data.status === "ORDER_CREATED") {
       const searchParams = new URLSearchParams({ orderKey: result.data.orderKey });
       if (selectedCouponId !== null) searchParams.set("couponId", String(selectedCouponId));
+      if (couponDiscount > 0) searchParams.set("couponDiscount", String(couponDiscount));
       if (appliedPoint > 0) searchParams.set("point", String(appliedPoint));
+      searchParams.set("amount", String(totals.total));
       if (cartItemIds.length > 0) searchParams.set("cartItemIds", cartItemIds.join(","));
       navigate(`/payment?${searchParams.toString()}`, { replace: true });
       return;

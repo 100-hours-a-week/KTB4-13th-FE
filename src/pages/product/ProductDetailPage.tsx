@@ -16,6 +16,7 @@ import { LoginRequiredDialog } from "@/features/auth/components/LoginRequiredDia
 import { useAuth } from "@/features/auth/context/useAuth";
 import type { OrderNavigationState } from "@/features/order/types/order";
 import { ProductDetailContent, ProductDetailSkeleton } from "@/pages/product/components/ProductDetailContent";
+import { ProductCouponSection } from "@/pages/product/components/ProductCouponSection";
 import { ProductHeader } from "@/pages/product/components/ProductHeader";
 import { PurchaseBar } from "@/pages/product/components/PurchaseBar";
 import { useProductDetail } from "@/pages/product/hooks/useProductDetail";
@@ -50,7 +51,7 @@ export function ProductDetailPage() {
     "cart" | "buy-now" | null
   >(null);
   const [loginRequiredAction, setLoginRequiredAction] = useState<
-    "cart" | "buy-now" | null
+    "cart" | "buy-now" | "coupon" | null
   >(null);
   const product = state.kind === "ready" ? state.data : null;
 
@@ -173,10 +174,16 @@ export function ProductDetailPage() {
         ) : null}
 
         {product ? (
-          <ProductDetailContent
-            product={product}
-            recommendationReason={recommendationReason}
-          />
+          <>
+            <ProductDetailContent
+              product={product}
+              recommendationReason={recommendationReason}
+            />
+            <ProductCouponSection
+              couponIds={product.couponIds}
+              onLoginRequired={() => setLoginRequiredAction("coupon")}
+            />
+          </>
         ) : null}
       </main>
 
@@ -209,6 +216,8 @@ export function ProductDetailPage() {
         title={
           loginRequiredAction === "buy-now"
             ? "구매하려면 로그인이 필요해요"
+            : loginRequiredAction === "coupon"
+              ? "쿠폰을 받으려면 로그인이 필요해요"
             : "장바구니를 이용하려면 로그인이 필요해요"
         }
       />

@@ -3,6 +3,7 @@ import type { ProductDetail } from "@/features/product/types/product";
 const baseProduct: ProductDetail = {
   author: "북적북적 테스트 저자",
   category: "소설",
+  couponIds: [],
   description: "실제 API나 DB와 무관한 개발 전용 도서입니다. 상품 상세 화면의 가격과 재고 상태를 점검하기 위해 사용합니다.",
   discountedPrice: 20000,
   itemName: "미리보기용 테스트 도서",

@@ -62,7 +62,7 @@ export function PaymentMethodSection() {
         />
         토스페이먼츠
       </label>
-      <p className="mt-2 type-caption leading-relaxed text-text-tertiary">결제 승인 서버가 준비되면 선택한 수단으로 결제를 진행할 수 있어요.</p>
+      <p className="mt-2 type-caption leading-relaxed text-text-tertiary">토스페이먼츠 결제창에서 카드 또는 간편결제를 선택할 수 있어요.</p>
     </fieldset>
   );
 }

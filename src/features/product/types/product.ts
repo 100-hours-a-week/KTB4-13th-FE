@@ -17,6 +17,7 @@ export interface ProductListPage {
 export interface ProductDetail {
   author: string;
   category: string;
+  couponIds: number[];
   description: string | null;
   discountedPrice: number;
   itemName: string;

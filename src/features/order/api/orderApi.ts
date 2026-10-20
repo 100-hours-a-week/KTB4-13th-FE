@@ -261,6 +261,51 @@ export async function cancelCreatedOrder(orderKey: string) {
   }
 }
 
+type PaidCancellationResult =
+  | { ok: true }
+  | { message: string | null; ok: false };
+
+async function requestPaidCancellation(
+  path: "/api/v1/cancel" | "/api/v1/partial-cancel",
+  requestKey: string,
+  body: Record<string, number | string>,
+): Promise<PaidCancellationResult> {
+  try {
+    const result = await parseApiResponse(
+      await fetchWithAuth(path, {
+        body: JSON.stringify(body),
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": requestKey,
+        },
+        method: "POST",
+      }),
+    );
+    return result.ok
+      ? { ok: true }
+      : { message: result.error?.message?.trim() || null, ok: false };
+  } catch {
+    return { message: null, ok: false };
+  }
+}
+
+export function cancelPaidOrder(orderKey: string, requestKey: string) {
+  return requestPaidCancellation("/api/v1/cancel", requestKey, { orderKey });
+}
+
+export function partiallyCancelPaidOrder(
+  orderKey: string,
+  orderItemId: number,
+  quantity: number,
+  requestKey: string,
+) {
+  return requestPaidCancellation("/api/v1/partial-cancel", requestKey, {
+    orderItemId,
+    orderKey,
+    quantity,
+  });
+}
+
 function isCreateOrderItemResponse(value: unknown) {
   return (
     typeof value === "object" &&
