@@ -21,9 +21,11 @@ export function OrderHistoryPage() {
           status={history.status}
         />
       </main>
+      <BottomNavigation />
     </div>
   );
 }
 import { useLocation } from "react-router-dom";
 
+import { BottomNavigation } from "@/common/components/BottomNavigation";
 import { Toast } from "@/common/components/Toast";

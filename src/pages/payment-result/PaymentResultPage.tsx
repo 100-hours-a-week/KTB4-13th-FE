@@ -103,6 +103,7 @@ export function PaymentResultPage({ kind }: { kind: "success" | "fail" }) {
         {state.kind === "error" && kind === "success" ? <Button className="min-h-11 w-full" onClick={() => { setState({ kind: "loading" }); setRequestKey((value) => value + 1); }}>다시 확인하기</Button> : null}
         {orderKey && state.kind === "error" ? <Link className="inline-flex min-h-11 items-center justify-center rounded-control bg-primary px-4 type-body-small font-semibold text-white" to={`/payment?orderKey=${encodeURIComponent(orderKey)}`}>결제 화면으로 돌아가기</Link> : null}
         <Link className="inline-flex min-h-11 items-center justify-center rounded-control border border-border px-4 type-body-small font-semibold" to="/my/orders">주문 내역 보기</Link>
+        <Link className="inline-flex min-h-11 items-center justify-center rounded-control px-4 type-body-small font-semibold text-text-secondary hover:bg-muted" to="/">홈으로 가기</Link>
       </div>
     </main>
   );
