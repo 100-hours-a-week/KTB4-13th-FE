@@ -13,6 +13,34 @@ export interface RecommendationCardViewModel {
   title: string;
 }
 
+export interface CartProposalItemViewModel {
+  expectedQuantity: number;
+  expectedUnitPrice: number | null;
+  itemName: string | null;
+  operation: "remove" | "set";
+  productId: number;
+  quantity: number | null;
+}
+
+export interface CartProposalViewModel {
+  executionId: number | null;
+  expiresAt: string;
+  items: CartProposalItemViewModel[];
+  proposalId: number;
+  status: "executed" | "expired" | "invalidated" | "pending";
+}
+
+export type ProposalExecutionStatus =
+  | "declined"
+  | "error"
+  | "executed"
+  | "executing"
+  | "expired"
+  | "invalidated"
+  | "pending"
+  | "proposal-error"
+  | "rejected";
+
 export type ChatPresentationMessage =
   | {
       content: string;
@@ -28,8 +56,9 @@ export type ChatPresentationMessage =
         target: string | null;
       }>;
       content: string;
-      executionStatus?: "declined" | "error" | "executed" | "executing" | "pending" | "rejected";
+      executionStatus?: ProposalExecutionStatus;
       id: string;
+      proposal?: CartProposalViewModel;
       recommendations?: RecommendationCardViewModel[];
       role: "assistant";
     };

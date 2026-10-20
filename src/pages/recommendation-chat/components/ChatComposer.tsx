@@ -60,7 +60,7 @@ export function ChatComposer({
         <span aria-hidden="true">+</span>
       </button>
       <label className="min-w-0 flex-1">
-        <span className="sr-only">AI 추천 메시지</span>
+        <span className="sr-only">도서 쇼핑 도우미에게 보낼 메시지</span>
         <input
           autoComplete="off"
           className="min-h-11 w-full rounded-control border border-transparent bg-muted px-3 type-body-small text-text-primary outline-none placeholder:text-text-tertiary focus-visible:border-primary focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary disabled:cursor-not-allowed disabled:text-text-disabled disabled:opacity-60"
@@ -74,7 +74,7 @@ export function ChatComposer({
             isComposingRef.current = true;
           }}
           onKeyDown={handleKeyDown}
-          placeholder="예: 밤에 잠 안 올 때 읽기 좋은 에세이"
+          placeholder="추천이나 장바구니 요청을 입력해 주세요"
           type="text"
           value={draft}
         />

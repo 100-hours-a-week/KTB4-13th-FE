@@ -6,10 +6,12 @@ import {
   createChatSession,
   fetchChatHistory,
   fetchChatSessions,
-  fetchCartProposalStatus,
+  fetchCartProposal,
   sendSessionMessage,
 } from "@/features/recommendation/api/recommendationSessionApi";
+import { fetchProductDetail } from "@/features/product/api/productDetailApi";
 import type {
+  AgentCartProposal,
   ChatHistoryMessage,
   ChatSessionSummary,
   SessionChatReply,
@@ -17,7 +19,11 @@ import type {
 import type {
   ChatPresentationMessage,
   ChatPresentationStatus,
+  CartProposalViewModel,
+  ProposalExecutionStatus,
 } from "@/pages/recommendation-chat/types/chatPresentation";
+
+const DECLINED_PROPOSALS_STORAGE_KEY = "bookjeok-chat-declined-proposals";
 
 function replyContent(reply: SessionChatReply) {
   return reply.followup ? `${reply.reply}\n\n${reply.followup}` : reply.reply;
@@ -54,6 +60,72 @@ function toAssistantMessage(
   };
 }
 
+function proposalIdOf(message: ChatPresentationMessage) {
+  if (message.role !== "assistant") return null;
+  return message.agentButtons?.find(
+    (button) => button.action === "confirm_selection",
+  )?.proposalId ?? message.proposal?.proposalId ?? null;
+}
+
+function readDeclinedProposalIds() {
+  try {
+    const value: unknown = JSON.parse(
+      window.localStorage.getItem(DECLINED_PROPOSALS_STORAGE_KEY) ?? "[]",
+    );
+    return new Set(
+      Array.isArray(value)
+        ? value.filter(
+            (item): item is number => Number.isSafeInteger(item) && item > 0,
+          )
+        : [],
+    );
+  } catch {
+    return new Set<number>();
+  }
+}
+
+function storeDeclinedProposal(proposalId: number) {
+  const proposalIds = [...readDeclinedProposalIds(), proposalId].slice(-100);
+  try {
+    window.localStorage.setItem(
+      DECLINED_PROPOSALS_STORAGE_KEY,
+      JSON.stringify([...new Set(proposalIds)]),
+    );
+  } catch {
+    // The current screen still keeps the declined state when storage is unavailable.
+  }
+}
+
+function executionStatusForProposal(
+  proposal: AgentCartProposal,
+  isDeclined: boolean,
+): ProposalExecutionStatus {
+  if (proposal.status === "executed") return "executed";
+  if (proposal.status === "expired") return "expired";
+  if (proposal.status === "invalidated") return "invalidated";
+  return isDeclined ? "declined" : "pending";
+}
+
+async function toProposalViewModel(
+  proposal: AgentCartProposal,
+  signal?: AbortSignal,
+): Promise<CartProposalViewModel> {
+  const products = await Promise.all(
+    proposal.items.map((item) => fetchProductDetail(item.productId, signal)),
+  );
+
+  return {
+    ...proposal,
+    items: proposal.items.map((item, index) => {
+      const product = products[index];
+      return {
+        ...item,
+        itemName: product.ok ? product.data.itemName : null,
+      };
+    }),
+  };
+}
+
 function toHistoryMessages(
   history: ChatHistoryMessage[],
 ): ChatPresentationMessage[] {
@@ -77,16 +149,24 @@ function toHistoryMessages(
 
 async function restoreProposalStatuses(
   messages: ChatPresentationMessage[],
-  signal: AbortSignal,
+  signal?: AbortSignal,
 ) {
   return Promise.all(messages.map(async (message) => {
-    if (message.role !== "assistant" || message.executionStatus !== "pending") return message;
-    const proposalId = message.agentButtons?.find((button) => button.action === "confirm_selection")?.proposalId;
+    if (message.role !== "assistant") return message;
+    const proposalId = proposalIdOf(message);
     if (proposalId === null || proposalId === undefined) return message;
-    const proposalStatus = await fetchCartProposalStatus(proposalId, signal);
+    const result = await fetchCartProposal(proposalId, signal);
+    if (!result.ok) {
+      return { ...message, executionStatus: "proposal-error" as const };
+    }
+    const proposal = await toProposalViewModel(result.data, signal);
     return {
       ...message,
-      executionStatus: proposalStatus === "unavailable" ? "rejected" as const : proposalStatus,
+      executionStatus: executionStatusForProposal(
+        result.data,
+        readDeclinedProposalIds().has(proposalId),
+      ),
+      proposal,
     };
   }));
 }
@@ -107,6 +187,8 @@ export function useRecommendationChat(
   const [status, setStatus] = useState<ChatPresentationStatus>("idle");
   const shownBookIdsRef = useRef<number[]>([]);
   const isSendingRef = useRef(false);
+  const executingProposalIdsRef = useRef(new Set<number>());
+  const proposalIdempotencyKeysRef = useRef(new Map<number, string>());
   const nextMessageIdRef = useRef(1);
   const skipHistorySessionIdRef = useRef<number | null>(null);
 
@@ -169,7 +251,11 @@ export function useRecommendationChat(
   }, [historyRequestKey, sessionId]);
 
   const selectSession = (nextSessionId: number) => {
-    if (isSendingRef.current || nextSessionId === sessionId) return;
+    if (
+      isSendingRef.current ||
+      executingProposalIdsRef.current.size > 0 ||
+      nextSessionId === sessionId
+    ) return;
     setIsHistoryLoading(true);
     setHistoryError(false);
     setStatus("idle");
@@ -178,7 +264,7 @@ export function useRecommendationChat(
   };
 
   const startNewSession = () => {
-    if (isSendingRef.current) return;
+    if (isSendingRef.current || executingProposalIdsRef.current.size > 0) return;
     setSessionId(null);
     setMessages([]);
     setStatus("idle");
@@ -248,10 +334,14 @@ export function useRecommendationChat(
     if (result.data.execution?.status === "applied") {
       notifyCartChanged({ animate: true });
     }
-    setMessages((current) => [
-      ...current,
-      toAssistantMessage(createMessageId("assistant"), result.data),
+    const assistantMessage = toAssistantMessage(
+      createMessageId("assistant"),
+      result.data,
+    );
+    const [restoredAssistantMessage] = await restoreProposalStatuses([
+      assistantMessage,
     ]);
+    setMessages((current) => [...current, restoredAssistantMessage]);
     setStatus("idle");
     void loadSessions();
   };
@@ -278,36 +368,125 @@ export function useRecommendationChat(
     if (failedMessage) void requestReply(failedMessage.content, failedMessage.id);
   };
 
-  const confirmProposal = async (messageId: string, proposalId: number) => {
+  const updateProposalMessage = (
+    messageId: string,
+    executionStatus: ProposalExecutionStatus,
+    proposal?: CartProposalViewModel,
+  ) => {
     setMessages((current) =>
       current.map((message) =>
         message.role === "assistant" && message.id === messageId
-          ? { ...message, executionStatus: "executing" }
+          ? { ...message, executionStatus, proposal: proposal ?? message.proposal }
           : message,
       ),
     );
-    const result = await confirmCartProposal(proposalId);
-    setMessages((current) =>
-      current.map((message) =>
-        message.role === "assistant" && message.id === messageId
-          ? {
-              ...message,
-              executionStatus: result.ok ? "executed" : "error",
-            }
-          : message,
-      ),
-    );
-    if (result.ok) notifyCartChanged({ animate: true });
   };
 
-  const declineProposal = (messageId: string) => {
-    setMessages((current) =>
-      current.map((message) =>
-        message.role === "assistant" && message.id === messageId
-          ? { ...message, executionStatus: "declined" }
-          : message,
-      ),
-    );
+  const readProposal = async (proposalId: number) => {
+    const result = await fetchCartProposal(proposalId);
+    if (!result.ok) return result;
+    return {
+      data: {
+        proposal: result.data,
+        viewModel: await toProposalViewModel(result.data),
+      },
+      ok: true as const,
+    };
+  };
+
+  const confirmProposal = async (messageId: string, proposalId: number) => {
+    if (executingProposalIdsRef.current.has(proposalId)) return;
+    executingProposalIdsRef.current.add(proposalId);
+    updateProposalMessage(messageId, "executing");
+
+    try {
+      const currentProposal = await readProposal(proposalId);
+      if (!currentProposal.ok) {
+        updateProposalMessage(messageId, "proposal-error");
+        return;
+      }
+
+      if (currentProposal.data.proposal.status !== "pending") {
+        const nextStatus = executionStatusForProposal(
+          currentProposal.data.proposal,
+          false,
+        );
+        updateProposalMessage(
+          messageId,
+          nextStatus,
+          currentProposal.data.viewModel,
+        );
+        if (nextStatus === "executed") notifyCartChanged({ animate: true });
+        return;
+      }
+
+      updateProposalMessage(
+        messageId,
+        "executing",
+        currentProposal.data.viewModel,
+      );
+      let idempotencyKey = proposalIdempotencyKeysRef.current.get(proposalId);
+      if (!idempotencyKey) {
+        idempotencyKey = crypto.randomUUID();
+        proposalIdempotencyKeysRef.current.set(proposalId, idempotencyKey);
+      }
+      const result = await confirmCartProposal(proposalId, idempotencyKey);
+      if (result.ok) {
+        updateProposalMessage(messageId, "executed", {
+          ...currentProposal.data.viewModel,
+          executionId: result.data.executionId,
+          status: "executed",
+        });
+        notifyCartChanged({ animate: true });
+        return;
+      }
+
+      const refreshedProposal = await readProposal(proposalId);
+      if (!refreshedProposal.ok) {
+        updateProposalMessage(messageId, "error");
+        return;
+      }
+      const nextStatus = executionStatusForProposal(
+        refreshedProposal.data.proposal,
+        false,
+      );
+      updateProposalMessage(
+        messageId,
+        nextStatus === "pending" ? "error" : nextStatus,
+        refreshedProposal.data.viewModel,
+      );
+      if (nextStatus === "executed") notifyCartChanged({ animate: true });
+    } finally {
+      executingProposalIdsRef.current.delete(proposalId);
+    }
+  };
+
+  const declineProposal = (messageId: string, proposalId: number) => {
+    storeDeclinedProposal(proposalId);
+    updateProposalMessage(messageId, "declined");
+  };
+
+  const retryProposal = async (messageId: string, proposalId: number) => {
+    if (executingProposalIdsRef.current.has(proposalId)) return;
+    executingProposalIdsRef.current.add(proposalId);
+    updateProposalMessage(messageId, "executing");
+    try {
+      const result = await readProposal(proposalId);
+      if (!result.ok) {
+        updateProposalMessage(messageId, "proposal-error");
+        return;
+      }
+      updateProposalMessage(
+        messageId,
+        executionStatusForProposal(
+          result.data.proposal,
+          readDeclinedProposalIds().has(proposalId),
+        ),
+        result.data.viewModel,
+      );
+    } finally {
+      executingProposalIdsRef.current.delete(proposalId);
+    }
   };
 
   return {
@@ -324,6 +503,7 @@ export function useRecommendationChat(
       setIsHistoryLoading(true);
       setHistoryRequestKey((value) => value + 1);
     },
+    retryProposal,
     selectSession,
     sendMessage,
     sessionId,

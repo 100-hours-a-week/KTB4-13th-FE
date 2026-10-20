@@ -48,7 +48,35 @@ export function AiRecommendationChatPage() {
       </div>
 
       <main className="min-h-0 flex-1 overflow-y-auto">
-        {chat.isHistoryLoading ? <p aria-busy="true" className="page-content py-5 type-body-small text-text-tertiary" role="status">대화를 불러오는 중이에요</p> : chat.historyError ? <div className="page-content py-5"><Toast action={<RetryButton onClick={chat.retryHistory} />} variant="error">대화를 불러오지 못했어요</Toast></div> : <ChatMessageList messages={chat.messages} onConfirmProposal={chat.confirmProposal} onDeclineProposal={chat.declineProposal} onRetry={chat.retry} status={chat.status} />}
+        {chat.isHistoryLoading ? (
+          <p
+            aria-busy="true"
+            className="page-content py-5 type-body-small text-text-tertiary"
+            role="status"
+          >
+            대화를 불러오는 중이에요
+          </p>
+        ) : chat.historyError ? (
+          <div className="page-content py-5">
+            <Toast
+              action={<RetryButton onClick={chat.retryHistory} />}
+              variant="error"
+            >
+              대화를 불러오지 못했어요
+            </Toast>
+          </div>
+        ) : (
+          <ChatMessageList
+            messages={chat.messages}
+            onConfirmProposal={chat.confirmProposal}
+            onDeclineProposal={chat.declineProposal}
+            onNavigate={navigate}
+            onQuickMessage={chat.sendMessage}
+            onRetry={chat.retry}
+            onRetryProposal={chat.retryProposal}
+            status={chat.status}
+          />
+        )}
       </main>
 
       <ChatComposer

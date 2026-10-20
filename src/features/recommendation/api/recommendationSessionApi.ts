@@ -1,6 +1,8 @@
 import { parseApiResponse } from "@/common/api/apiResponse";
 import { fetchWithAuth } from "@/features/auth/lib/httpClient";
 import type {
+  AgentCartProposal,
+  AgentCartProposalItem,
   AgentButton,
   AgentExecution,
   ChatHistoryMessage,
@@ -47,6 +49,56 @@ function parseExecution(value: unknown): AgentExecution | null | undefined {
   if (value === null || value === undefined) return null;
   if (!isRecord(value) || !nullableNumber(value.executionId) || !nullableNumber(value.proposalId) || typeof value.status !== "string" || !nullableString(value.rejectionCode)) return undefined;
   return { executionId: value.executionId ?? null, proposalId: value.proposalId ?? null, rejectionCode: value.rejectionCode ?? null, status: value.status };
+}
+
+function parseProposalItem(value: unknown): AgentCartProposalItem | null {
+  if (
+    !isRecord(value) ||
+    typeof value.productId !== "number" ||
+    (value.operation !== "set" && value.operation !== "remove") ||
+    !nullableNumber(value.quantity) ||
+    typeof value.expectedQuantity !== "number" ||
+    !nullableNumber(value.expectedUnitPrice)
+  ) {
+    return null;
+  }
+
+  return {
+    expectedQuantity: value.expectedQuantity,
+    expectedUnitPrice: value.expectedUnitPrice ?? null,
+    operation: value.operation,
+    productId: value.productId,
+    quantity: value.quantity ?? null,
+  };
+}
+
+function parseProposal(value: unknown): AgentCartProposal | null {
+  if (
+    !isRecord(value) ||
+    typeof value.proposalId !== "number" ||
+    typeof value.expiresAt !== "string" ||
+    !nullableNumber(value.executionId) ||
+    !Array.isArray(value.items) ||
+    (value.status !== "pending" &&
+      value.status !== "executed" &&
+      value.status !== "expired" &&
+      value.status !== "invalidated")
+  ) {
+    return null;
+  }
+
+  const items = value.items.map(parseProposalItem);
+  if (!items.every((item): item is AgentCartProposalItem => item !== null)) {
+    return null;
+  }
+
+  return {
+    executionId: value.executionId ?? null,
+    expiresAt: value.expiresAt,
+    items,
+    proposalId: value.proposalId,
+    status: value.status,
+  };
 }
 
 function parseReply(value: unknown): SessionChatReply | null {
@@ -120,10 +172,10 @@ export async function sendSessionMessage(sessionId: number, message: string, exc
   } catch { return { ok: false, reason: "error" }; }
 }
 
-export async function confirmCartProposal(proposalId: number): Promise<{ data: AgentExecution; ok: true } | ApiFailure> {
+export async function confirmCartProposal(proposalId: number, idempotencyKey: string): Promise<{ data: AgentExecution; ok: true } | ApiFailure> {
   try {
     const result = await parseApiResponse(await fetchWithAuth("/api/v1/agent/cart/executions", {
-      body: JSON.stringify({ idempotencyKey: crypto.randomUUID(), proposalId }),
+      body: JSON.stringify({ idempotencyKey, proposalId }),
       headers: { "Content-Type": "application/json" },
       method: "POST",
     }));
@@ -133,21 +185,20 @@ export async function confirmCartProposal(proposalId: number): Promise<{ data: A
   } catch { return { ok: false, reason: "error" }; }
 }
 
-export async function fetchCartProposalStatus(
+export async function fetchCartProposal(
   proposalId: number,
   signal?: AbortSignal,
-): Promise<"pending" | "executed" | "unavailable"> {
+): Promise<{ data: AgentCartProposal; ok: true } | ApiFailure> {
   try {
     const result = await parseApiResponse(
       await fetchWithAuth(`/api/v1/agent/cart/proposals/${proposalId}`, { signal }),
     );
-    if (!result.ok || !isRecord(result.data) || typeof result.data.status !== "string") {
-      return "unavailable";
-    }
-    if (result.data.status === "pending") return "pending";
-    if (result.data.status === "executed") return "executed";
-    return "unavailable";
+    if (!result.ok) return failure(result.status);
+    const proposal = parseProposal(result.data);
+    return proposal
+      ? { data: proposal, ok: true }
+      : { ok: false, reason: "error" };
   } catch {
-    return "unavailable";
+    return { ok: false, reason: "error" };
   }
 }

@@ -48,6 +48,28 @@ export interface AgentExecution {
   status: string;
 }
 
+export type AgentCartProposalStatus =
+  | "executed"
+  | "expired"
+  | "invalidated"
+  | "pending";
+
+export interface AgentCartProposalItem {
+  expectedQuantity: number;
+  expectedUnitPrice: number | null;
+  operation: "remove" | "set";
+  productId: number;
+  quantity: number | null;
+}
+
+export interface AgentCartProposal {
+  executionId: number | null;
+  expiresAt: string;
+  items: AgentCartProposalItem[];
+  proposalId: number;
+  status: AgentCartProposalStatus;
+}
+
 export interface SessionChatReply {
   buttons: AgentButton[];
   cards: RecommendationChatCard[];
