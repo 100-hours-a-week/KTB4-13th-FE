@@ -6,7 +6,6 @@ import { ProductAvailabilityBadge } from "@/common/components/ProductAvailabilit
 import { MAX_CHAT_MESSAGE_LENGTH } from "@/pages/recommendation-chat/lib/chatMessage";
 import type {
   CartProposalItemViewModel,
-  CartProposalViewModel,
   ChatErrorReason,
   ChatPresentationMessage,
   ChatPresentationStatus,
@@ -25,14 +24,14 @@ const ERROR_MESSAGES: Record<ChatErrorReason, string> = {
 };
 
 const EXECUTION_MESSAGES: Record<Exclude<ProposalExecutionStatus, "pending">, string> = {
-  declined: "이 제안은 적용하지 않았어요.",
-  error: "반영 여부를 확인했지만 아직 적용되지 않았어요. 같은 요청으로 안전하게 다시 시도할 수 있어요.",
-  executed: "실제 장바구니에 반영했어요.",
-  executing: "제안과 장바구니 상태를 확인하고 있어요.",
-  expired: "제안 시간이 만료됐어요. 채팅으로 다시 요청해 주세요.",
-  invalidated: "장바구니 상태가 달라져 이 제안은 실행할 수 없어요.",
+  declined: "제안을 거절했어요. 장바구니는 그대로예요.",
+  error: "아직 반영되지 않았어요. 다시 시도해도 중복으로 담기지 않아요.",
+  executed: "장바구니에 반영했어요.",
+  executing: "장바구니에 반영하는 중이에요.",
+  expired: "제안 시간이 지났어요. 채팅으로 다시 요청해 주세요.",
+  invalidated: "장바구니 상태가 바뀌어 이 제안은 적용할 수 없어요.",
   "proposal-error": "제안 정보를 확인하지 못했어요.",
-  rejected: "요청을 실행할 수 없어요.",
+  rejected: "요청을 처리할 수 없어요.",
 };
 
 function executionMessageClassName(status: ProposalExecutionStatus) {
@@ -41,6 +40,14 @@ function executionMessageClassName(status: ProposalExecutionStatus) {
     return "text-text-tertiary";
   }
   return "text-error";
+}
+
+function CheckIcon() {
+  return (
+    <svg aria-hidden="true" className="size-3.5" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" viewBox="0 0 24 24">
+      <path d="M5 12.5l4.5 4.5L19 7.5" />
+    </svg>
+  );
 }
 
 function RecommendationCard({
@@ -55,6 +62,7 @@ function RecommendationCard({
   recommendation: RecommendationCardViewModel;
 }) {
   const hasProduct = recommendation.productId !== null;
+  // recommendationCardId lets the detail page load the long AI reason (FE #116).
   const detailPath = hasProduct
     ? `/products/${recommendation.productId}?recommendationCardId=${recommendation.id}`
     : null;
@@ -69,21 +77,43 @@ function RecommendationCard({
 
   return (
     <article
-      className={`flex h-full flex-col rounded-control border p-2 transition-colors ${
-        isSelected
-          ? "border-accent bg-accent-soft"
-          : "border-transparent bg-surface"
+      className={`flex h-full flex-col rounded-control border p-1.5 transition-colors ${
+        isSelected ? "border-accent bg-accent-soft" : "border-transparent"
       }`}
     >
-      {detailPath ? (
-        <Link
-          aria-label={`${recommendation.title} 상세 보기`}
-          className="rounded-cover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          to={detailPath}
+      <div className="relative">
+        {detailPath ? (
+          <Link
+            aria-label={`${recommendation.title} 상세 보기`}
+            className="block rounded-cover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            to={detailPath}
+          >
+            {cover}
+          </Link>
+        ) : (
+          <div className="opacity-60">{cover}</div>
+        )}
+        <button
+          aria-label={hasProduct ? `${recommendation.title} 선택` : `${recommendation.title}은 구매할 수 없어요`}
+          aria-pressed={hasProduct ? isSelected : undefined}
+          className="group absolute -right-1.5 -top-1.5 flex size-11 items-start justify-end p-2 focus-visible:outline-none disabled:cursor-not-allowed"
+          disabled={!hasProduct || isSending}
+          onClick={onToggle}
+          type="button"
         >
-          {cover}
-        </Link>
-      ) : cover}
+          <span
+            className={`flex size-6 items-center justify-center rounded-full border-2 shadow-sm transition-colors group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-primary ${
+              isSelected
+                ? "border-accent bg-accent text-white"
+                : hasProduct
+                  ? "border-white bg-black/25 text-transparent"
+                  : "border-border bg-muted text-transparent"
+            }`}
+          >
+            <CheckIcon />
+          </span>
+        </button>
+      </div>
       <h3 className="mt-2 line-clamp-2 type-body-small font-semibold text-text-primary">
         {detailPath ? (
           <Link
@@ -104,32 +134,15 @@ function RecommendationCard({
           {priceFormatter.format(recommendation.price)}원
         </p>
       ) : null}
-      <p className="mt-2 type-caption font-medium tabular-nums text-accent">
-        매칭 {recommendation.matchScore}%
-      </p>
-      {recommendation.reasonShort ? (
-        <p className="mt-1.5 line-clamp-2 border-l border-border-strong pl-2 type-caption leading-relaxed text-text-secondary">
-          {recommendation.reasonShort}
-        </p>
-      ) : null}
       {recommendation.productId === null ? (
-        <div className="mt-1.5">
+        <div className="mt-1">
           <ProductAvailabilityBadge />
         </div>
       ) : null}
-      <button
-        aria-pressed={hasProduct ? isSelected : undefined}
-        className={`mt-3 min-h-11 w-full rounded-control border px-2 type-caption font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:border-border disabled:text-text-disabled ${
-          isSelected
-            ? "border-accent bg-accent text-white"
-            : "border-border bg-surface text-text-primary hover:bg-muted"
-        }`}
-        disabled={!hasProduct || isSending}
-        onClick={onToggle}
-        type="button"
-      >
-        {hasProduct ? (isSelected ? "선택됨" : "선택") : "구매할 수 없어요"}
-      </button>
+      <p className="mt-1.5 line-clamp-2 type-caption text-text-secondary">
+        <span className="font-semibold tabular-nums text-accent">매칭 {recommendation.matchScore}%</span>
+        {recommendation.reasonShort ? ` · ${recommendation.reasonShort}` : null}
+      </p>
     </article>
   );
 }
@@ -179,16 +192,13 @@ function RecommendationCardList({
     <div className="mt-3">
       <div
         aria-label="AI 추천 도서 목록"
-        className="-mx-5 overflow-x-auto px-5 pb-1 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+        className="-mx-5 overflow-x-auto px-5 pb-1 [scrollbar-width:none] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
         role="region"
         tabIndex={0}
       >
-        <ul className="flex items-stretch gap-4">
+        <ul className="flex items-stretch gap-2">
           {visibleRecommendations.map((recommendation) => (
-            <li
-              className="w-[calc(42%-22px)] shrink-0 min-[360px]:w-[42%]"
-              key={recommendation.id}
-            >
+            <li className="w-36 shrink-0 sm:w-40" key={recommendation.id}>
               <RecommendationCard
                 isSending={isSending}
                 isSelected={selectedIds.has(recommendation.id)}
@@ -199,26 +209,24 @@ function RecommendationCardList({
           ))}
         </ul>
       </div>
-      <div className="mt-3 flex min-h-11 items-center justify-between gap-3 border-t border-hairline pt-3">
-        <p className="type-caption text-text-secondary" role="status">
+      <div className="mt-2 flex min-h-11 max-w-md items-center justify-between gap-3">
+        <p className="min-w-0 type-caption text-text-secondary" role="status">
           {selectedRecommendations.length > 0
             ? isRequestTooLong
               ? "제목이 길어 선택을 줄여 주세요"
-              : `${selectedRecommendations.length}권 선택 · 각 1권`
-            : "담을 책을 선택해 주세요"}
+              : <><strong className="font-semibold text-text-primary">{selectedRecommendations.length}권 선택</strong> · 승인 전까지 담기지 않아요</>
+            : "표지의 체크를 눌러 담을 책을 고르세요"}
         </p>
-        <button
-          className="min-h-11 shrink-0 rounded-control bg-primary px-4 type-body-small font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:bg-border-strong disabled:text-text-tertiary"
-          disabled={
-            selectedRecommendations.length === 0 ||
-            isSending ||
-            isRequestTooLong
-          }
-          onClick={handleRequestCart}
-          type="button"
-        >
-          선택한 책 담기 요청
-        </button>
+        {selectedRecommendations.length > 0 ? (
+          <button
+            className="min-h-10 shrink-0 rounded-control bg-primary px-3.5 type-body-small font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:bg-border-strong disabled:text-text-tertiary"
+            disabled={isSending || isRequestTooLong}
+            onClick={handleRequestCart}
+            type="button"
+          >
+            담기 제안 받기
+          </button>
+        ) : null}
       </div>
     </div>
   );
@@ -226,86 +234,138 @@ function RecommendationCardList({
 
 function proposalChangeLabel(item: CartProposalItemViewModel) {
   if (item.operation === "remove") {
-    return `장바구니에서 ${item.expectedQuantity}권 빼기`;
+    return `${item.expectedQuantity}권 빼기`;
   }
   if (item.expectedQuantity === 0) {
-    return `장바구니에 ${item.quantity ?? 0}권 담기`;
+    return `${item.quantity ?? 0}권 담기`;
   }
   return `수량 ${item.expectedQuantity}권 → ${item.quantity ?? 0}권`;
 }
 
-function CartProposalSummary({ proposal }: { proposal: CartProposalViewModel }) {
+interface CartProposalPanelProps {
+  confirmLabel: string | null;
+  message: Extract<ChatPresentationMessage, { role: "assistant" }>;
+  onConfirm: (() => void) | null;
+  onDecline: (() => void) | null;
+  onQuickMessage: (message: string) => void;
+  onRetryProposal: (() => void) | null;
+}
+
+// Groups the server-issued proposal, its approve/decline actions and the execution feedback in one block.
+function CartProposalPanel({
+  confirmLabel,
+  message,
+  onConfirm,
+  onDecline,
+  onQuickMessage,
+  onRetryProposal,
+}: CartProposalPanelProps) {
+  const { executionStatus, proposal } = message;
+  const isPending = executionStatus === "pending";
+  const isExecuting = executionStatus === "executing";
+
   return (
     <section
       aria-label="장바구니 변경 제안"
-      className="mt-4 rounded-panel border border-border bg-muted p-4"
+      className="mt-3 max-w-md overflow-hidden rounded-panel border border-border bg-surface"
     >
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="type-title">장바구니 변경 내용</h3>
-        <span className="shrink-0 rounded-full bg-surface px-2.5 py-1 type-caption text-text-secondary">
-          {proposal.items.length}개 상품
-        </span>
-      </div>
-      <ul className="mt-3 divide-y divide-border">
-        {proposal.items.map((item) => (
-          <li className="py-3 first:pt-0 last:pb-0" key={item.productId}>
-            <div className="flex min-w-0 items-start justify-between gap-3">
-              <div className="min-w-0">
-                <Link
-                  className="line-clamp-2 rounded-sm type-body-small font-semibold text-text-primary underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                  to={`/products/${item.productId}`}
-                >
-                  {item.itemName ?? `상품 #${item.productId}`}
-                </Link>
-                <p className="mt-1 type-caption text-text-secondary">
-                  {proposalChangeLabel(item)}
-                </p>
-              </div>
-              {item.expectedUnitPrice !== null ? (
-                <p className="shrink-0 type-body-small font-semibold tabular-nums text-text-primary">
-                  {priceFormatter.format(item.expectedUnitPrice)}원
-                </p>
-              ) : null}
-            </div>
-          </li>
-        ))}
-      </ul>
-      {proposal.status === "pending" ? (
-        <p className="mt-3 type-caption text-text-tertiary">
-          승인하면 표시된 수량으로 장바구니가 변경돼요.
-        </p>
+      {proposal ? (
+        <>
+          <h3 className="border-b border-hairline px-4 py-2.5 type-caption font-semibold text-text-secondary">
+            장바구니 변경 제안
+          </h3>
+          <ul className="divide-y divide-hairline px-4">
+            {proposal.items.map((item) => (
+              <li className="flex min-w-0 items-center justify-between gap-3 py-2.5" key={item.productId}>
+                <div className="min-w-0">
+                  <Link
+                    className="line-clamp-1 rounded-sm type-body-small font-semibold text-text-primary underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                    to={`/products/${item.productId}`}
+                  >
+                    {item.itemName ?? `상품 #${item.productId}`}
+                  </Link>
+                  <p className="type-caption text-text-tertiary">
+                    {proposalChangeLabel(item)}
+                  </p>
+                </div>
+                {item.expectedUnitPrice !== null ? (
+                  <p className="shrink-0 type-body-small font-semibold tabular-nums text-text-primary">
+                    {priceFormatter.format(item.expectedUnitPrice)}원
+                  </p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </>
       ) : null}
+      <div className={`px-4 py-3 ${proposal ? "border-t border-hairline bg-muted/60" : ""}`}>
+        {executionStatus && !isPending ? (
+          <p
+            aria-live="polite"
+            className={`flex items-center gap-2 type-caption ${executionMessageClassName(executionStatus)}`}
+            role="status"
+          >
+            {isExecuting ? (
+              <span aria-hidden="true" className="size-3.5 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            ) : null}
+            {EXECUTION_MESSAGES[executionStatus]}
+          </p>
+        ) : null}
+        {isPending && onConfirm && onDecline ? (
+          <div className="flex gap-2">
+            <button
+              className="min-h-11 rounded-control border border-border bg-surface px-4 type-body-small font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              onClick={onDecline}
+              type="button"
+            >
+              거절
+            </button>
+            <button
+              className="min-h-11 flex-1 rounded-control bg-primary px-4 type-body-small font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              onClick={onConfirm}
+              type="button"
+            >
+              {confirmLabel}
+            </button>
+          </div>
+        ) : null}
+        {executionStatus === "error" && onConfirm ? (
+          <button
+            className="mt-2 min-h-11 w-full rounded-control bg-primary px-4 type-body-small font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            onClick={onConfirm}
+            type="button"
+          >
+            다시 시도
+          </button>
+        ) : null}
+        {executionStatus === "proposal-error" && onRetryProposal ? (
+          <button
+            className="mt-2 min-h-11 w-full rounded-control border border-border bg-surface px-4 type-body-small font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            onClick={onRetryProposal}
+            type="button"
+          >
+            제안 다시 확인하기
+          </button>
+        ) : null}
+        {executionStatus === "executed" ? (
+          <div className="mt-2 flex gap-2">
+            <Link
+              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-control bg-primary px-4 type-body-small font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              to="/cart"
+            >
+              장바구니 확인
+            </Link>
+            <button
+              className="min-h-11 rounded-control border border-border bg-surface px-4 type-body-small font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              onClick={() => onQuickMessage("내 취향에 맞는 책을 더 추천해줘")}
+              type="button"
+            >
+              더 추천받기
+            </button>
+          </div>
+        ) : null}
+      </div>
     </section>
-  );
-}
-
-function CompletionActions({
-  onQuickMessage,
-}: {
-  onQuickMessage: (message: string) => void;
-}) {
-  return (
-    <div className="mt-4 flex flex-wrap gap-2">
-      <Link
-        className="inline-flex min-h-11 items-center rounded-control bg-primary px-4 type-body-small font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-        to="/cart"
-      >
-        장바구니 확인하기
-      </Link>
-      <Link
-        className="inline-flex min-h-11 items-center rounded-control border border-border px-4 type-body-small font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-        to="/"
-      >
-        쇼핑 계속하기
-      </Link>
-      <button
-        className="min-h-11 rounded-control border border-border px-4 type-body-small font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-        onClick={() => onQuickMessage("내 취향에 맞는 책을 더 추천해줘")}
-        type="button"
-      >
-        추가 추천받기
-      </button>
-    </div>
   );
 }
 
@@ -326,123 +386,76 @@ function ChatBubble({
   onRetryProposal,
   status,
 }: ChatBubbleProps) {
-  const isUser = message.role === "user";
-  const proposalButton = message.role === "assistant"
-    ? message.agentButtons?.find(
-        (button) => button.action === "confirm_selection",
-      )
-    : undefined;
-  const retryProposalId = proposalButton?.proposalId ?? null;
-
-  return (
-    <div className={isUser ? "flex justify-end" : "flex justify-start"}>
-      <div className={isUser ? "max-w-[78%]" : "w-full min-w-0"}>
-        <p
-          className={`whitespace-pre-wrap break-words ${
-            isUser
-              ? "rounded-control bg-primary px-3.5 py-2.5 type-body-small text-white"
-              : "type-body leading-relaxed text-text-primary"
-          }`}
-        >
+  if (message.role === "user") {
+    return (
+      <div className="flex justify-end">
+        <p className="max-w-[78%] whitespace-pre-wrap break-words rounded-control bg-primary px-3.5 py-2.5 type-body-small text-white">
           {message.content}
         </p>
-        {message.role === "assistant" && message.recommendations?.length ? (
-          <>
-            <RecommendationCardList
-              isSending={status === "sending"}
-              onRequestCart={onQuickMessage}
-              recommendations={message.recommendations}
-            />
-            <button
-              className="mt-3 min-h-11 rounded-control px-2 type-body-small font-semibold text-text-secondary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:text-text-disabled"
-              disabled={status === "sending"}
-              onClick={() =>
-                onQuickMessage("방금 추천과 겹치지 않는 다른 책을 추천해줘")
-              }
-              type="button"
-            >
-              다른 책 추천받기
-            </button>
-          </>
-        ) : null}
-        {message.role === "assistant" && message.proposal ? (
-          <CartProposalSummary proposal={message.proposal} />
-        ) : null}
-        {message.role === "assistant" && message.agentButtons?.length ? (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {message.agentButtons.map((button) => {
-              if (button.action === "navigate") {
-                const target = button.target === "CART-001" ? "/cart" : button.target === "ORDER-LIST-001" ? "/my/orders" : null;
-                if (target === "/cart" && message.executionStatus === "executed") {
-                  return null;
-                }
-                return target ? (
-                  <Link
-                    className="inline-flex min-h-11 items-center rounded-control border border-border px-4 type-body-small font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                    key={`${button.action}-${button.label}`}
-                    to={target}
-                  >
-                    {button.label}
-                  </Link>
-                ) : null;
-              }
-              if (button.action === "confirm_selection" && button.proposalId !== null) {
-                const proposalId = button.proposalId;
-                const canConfirm = message.executionStatus === "pending" || message.executionStatus === "error";
-                const confirmLabel = message.executionStatus === "pending"
-                  ? button.label
-                  : message.executionStatus === "error"
-                    ? "안전하게 다시 시도"
-                    : message.executionStatus === "executing"
-                      ? "확인 중"
-                      : "처리 완료";
-                return (
-                  <span className="contents" key={`${button.action}-${proposalId}`}>
-                    <button
-                      className="min-h-11 rounded-control bg-primary px-4 type-body-small font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
-                      disabled={!canConfirm}
-                      onClick={() => onConfirmProposal(message.id, proposalId)}
-                      type="button"
-                    >
-                      {confirmLabel}
-                    </button>
-                    <button
-                      className="min-h-11 rounded-control border border-border px-4 type-body-small font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
-                      disabled={message.executionStatus !== "pending"}
-                      onClick={() => onDeclineProposal(message.id, proposalId)}
-                      type="button"
-                    >
-                      제안 거절
-                    </button>
-                  </span>
-                );
-              }
-              return null;
-            })}
-          </div>
-        ) : null}
-        {message.role === "assistant" && message.executionStatus && message.executionStatus !== "pending" ? (
-          <p
-            aria-live="polite"
-            className={`mt-3 type-caption ${executionMessageClassName(message.executionStatus)}`}
-            role="status"
-          >
-            {EXECUTION_MESSAGES[message.executionStatus]}
-          </p>
-        ) : null}
-        {message.role === "assistant" && message.executionStatus === "proposal-error" && retryProposalId !== null ? (
+      </div>
+    );
+  }
+
+  // Approve/decline only render for a proposalId the server actually returned.
+  const proposalButton = message.agentButtons?.find(
+    (button) => button.action === "confirm_selection" && button.proposalId !== null,
+  );
+  const proposalId = proposalButton?.proposalId ?? null;
+  const navigateButtons = (message.agentButtons ?? []).flatMap((button) => {
+    if (button.action !== "navigate") return [];
+    const target = button.target === "CART-001" ? "/cart" : button.target === "ORDER-LIST-001" ? "/my/orders" : null;
+    if (!target || (target === "/cart" && message.executionStatus === "executed")) return [];
+    return [{ label: button.label, target }];
+  });
+  const hasProposalPanel = proposalId !== null || message.proposal !== undefined || (message.executionStatus !== undefined && message.executionStatus !== "pending");
+
+  return (
+    <div className="min-w-0">
+      <p className="whitespace-pre-wrap break-words type-body leading-relaxed text-text-primary">
+        {message.content}
+      </p>
+      {message.recommendations?.length ? (
+        <>
+          <RecommendationCardList
+            isSending={status === "sending"}
+            onRequestCart={onQuickMessage}
+            recommendations={message.recommendations}
+          />
           <button
-            className="mt-2 min-h-11 rounded-control px-2 type-body-small font-semibold text-text-primary underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-            onClick={() => onRetryProposal(message.id, retryProposalId)}
+            className="min-h-11 rounded-control px-2 -ml-2 type-body-small font-semibold text-text-secondary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:text-text-disabled"
+            disabled={status === "sending"}
+            onClick={() =>
+              onQuickMessage("방금 추천과 겹치지 않는 다른 책을 추천해줘")
+            }
             type="button"
           >
-            제안 다시 확인하기
+            다른 책 추천받기
           </button>
-        ) : null}
-        {message.role === "assistant" && message.executionStatus === "executed" ? (
-          <CompletionActions onQuickMessage={onQuickMessage} />
-        ) : null}
-      </div>
+        </>
+      ) : null}
+      {hasProposalPanel ? (
+        <CartProposalPanel
+          confirmLabel={proposalButton?.label ?? null}
+          message={message}
+          onConfirm={proposalId !== null ? () => onConfirmProposal(message.id, proposalId) : null}
+          onDecline={proposalId !== null ? () => onDeclineProposal(message.id, proposalId) : null}
+          onQuickMessage={onQuickMessage}
+          onRetryProposal={proposalId !== null ? () => onRetryProposal(message.id, proposalId) : null}
+        />
+      ) : null}
+      {navigateButtons.length ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {navigateButtons.map((button) => (
+            <Link
+              className="inline-flex min-h-11 items-center rounded-control border border-border px-4 type-body-small font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              key={`${button.target}-${button.label}`}
+              to={button.target}
+            >
+              {button.label}
+            </Link>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
