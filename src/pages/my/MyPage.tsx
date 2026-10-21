@@ -6,10 +6,7 @@ import { RetryButton } from "@/common/components/RetryButton";
 import { CartButton } from "@/features/cart/components/CartButton";
 import { useLogout } from "@/features/auth/hooks/useLogout";
 import { fetchMyProfile } from "@/features/profile/api/profileApi";
-import {
-  DEFAULT_PROFILE_IMAGE_URL,
-  getProfileImage,
-} from "@/features/profile/lib/profileImageStore";
+import { DEFAULT_PROFILE_IMAGE_URL } from "@/features/profile/lib/profileImageStore";
 import { LogoutDialog } from "@/pages/my/components/LogoutDialog";
 
 interface MenuLinkProps {
@@ -46,7 +43,6 @@ export function MyPage() {
   const [nickname, setNickname] = useState("");
   const [profileError, setProfileError] = useState(false);
   const [profileRequestKey, setProfileRequestKey] = useState(0);
-  const [imageDataUrl, setImageDataUrl] = useState(getProfileImage);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
   const isLogoutRequestedRef = useRef(false);
@@ -108,11 +104,8 @@ export function MyPage() {
         >
           <img
             alt="프로필"
-            className={`size-12 shrink-0 rounded-full bg-accent-soft ${imageDataUrl ? "object-cover" : "object-contain p-0.5"}`}
-            onError={() => {
-              if (imageDataUrl) setImageDataUrl(null);
-            }}
-            src={imageDataUrl ?? DEFAULT_PROFILE_IMAGE_URL}
+            className="size-12 shrink-0 rounded-full bg-accent-soft object-contain p-0.5"
+            src={DEFAULT_PROFILE_IMAGE_URL}
           />
           <div className="min-w-0">
             <h2 className="type-title text-text-primary" id="my-profile-title">
