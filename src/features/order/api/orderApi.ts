@@ -268,7 +268,6 @@ type PaidCancellationResult =
 
 async function requestPaidCancellation(
   path: "/api/v1/cancel" | "/api/v1/partial-cancel",
-  requestKey: string,
   body: Record<string, number | string>,
 ): Promise<PaidCancellationResult> {
   try {
@@ -277,7 +276,6 @@ async function requestPaidCancellation(
         body: JSON.stringify(body),
         headers: {
           "Content-Type": "application/json",
-          "Idempotency-Key": requestKey,
         },
         method: "POST",
       }),
@@ -290,17 +288,17 @@ async function requestPaidCancellation(
   }
 }
 
-export function cancelPaidOrder(orderKey: string, requestKey: string) {
-  return requestPaidCancellation("/api/v1/cancel", requestKey, { orderKey });
+export function cancelPaidOrder(orderKey: string, _requestKey: string) {
+  return requestPaidCancellation("/api/v1/cancel", { orderKey });
 }
 
 export function partiallyCancelPaidOrder(
   orderKey: string,
   orderItemId: number,
   quantity: number,
-  requestKey: string,
+  _requestKey: string,
 ) {
-  return requestPaidCancellation("/api/v1/partial-cancel", requestKey, {
+  return requestPaidCancellation("/api/v1/partial-cancel", {
     orderItemId,
     orderKey,
     quantity,
