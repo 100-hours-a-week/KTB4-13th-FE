@@ -18,6 +18,7 @@ const priceFormatter = new Intl.NumberFormat("ko-KR");
 const SKELETON_COUNT = 3;
 const SWIPE_THRESHOLD = 40;
 const AUTO_ADVANCE_MS = 3500;
+const VISIBLE_NEIGHBORS = 3;
 
 function CoverflowRecommendations({
   books,
@@ -93,35 +94,45 @@ function CoverflowRecommendations({
       tabIndex={0}
     >
       <div
-        className="relative left-1/2 h-[310px] w-[calc(100vw-24px)] max-w-[1100px] -translate-x-1/2 overflow-hidden sm:h-[430px]"
-        style={{ perspective: "1300px" }}
+        className="relative left-1/2 h-[275px] w-[calc(100vw-24px)] max-w-[950px] -translate-x-1/2 overflow-hidden sm:h-[350px]"
+        style={{ perspective: "1200px" }}
       >
         {books.map((book, index) => {
           const forward = (index - activeIndex + books.length) % books.length;
           const backward = forward - books.length;
           const distance = Math.abs(forward) <= Math.abs(backward) ? forward : backward;
           const isActive = distance === 0;
-          const visible = Math.abs(distance) <= 3;
-          const offset = Math.sign(distance) * (Math.abs(distance) === 1 ? 80 : Math.abs(distance) === 2 ? 149 : 205);
+          const depth = Math.abs(distance);
+          const visible = depth <= VISIBLE_NEIGHBORS;
+          const offset = Math.sign(distance) * (depth === 1 ? 80 : depth === 2 ? 151 : 210);
           return (
             <button
               aria-label={isActive ? `${book.title}, 현재 선택됨` : `${book.title} 선택`}
               aria-pressed={isActive}
-              className="absolute left-1/2 top-5 w-[155px] origin-center cursor-pointer rounded-cover outline-offset-4 transition-[transform,opacity,filter] duration-700 ease-in-out focus-visible:outline-2 focus-visible:outline-primary sm:top-8 sm:w-[245px]"
+              className="absolute left-1/2 top-6 w-[132px] origin-center cursor-pointer rounded-cover outline-offset-4 transition-[transform,opacity] duration-700 ease-in-out focus-visible:outline-2 focus-visible:outline-primary sm:top-7 sm:w-[190px]"
               key={book.bookId}
               onClick={() => {
                 if (!isActive) setActiveIndex(index);
               }}
               style={{
-                opacity: visible ? (isActive ? 1 : Math.max(0.42, 0.95 - Math.abs(distance) * 0.14)) : 0,
+                opacity: visible ? (isActive ? 1 : Math.max(0.48, 0.96 - depth * 0.12)) : 0,
                 pointerEvents: visible ? "auto" : "none",
-                transform: `translateX(-50%) translateX(${offset}%) translateZ(${isActive ? 85 : -Math.abs(distance) * 65}px) rotateY(${distance === 0 ? 0 : distance < 0 ? 38 : -38}deg) scale(${isActive ? 1 : Math.max(0.68, 1 - Math.abs(distance) * 0.10)})`,
+                transform: `translateX(-50%) translateX(${offset}%) translateZ(${isActive ? 45 : -depth * 42}px) rotateY(${isActive ? 0 : distance < 0 ? 22 : -22}deg) scale(${isActive ? 1 : Math.max(0.70, 1 - depth * 0.085)})`,
                 zIndex: books.length - Math.abs(distance),
               }}
               tabIndex={visible ? 0 : -1}
               type="button"
             >
-              <div className="aspect-[3/4] overflow-hidden rounded-cover bg-muted shadow-[0_18px_36px_rgba(0,0,0,0.16)]">
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-[-6%] bottom-[-22px] h-10 rounded-full bg-black/15 blur-2xl sm:bottom-[-28px]"
+              />
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-[-8%] top-[21%] h-[48%] rounded-xl bg-neutral-500/20 blur-[1px]"
+                style={{ transform: `translateX(${distance < 0 ? 10 : -10}%)` }}
+              />
+              <div className="relative aspect-[3/4] overflow-hidden rounded-cover bg-muted shadow-[0_12px_22px_rgba(0,0,0,0.14),0_3px_7px_rgba(0,0,0,0.10)]">
                 <BookCover alt={book.title} fallbackTitle={book.title} radius="cover" thumbnailUrl={book.coverUrl} />
               </div>
             </button>
