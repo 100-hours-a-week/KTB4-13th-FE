@@ -7,6 +7,7 @@ import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
 import { useAuth } from "@/features/auth/context/useAuth";
 import { AppPageHeader } from "@/features/navigation/components/AppPageHeader";
+import { DEFAULT_PROFILE_IMAGE_URL } from "@/features/profile/lib/profileImageStore";
 import {
   deleteProductReview,
   fetchProductReviews,
@@ -139,7 +140,7 @@ export function ReviewListPage() {
             const isVisible = !review.isSpoiler || visibleSpoilers.includes(review.id);
             return <li className="py-5" key={review.id}>
               <div className="flex items-start gap-3">
-                <div aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent-soft font-brand text-accent">책</div>
+                <img alt="" aria-hidden="true" className="size-10 shrink-0 rounded-full bg-accent-soft object-contain p-0.5" src={DEFAULT_PROFILE_IMAGE_URL} />
                 <div className="min-w-0 flex-1">
                   <div className="flex min-h-8 items-start justify-between gap-3">
                     <strong className="type-body-small">{review.isMyReview ? "내 리뷰" : "구매자 리뷰"}</strong>
