@@ -5,8 +5,11 @@ import type { ProductListItem } from "@/features/product/types/product";
 
 // Backend default page size; the API defines no maximum limit.
 const RANKING_LIMIT = 20;
+// Dev-only opt-in to show real dev catalog books while the local DB has none.
+const USE_DEV_CATALOG =
+  import.meta.env.DEV && import.meta.env.VITE_DEV_HOME_RANKING_SOURCE === "dev-api";
 
-type BookRankingState =
+export type BookRankingState =
   | { kind: "loading" }
   | { kind: "ready"; items: ProductListItem[] }
   | { kind: "error" };
@@ -18,7 +21,10 @@ export function useBookRanking() {
   useEffect(() => {
     let isActive = true;
 
-    void fetchPopularProducts({ limit: RANKING_LIMIT }).then((page) => {
+    void fetchPopularProducts(
+      { limit: RANKING_LIMIT },
+      { useDevCatalog: USE_DEV_CATALOG },
+    ).then((page) => {
       if (isActive) {
         setState(page ? { kind: "ready", items: page.items } : { kind: "error" });
       }

@@ -11,6 +11,7 @@ import { BookRankingSection } from "@/pages/home/components/BookRankingSection";
 import { GuestRecommendationBanner } from "@/pages/home/components/GuestRecommendationBanner";
 import { HomeHeader } from "@/pages/home/components/HomeHeader";
 import { RecommendationSection } from "@/pages/home/components/RecommendationSection";
+import { useBookRanking } from "@/pages/home/hooks/useBookRanking";
 
 type HomeLoginPrompt = "cart" | "login" | "recommendation";
 
@@ -41,6 +42,7 @@ export function HomePage() {
   const navigate = useNavigate();
   const mainRef = useRef<HTMLElement>(null);
   const [loginPrompt, setLoginPrompt] = useState<HomeLoginPrompt | null>(null);
+  const { ranking, retry: retryRanking } = useBookRanking();
   const homeScrollTop = (location.state as { homeScrollTop?: unknown } | null)
     ?.homeScrollTop;
 
@@ -71,7 +73,7 @@ export function HomePage() {
   };
 
   return (
-    <div className="relative flex h-full flex-col bg-surface">
+    <div className="relative flex h-full flex-col bg-background">
       <HomeHeader
         isGuest={status === "unauthenticated"}
         onCartClick={() => {
@@ -86,7 +88,7 @@ export function HomePage() {
       />
 
       <main className="min-h-0 flex-1 overflow-y-auto" ref={mainRef}>
-        <div className="flex flex-col divide-y divide-hairline pb-6">
+        <div className="flex flex-col gap-3 pb-6">
           {/* The feed requires a token, so guests never mount the section or request it. */}
           {status === "authenticated" ? (
             <RecommendationSection
@@ -97,11 +99,14 @@ export function HomePage() {
           {status === "unauthenticated" ? (
             <GuestRecommendationBanner
               onLoginClick={() => setLoginPrompt("recommendation")}
+              ranking={ranking}
             />
           ) : null}
           <BookRankingSection
             onMoreClick={() => navigate("/catalog/ranking")}
             onProductClick={rememberHomeScroll}
+            ranking={ranking}
+            retry={retryRanking}
           />
         </div>
       </main>

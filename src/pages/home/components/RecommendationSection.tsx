@@ -5,9 +5,14 @@ import { BookCover } from "@/common/components/BookCover";
 import { ProductAvailabilityBadge } from "@/common/components/ProductAvailabilityBadge";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
+import { useRecommendationPreview } from "@/dev/useRecommendationPreview";
 import type { RecommendationFeedItem } from "@/features/recommendation/types/recommendationFeed";
 import { HomeSectionHeader } from "@/pages/home/components/HomeSectionHeader";
 import { useHomeRecommendations } from "@/pages/home/hooks/useHomeRecommendations";
+
+// Dev-only opt-in: an empty or failed feed also shows fixture books so the carousel design can be checked locally.
+const SHOW_DEV_PREVIEW =
+  import.meta.env.DEV && import.meta.env.VITE_DEV_HOME_RECOMMENDATION_PREVIEW === "true";
 
 interface RecommendationSectionProps {
   onMoreClick: () => void;
@@ -31,9 +36,12 @@ function wrapIndex(index: number, length: number) {
 
 export function CoverflowRecommendations({
   books,
+  isPreview = false,
   onProductClick,
 }: {
   books: RecommendationFeedItem[];
+  // Preview mode keeps display-only items from navigating to product detail.
+  isPreview?: boolean;
   onProductClick: () => void;
 }) {
   const navigate = useNavigate();
@@ -226,11 +234,11 @@ export function CoverflowRecommendations({
                   <button
                     aria-label={isActive ? `${book.title}, 현재 선택됨` : `${book.title} 선택`}
                     aria-pressed={isActive}
-                    className="absolute inset-0 cursor-pointer rounded-cover outline-offset-4 focus-visible:outline-2 focus-visible:outline-primary"
+                    className="absolute inset-0 cursor-pointer rounded-control outline-offset-4 focus-visible:outline-2 focus-visible:outline-primary"
                     onClick={() => {
                       if (!isActive) {
                         selectBook(slot);
-                      } else if (book.productId !== null) {
+                      } else if (!isPreview && book.productId !== null) {
                         onProductClick();
                         navigate(`/products/${book.productId}`);
                       }
@@ -240,7 +248,7 @@ export function CoverflowRecommendations({
                     type="button"
                   >
                     <span aria-hidden="true" className="pointer-events-none absolute -bottom-4 left-[5%] h-8 w-[90%] rounded-full bg-black/20 blur-xl" />
-                    <div className="relative size-full overflow-hidden rounded-cover border border-hairline bg-muted shadow-[0_12px_24px_-8px_rgba(0,0,0,0.35)] [&>div]:!h-full [&>div]:!aspect-auto">
+                    <div className="relative size-full overflow-hidden rounded-control bg-muted shadow-[0_14px_30px_-12px_rgba(36,33,31,0.38)] [&>div]:!h-full [&>div]:!aspect-auto [&>div]:!rounded-control [&>div]:!border-transparent">
                       <BookCover alt={book.title} fallbackTitle={book.title} radius="cover" thumbnailUrl={book.coverUrl} />
                       <span
                         aria-hidden="true"
@@ -285,7 +293,7 @@ export function CoverflowRecommendations({
           className="recommendation-info-enter flex flex-col items-center gap-2"
           key={`${activeBook.bookId}-${activeSlot}`}
         >
-          {activeBook.productId !== null ? (
+          {!isPreview && activeBook.productId !== null ? (
             <Link
               className="max-w-full rounded-cover text-xl font-bold text-text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-primary"
               onClick={onProductClick}
@@ -316,6 +324,7 @@ export function RecommendationSection({
   onProductClick,
 }: RecommendationSectionProps) {
   const { recommendations, retry } = useHomeRecommendations();
+  const previewBooks = useRecommendationPreview(SHOW_DEV_PREVIEW);
 
   return (
     <section
@@ -347,10 +356,27 @@ export function RecommendationSection({
         </Toast>
       ) : null}
 
-      {recommendations.kind === "ready" && recommendations.items.length === 0 ? (
+      {recommendations.kind === "ready" && recommendations.items.length === 0 && !SHOW_DEV_PREVIEW ? (
         <p className="py-6 text-center type-body-small text-text-secondary">
           아직 추천할 도서가 없어요
         </p>
+      ) : null}
+
+      {/* The error toast above stays visible; auth failures sign out and unmount this section instead. */}
+      {SHOW_DEV_PREVIEW &&
+      previewBooks.length > 0 &&
+      (recommendations.kind === "error" ||
+        (recommendations.kind === "ready" && recommendations.items.length === 0)) ? (
+        <div className="flex flex-col gap-3">
+          <p className="self-center rounded-full border border-dashed border-border px-3 py-1 type-caption text-text-secondary">
+            개발용 미리보기 데이터 · 실제 추천 아님
+          </p>
+          <CoverflowRecommendations
+            books={previewBooks}
+            isPreview
+            onProductClick={onProductClick}
+          />
+        </div>
       ) : null}
 
       {recommendations.kind === "ready" && recommendations.items.length > 0 ? (
