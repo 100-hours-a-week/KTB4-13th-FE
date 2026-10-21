@@ -45,7 +45,15 @@ if (isValidSentryDsn(sentryDsn)) {
 
 const root = createRoot(document.getElementById("root")!);
 
-if (import.meta.env.DEV && window.location.pathname === "/dev/preview") {
+if (import.meta.env.DEV && window.location.pathname === "/dev/recommendation-preview") {
+  void import("@/dev/DevRecommendationPreviewApp").then(({ default: DevRecommendationPreviewApp }) => {
+    root.render(
+      <StrictMode>
+        <DevRecommendationPreviewApp />
+      </StrictMode>,
+    );
+  });
+} else if (import.meta.env.DEV && window.location.pathname === "/dev/preview") {
   void import("@/dev/DevPreviewApp").then(({ default: DevPreviewApp }) => {
     root.render(
       <StrictMode>
