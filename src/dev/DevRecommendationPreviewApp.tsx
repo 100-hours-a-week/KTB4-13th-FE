@@ -20,9 +20,6 @@ const covers = [
   ["참을 수 없는 존재의 가벼움", "9788937437564.webp"],
   ["달과 6펜스", "9788937460388.webp"],
   ["노르웨이의 숲", "9788937434488.webp"],
-  ["노인과 바다", "9788937462788.webp"],
-  ["설국", "9788937460616.webp"],
-  ["위대한 개츠비", "9788937460753.webp"],
 ] as const;
 
 const books: RecommendationFeedItem[] = covers.map(([title, cover], index) => ({
