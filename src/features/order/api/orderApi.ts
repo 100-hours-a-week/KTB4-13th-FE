@@ -288,7 +288,7 @@ async function requestPaidCancellation(
   }
 }
 
-export function cancelPaidOrder(orderKey: string, _requestKey: string) {
+export function cancelPaidOrder(orderKey: string) {
   return requestPaidCancellation("/api/v1/cancel", { orderKey });
 }
 
@@ -296,8 +296,7 @@ export function partiallyCancelPaidOrder(
   orderKey: string,
   orderItemId: number,
   quantity: number,
-  _requestKey: string,
-) {
+ ) {
   return requestPaidCancellation("/api/v1/partial-cancel", {
     orderItemId,
     orderKey,
