@@ -87,10 +87,6 @@ export function HomePage() {
 
       <main className="min-h-0 flex-1 overflow-y-auto" ref={mainRef}>
         <div className="flex flex-col divide-y divide-hairline pb-6">
-          <BookRankingSection
-            onMoreClick={() => navigate("/catalog/ranking")}
-            onProductClick={rememberHomeScroll}
-          />
           {/* The feed requires a token, so guests never mount the section or request it. */}
           {status === "authenticated" ? (
             <RecommendationSection
@@ -103,6 +99,10 @@ export function HomePage() {
               onLoginClick={() => setLoginPrompt("recommendation")}
             />
           ) : null}
+          <BookRankingSection
+            onMoreClick={() => navigate("/catalog/ranking")}
+            onProductClick={rememberHomeScroll}
+          />
         </div>
       </main>
 
