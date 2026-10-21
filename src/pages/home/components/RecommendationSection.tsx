@@ -18,7 +18,7 @@ const priceFormatter = new Intl.NumberFormat("ko-KR");
 const SKELETON_COUNT = 3;
 const SWIPE_THRESHOLD = 40;
 const AUTO_ADVANCE_MS = 3500;
-const VISIBLE_NEIGHBORS = 3;
+const ANIMATION_MS = 1050;
 
 function CoverflowRecommendations({
   books,
@@ -28,6 +28,7 @@ function CoverflowRecommendations({
   onProductClick: () => void;
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [rotationStep, setRotationStep] = useState(0);
   const touchStartX = useRef<number | null>(null);
   const [paused, setPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -50,7 +51,15 @@ function CoverflowRecommendations({
   const activeBook = books[activeIndex] ?? books[0];
 
   const move = (direction: number) => {
+    setRotationStep((current) => current + direction);
     setActiveIndex((current) => (current + direction + books.length) % books.length);
+  };
+
+  const selectBook = (index: number) => {
+    const forward = (index - activeIndex + books.length) % books.length;
+    const backward = forward - books.length;
+    const shortest = Math.abs(forward) <= Math.abs(backward) ? forward : backward;
+    if (shortest !== 0) move(shortest);
   };
 
   const finishSwipe = (endX: number) => {
@@ -95,36 +104,37 @@ function CoverflowRecommendations({
     >
       <div
         className="relative left-1/2 h-[255px] w-[calc(100vw-16px)] max-w-[900px] -translate-x-1/2 overflow-hidden sm:h-[330px]"
-        style={{ perspective: "950px", perspectiveOrigin: "50% 43%", ["--coverflow-step" as string]: "clamp(76px, 23vw, 152px)" }}
+        style={{ perspective: "950px", perspectiveOrigin: "50% 43%", ["--coverflow-radius" as string]: "clamp(178px, 53vw, 365px)", ["--coverflow-depth" as string]: "clamp(130px, 45vw, 275px)" }}
       >
         <div aria-hidden="true" className="pointer-events-none absolute bottom-3 left-1/2 h-10 w-[72%] max-w-[560px] -translate-x-1/2 rounded-full bg-black/10 blur-2xl" />
         {books.map((book, index) => {
-          const forward = (index - activeIndex + books.length) % books.length;
-          const backward = forward - books.length;
-          const distance = Math.abs(forward) <= Math.abs(backward) ? forward : backward;
-          const isActive = distance === 0;
-          const depth = Math.abs(distance);
-          const visible = depth <= VISIBLE_NEIGHBORS;
-          // Space the rear books outward so they remain visible beyond the front neighbors.
-          const ringOffset = depth === 0 ? 0 : depth === 1 ? 1 : depth === 2 ? 1.72 : 2.32;
-          const angle = Math.sign(distance) * (depth === 1 ? 24 : depth === 2 ? 48 : 70);
-          const z = depth === 0 ? 40 : depth === 1 ? -25 : depth === 2 ? -115 : -205;
+          const count = books.length;
+          const ringStep = count <= 4 ? 45 : 360 / count;
+          const rawDistance = index - rotationStep;
+          const distance = ((rawDistance % count) + count * 1.5) % count - count / 2;
+          const angle = distance * ringStep;
+          const radians = angle * Math.PI / 180;
+          const depth = Math.abs(angle);
+          const visible = depth <= 115;
+          const isActive = index === activeIndex;
+          const opacity = !visible ? 0 : Math.max(0.2, 1 - depth / 155);
           return (
             <button
               aria-label={isActive ? `${book.title}, 현재 선택됨` : `${book.title} 선택`}
               aria-pressed={isActive}
-              className="absolute left-1/2 top-5 w-[124px] cursor-pointer rounded-cover outline-offset-4 transition-[transform,opacity] duration-700 ease-in-out focus-visible:outline-2 focus-visible:outline-primary sm:top-6 sm:w-[190px] motion-reduce:transition-none"
+              className="absolute left-1/2 top-5 w-[114px] cursor-pointer rounded-cover outline-offset-4 transition-[transform,opacity] ease-in-out focus-visible:outline-2 focus-visible:outline-primary sm:top-6 sm:w-[180px] motion-reduce:transition-none"
               key={book.bookId}
               onClick={() => {
-                if (!isActive) setActiveIndex(index);
+                if (!isActive) selectBook(index);
               }}
               style={{
-                opacity: visible ? (isActive ? 1 : Math.max(0.48, 0.96 - depth * 0.12)) : 0,
+                opacity,
+                transitionDuration: `${ANIMATION_MS}ms`,
                 pointerEvents: visible ? "auto" : "none",
-                transform: `translateX(calc(-50% + ${distance < 0 ? -1 : 1} * ${ringOffset} * var(--coverflow-step))) translateZ(${z}px) rotateY(${-angle}deg)`,
+                transform: `translateX(calc(-50% + ${Math.sin(radians).toFixed(5)} * var(--coverflow-radius))) translateZ(calc(${(Math.cos(radians) - 1).toFixed(5)} * var(--coverflow-depth))) rotateY(${-angle}deg)`,
                 transformStyle: "preserve-3d",
                 backfaceVisibility: "visible",
-                zIndex: books.length - Math.abs(distance),
+                zIndex: Math.round((Math.cos(radians) + 1) * 100),
               }}
               tabIndex={visible ? 0 : -1}
               type="button"
