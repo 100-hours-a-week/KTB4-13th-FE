@@ -94,9 +94,10 @@ function CoverflowRecommendations({
       tabIndex={0}
     >
       <div
-        className="relative left-1/2 h-[275px] w-[calc(100vw-24px)] max-w-[950px] -translate-x-1/2 overflow-hidden sm:h-[350px]"
-        style={{ perspective: "1200px" }}
+        className="relative left-1/2 h-[255px] w-[calc(100vw-16px)] max-w-[900px] -translate-x-1/2 overflow-hidden sm:h-[330px]"
+        style={{ perspective: "950px", perspectiveOrigin: "50% 43%", ["--coverflow-radius" as string]: "clamp(164px, 41vw, 305px)" }}
       >
+        <div aria-hidden="true" className="pointer-events-none absolute bottom-3 left-1/2 h-10 w-[72%] max-w-[560px] -translate-x-1/2 rounded-full bg-black/10 blur-2xl" />
         {books.map((book, index) => {
           const forward = (index - activeIndex + books.length) % books.length;
           const backward = forward - books.length;
@@ -104,12 +105,12 @@ function CoverflowRecommendations({
           const isActive = distance === 0;
           const depth = Math.abs(distance);
           const visible = depth <= VISIBLE_NEIGHBORS;
-          const offset = Math.sign(distance) * (depth === 1 ? 80 : depth === 2 ? 151 : 210);
+          const angle = distance * 34;
           return (
             <button
               aria-label={isActive ? `${book.title}, 현재 선택됨` : `${book.title} 선택`}
               aria-pressed={isActive}
-              className="absolute left-1/2 top-6 w-[132px] origin-center cursor-pointer rounded-cover outline-offset-4 transition-[transform,opacity] duration-700 ease-in-out focus-visible:outline-2 focus-visible:outline-primary sm:top-7 sm:w-[190px]"
+              className="absolute left-1/2 top-5 w-[124px] cursor-pointer rounded-cover outline-offset-4 transition-[transform,opacity] duration-700 ease-in-out focus-visible:outline-2 focus-visible:outline-primary sm:top-6 sm:w-[190px] motion-reduce:transition-none"
               key={book.bookId}
               onClick={() => {
                 if (!isActive) setActiveIndex(index);
@@ -117,7 +118,9 @@ function CoverflowRecommendations({
               style={{
                 opacity: visible ? (isActive ? 1 : Math.max(0.48, 0.96 - depth * 0.12)) : 0,
                 pointerEvents: visible ? "auto" : "none",
-                transform: `translateX(-50%) translateX(${offset}%) translateZ(${isActive ? 45 : -depth * 42}px) rotateY(${isActive ? 0 : distance < 0 ? 22 : -22}deg) scale(${isActive ? 1 : Math.max(0.70, 1 - depth * 0.085)})`,
+                transform: `translateX(-50%) rotateY(${angle}deg) translateZ(var(--coverflow-radius))`,
+                transformStyle: "preserve-3d",
+                backfaceVisibility: "visible",
                 zIndex: books.length - Math.abs(distance),
               }}
               tabIndex={visible ? 0 : -1}
@@ -125,12 +128,12 @@ function CoverflowRecommendations({
             >
               <span
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-x-[-6%] bottom-[-22px] h-10 rounded-full bg-black/15 blur-2xl sm:bottom-[-28px]"
+                className="pointer-events-none absolute -bottom-5 left-[5%] h-9 w-[90%] rounded-full bg-black/20 blur-xl"
               />
               <span
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-x-[-8%] top-[21%] h-[48%] rounded-xl bg-neutral-500/20 blur-[1px]"
-                style={{ transform: `translateX(${distance < 0 ? 10 : -10}%)` }}
+                className="pointer-events-none absolute inset-y-[15%] -left-[12%] w-[124%] rounded-cover bg-neutral-500/20 blur-[2px]"
+                style={{ transform: `translateX(${distance < 0 ? 9 : -9}%) translateZ(-15px)` }}
               />
               <div className="relative aspect-[3/4] overflow-hidden rounded-cover bg-muted shadow-[0_12px_22px_rgba(0,0,0,0.14),0_3px_7px_rgba(0,0,0,0.10)]">
                 <BookCover alt={book.title} fallbackTitle={book.title} radius="cover" thumbnailUrl={book.coverUrl} />
