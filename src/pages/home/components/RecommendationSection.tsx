@@ -76,7 +76,7 @@ function CoverflowRecommendations({
     <div
       aria-label="추천 도서 캐러셀"
       aria-roledescription="캐러셀"
-      className="w-full"
+      className="w-full min-w-0 max-w-full overflow-x-clip"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
@@ -106,8 +106,8 @@ function CoverflowRecommendations({
       tabIndex={0}
     >
       <div
-        className="relative left-1/2 h-[245px] w-[calc(100vw-8px)] max-w-[1000px] -translate-x-1/2 overflow-hidden sm:h-[330px]"
-        style={{ perspective: "950px", perspectiveOrigin: "50% 43%", ["--coverflow-radius" as string]: "clamp(145px, 39vw, 320px)" }}
+        className="relative h-[215px] w-full min-w-0 max-w-full overflow-hidden sm:h-[280px]"
+        style={{ perspective: "850px", perspectiveOrigin: "50% 48%", ["--coverflow-radius" as string]: "clamp(118px, 36vw, 210px)" }}
       >
         <div aria-hidden="true" className="pointer-events-none absolute bottom-3 left-1/2 h-10 w-[72%] max-w-[560px] -translate-x-1/2 rounded-full bg-black/10 blur-2xl" />
         <div className="absolute inset-0" style={{
@@ -125,12 +125,12 @@ function CoverflowRecommendations({
               <button
                 aria-label={isActive ? `${book.title}, 현재 선택됨` : `${book.title} 선택`}
                 aria-pressed={isActive}
-                className="absolute left-1/2 top-5 w-[98px] cursor-pointer rounded-cover outline-offset-4 focus-visible:outline-2 focus-visible:outline-primary sm:top-6 sm:w-[170px]"
+                className="absolute left-1/2 top-4 w-[82px] cursor-pointer rounded-cover outline-offset-4 focus-visible:outline-2 focus-visible:outline-primary sm:top-5 sm:w-[125px]"
                 key={book.bookId}
                 onClick={() => { if (!isActive) selectBook(index); }}
                 style={{
                   transform: `translateX(-50%) rotateY(${angle}deg) translateZ(var(--coverflow-radius))`,
-                  backfaceVisibility: "visible",
+                  backfaceVisibility: "hidden",
                   pointerEvents: Math.abs(distance) <= 3 ? "auto" : "none",
                 }}
                 tabIndex={Math.abs(distance) <= 3 ? 0 : -1}
@@ -206,7 +206,7 @@ export function RecommendationSection({
   return (
     <section
       aria-labelledby="book-recommendation-title"
-      className="page-content flex flex-col gap-4 py-8 first:pt-5"
+      className="page-content min-w-0 overflow-x-clip flex flex-col gap-4 py-8 first:pt-5"
     >
       <HomeSectionHeader
         id="book-recommendation-title"
