@@ -12,6 +12,10 @@ export type ReviewListResult =
   | { data: ProductReviewPage; ok: true }
   | { ok: false; reason: "unauthorized" | "error" };
 
+export type ReviewCountResult =
+  | { count: number; ok: true }
+  | { ok: false; reason: "error" };
+
 export type ReviewMutationResult =
   | { reviewId: number; ok: true }
   | { ok: false; reason: "invalid-request" | "unauthorized" | "error" };
@@ -82,6 +86,28 @@ export async function fetchProductReviews(
     }
     const data = parseReviewPage(result.data);
     return data ? { data, ok: true } : { ok: false, reason: "error" };
+  } catch {
+    return { ok: false, reason: "error" };
+  }
+}
+
+export async function fetchProductReviewCount(
+  productId: number,
+  signal?: AbortSignal,
+): Promise<ReviewCountResult> {
+  const params = new URLSearchParams({
+    targetId: String(productId),
+    targetType: "PRODUCT",
+  });
+
+  try {
+    const result = await parseApiResponse(
+      await fetchPublic(`/api/v1/reviews/count?${params.toString()}`, { signal, cache: "no-store" }),
+    );
+    return result.ok && typeof result.data === "number" &&
+      Number.isSafeInteger(result.data) && result.data >= 0
+      ? { count: result.data, ok: true }
+      : { ok: false, reason: "error" };
   } catch {
     return { ok: false, reason: "error" };
   }
