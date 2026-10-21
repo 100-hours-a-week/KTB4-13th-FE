@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { Button } from "@/common/components/Button";
@@ -21,10 +21,6 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
   PAID: "결제 완료",
   PARTIAL_CANCELED: "부분 취소",
 };
-
-function createRequestKey() {
-  return crypto.randomUUID().replaceAll("-", "_");
-}
 
 function formatDate(value: string) {
   const date = new Date(value);
@@ -55,29 +51,18 @@ export function OrderDetailPage() {
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ message: string; variant?: "error" } | null>(null);
   const [quantities, setQuantities] = useState<Record<number, number>>({});
-  const requestKeysRef = useRef(new Map<string, string>());
-
-  const requestKeyFor = (action: string) => {
-    const existing = requestKeysRef.current.get(action);
-    if (existing) return existing;
-    const next = createRequestKey();
-    requestKeysRef.current.set(action, next);
-    return next;
-  };
-
   const handleFullCancel = async () => {
     if (!orderKey || pendingAction) return;
     const action = "full";
     setPendingAction(action);
     setNotice(null);
-    const result = await cancelPaidOrder(orderKey, requestKeyFor(action));
+    const result = await cancelPaidOrder(orderKey);
     setPendingAction(null);
     setIsFullCancelOpen(false);
     if (!result.ok) {
       setNotice({ message: result.message ?? "전체 취소를 완료하지 못했어요. 다시 시도해 주세요.", variant: "error" });
       return;
     }
-    requestKeysRef.current.delete(action);
     setNotice({ message: "결제와 주문을 전체 취소했어요." });
     retry();
   };
@@ -92,14 +77,12 @@ export function OrderDetailPage() {
       orderKey,
       item.orderItemId,
       quantity,
-      requestKeyFor(action),
     );
     setPendingAction(null);
     if (!result.ok) {
       setNotice({ message: result.message ?? "부분 취소를 완료하지 못했어요. 다시 시도해 주세요.", variant: "error" });
       return;
     }
-    requestKeysRef.current.delete(action);
     setNotice({ message: `${item.itemName} ${quantity}권을 취소했어요.` });
     retry();
   };
