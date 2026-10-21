@@ -18,20 +18,38 @@ const priceFormatter = new Intl.NumberFormat("ko-KR");
 const SKELETON_COUNT = 3;
 const SWIPE_THRESHOLD = 40;
 const AUTO_ADVANCE_MS = 3500;
-const ANIMATION_MS = 1050;
+const ANIMATION_MS = 900;
+const MIN_CYLINDER_SLOTS = 18;
 
-function CoverflowRecommendations({
+function wrapAngle(angle: number) {
+  return ((angle + 180) % 360 + 360) % 360 - 180;
+}
+
+function wrapIndex(index: number, length: number) {
+  return ((index % length) + length) % length;
+}
+
+export function CoverflowRecommendations({
   books,
   onProductClick,
 }: {
   books: RecommendationFeedItem[];
   onProductClick: () => void;
 }) {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [rotationStep, setRotationStep] = useState(0);
+  const [activeSlot, setActiveSlot] = useState(0);
   const touchStartX = useRef<number | null>(null);
   const [paused, setPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const wheelRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const rotationRef = useRef(0);
+  const activeSlotRef = useRef(0);
+  const animationRef = useRef<{ from: number; startedAt: number | null; to: number } | null>(null);
+  const slotCount = books.length === 1
+    ? 1
+    : Math.ceil(MIN_CYLINDER_SLOTS / books.length) * books.length;
+  const angleStep = 360 / slotCount;
+  const activeIndex = activeSlot % books.length;
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -42,25 +60,72 @@ function CoverflowRecommendations({
   }, []);
 
   useEffect(() => {
-    if (paused || reducedMotion || books.length <= 1) return;
-    const timer = window.setInterval(() => {
-      if (!document.hidden) {
-        setRotationStep((current) => current + 1);
-        setActiveIndex((current) => (current + 1) % books.length);
+    let frame = 0;
+    let previousTime = 0;
+    let lastRotation = rotationRef.current;
+
+    const render = (rotation: number) => {
+      if (wheelRef.current) {
+        wheelRef.current.style.transform = `translateZ(calc(-1 * var(--cylinder-radius))) rotateY(${-rotation}deg)`;
       }
-    }, AUTO_ADVANCE_MS);
-    return () => window.clearInterval(timer);
-  }, [books.length, paused, reducedMotion]);
+      cardRefs.current.forEach((card, slot) => {
+        if (!card) return;
+        const distance = Math.abs(wrapAngle(slot * angleStep - rotation));
+        const depth = distance / 180;
+        card.style.opacity = String(1 - depth * 0.84);
+        card.style.transform = `scale(${1 - depth * 0.31})`;
+        card.style.zIndex = String(200 - Math.round(distance));
+        card.style.pointerEvents = distance < angleStep * 3.5 ? "auto" : "none";
+      });
+      const next = wrapIndex(Math.round(rotation / angleStep), slotCount);
+      if (next !== activeSlotRef.current) {
+        activeSlotRef.current = next;
+        setActiveSlot(next);
+      }
+    };
+
+    const tick = (time: number) => {
+      const elapsed = previousTime ? Math.min(time - previousTime, 50) : 0;
+      previousTime = time;
+      const animation = animationRef.current;
+      if (animation) {
+        if (animation.startedAt === null) animation.startedAt = time;
+        const progress = Math.min(1, (time - animation.startedAt) / ANIMATION_MS);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        rotationRef.current = animation.from + (animation.to - animation.from) * eased;
+        if (progress === 1) animationRef.current = null;
+      } else if (!paused && !reducedMotion && !document.hidden && books.length > 1) {
+        rotationRef.current += (elapsed * angleStep) / AUTO_ADVANCE_MS;
+      }
+      if (rotationRef.current !== lastRotation) {
+        render(rotationRef.current);
+        lastRotation = rotationRef.current;
+      }
+      frame = window.requestAnimationFrame(tick);
+    };
+
+    render(rotationRef.current);
+    frame = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(frame);
+  }, [angleStep, books.length, paused, reducedMotion, slotCount]);
   const activeBook = books[activeIndex] ?? books[0];
 
   const move = (direction: number) => {
-    setRotationStep((current) => current + direction);
-    setActiveIndex((current) => (current + direction + books.length) % books.length);
+    const nextStep = Math.round(rotationRef.current / angleStep) + direction;
+    const target = nextStep * angleStep;
+    if (reducedMotion) {
+      rotationRef.current = target;
+      animationRef.current = null;
+      activeSlotRef.current = wrapIndex(nextStep, slotCount);
+      setActiveSlot(activeSlotRef.current);
+      return;
+    }
+    animationRef.current = { from: rotationRef.current, startedAt: null, to: target };
   };
 
-  const selectBook = (index: number) => {
-    const forward = (index - activeIndex + books.length) % books.length;
-    const backward = forward - books.length;
+  const selectBook = (slot: number) => {
+    const forward = wrapIndex(slot - activeSlot, slotCount);
+    const backward = forward - slotCount;
     const shortest = Math.abs(forward) <= Math.abs(backward) ? forward : backward;
     if (shortest !== 0) move(shortest);
   };
@@ -76,7 +141,7 @@ function CoverflowRecommendations({
     <div
       aria-label="추천 도서 캐러셀"
       aria-roledescription="캐러셀"
-      className="w-full min-w-0 max-w-full overflow-x-clip"
+      className="-mx-5 w-[calc(100%+2.5rem)] min-w-0 overflow-x-clip [--book-width:110px] [--book-height:165px] [--cylinder-radius:350px] sm:[--book-width:130px] sm:[--book-height:195px] sm:[--cylinder-radius:420px]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
@@ -106,42 +171,51 @@ function CoverflowRecommendations({
       tabIndex={0}
     >
       <div
-        className="relative h-[215px] w-full min-w-0 max-w-full overflow-hidden sm:h-[280px]"
-        style={{ perspective: "850px", perspectiveOrigin: "50% 48%", ["--coverflow-radius" as string]: "clamp(118px, 36vw, 210px)" }}
+        className="relative flex h-[220px] w-full min-w-0 items-center justify-center overflow-visible sm:h-[260px]"
+        style={{ perspective: "1200px", perspectiveOrigin: "50% 30%" }}
       >
-        <div aria-hidden="true" className="pointer-events-none absolute bottom-3 left-1/2 h-10 w-[72%] max-w-[560px] -translate-x-1/2 rounded-full bg-black/10 blur-2xl" />
-        <div className="absolute inset-0" style={{
-          transformStyle: "preserve-3d",
-          transform: `translateZ(calc(-1 * var(--coverflow-radius))) rotateY(${-rotationStep * (360 / books.length)}deg)`,
-          transition: reducedMotion ? "none" : `transform ${ANIMATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
-        }}>
-          {books.map((book, index) => {
-            const angle = index * (360 / books.length);
-            const forward = (index - activeIndex + books.length) % books.length;
-            const backward = forward - books.length;
-            const distance = Math.abs(forward) <= Math.abs(backward) ? forward : backward;
-            const isActive = index === activeIndex;
+        <div aria-hidden="true" className="pointer-events-none absolute bottom-3 left-1/2 h-8 w-[85%] -translate-x-1/2 rounded-full bg-black/10 blur-xl" />
+        <div
+          className="relative h-[var(--book-height)] w-[var(--book-width)]"
+          ref={wheelRef}
+          style={{ transformStyle: "preserve-3d" }}
+        >
+          {Array.from({ length: slotCount }, (_, slot) => {
+            const book = books[slot % books.length];
+            const angle = slot * angleStep;
+            const isActive = slot === activeSlot;
+            const distance = Math.abs(wrapAngle(angle - activeSlot * angleStep));
             return (
-              <button
-                aria-label={isActive ? `${book.title}, 현재 선택됨` : `${book.title} 선택`}
-                aria-pressed={isActive}
-                className="absolute left-1/2 top-4 w-[82px] cursor-pointer rounded-cover outline-offset-4 focus-visible:outline-2 focus-visible:outline-primary sm:top-5 sm:w-[125px]"
-                key={book.bookId}
-                onClick={() => { if (!isActive) selectBook(index); }}
+              <div
+                className="absolute inset-0"
+                key={`${book.bookId}-${slot}`}
                 style={{
-                  transform: `translateX(-50%) rotateY(${angle}deg) translateZ(var(--coverflow-radius))`,
-                  backfaceVisibility: "hidden",
-                  pointerEvents: Math.abs(distance) <= 3 ? "auto" : "none",
+                  transform: `rotateY(${angle}deg) translateZ(var(--cylinder-radius))`,
+                  transformStyle: "preserve-3d",
                 }}
-                tabIndex={Math.abs(distance) <= 3 ? 0 : -1}
-                type="button"
               >
-                <span aria-hidden="true" className="pointer-events-none absolute -bottom-5 left-[5%] h-9 w-[90%] rounded-full bg-black/20 blur-xl" />
-                <span aria-hidden="true" className="pointer-events-none absolute inset-y-[16%] -left-[8%] w-[116%] rounded-cover bg-neutral-500/15 blur-[2px]" />
-                <div className="relative aspect-[3/4] overflow-hidden rounded-cover bg-muted shadow-[0_12px_22px_rgba(0,0,0,0.16),0_3px_7px_rgba(0,0,0,0.09)]">
-                  <BookCover alt={book.title} fallbackTitle={book.title} radius="cover" thumbnailUrl={book.coverUrl} />
+                <div className="relative size-full" ref={(node) => { cardRefs.current[slot] = node; }} style={{ transformStyle: "preserve-3d" }}>
+                  <button
+                    aria-label={isActive ? `${book.title}, 현재 선택됨` : `${book.title} 선택`}
+                    aria-pressed={isActive}
+                    className="absolute inset-0 cursor-pointer rounded-cover outline-offset-4 focus-visible:outline-2 focus-visible:outline-primary"
+                    onClick={() => { if (!isActive) selectBook(slot); }}
+                    style={{ backfaceVisibility: "hidden" }}
+                    tabIndex={distance <= angleStep * 3 ? 0 : -1}
+                    type="button"
+                  >
+                    <span aria-hidden="true" className="pointer-events-none absolute -bottom-4 left-[5%] h-8 w-[90%] rounded-full bg-black/20 blur-xl" />
+                    <div className="relative size-full overflow-hidden rounded-cover bg-muted shadow-[0_12px_24px_-8px_rgba(0,0,0,0.35)] [&>div]:!h-full [&>div]:!aspect-auto">
+                      <BookCover alt={book.title} fallbackTitle={book.title} radius="cover" thumbnailUrl={book.coverUrl} />
+                      <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/5" />
+                    </div>
+                  </button>
+                  <div aria-hidden="true" className="absolute inset-0 overflow-hidden rounded-cover bg-muted shadow-lg [&>div]:!h-full [&>div]:!aspect-auto" style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}>
+                    <BookCover alt="" fallbackTitle={book.title} radius="cover" thumbnailUrl={book.coverUrl} />
+                    <span className="pointer-events-none absolute inset-0 bg-surface/70" />
+                  </div>
                 </div>
-              </button>
+              </div>
             );
           })}
         </div>
@@ -206,7 +280,7 @@ export function RecommendationSection({
   return (
     <section
       aria-labelledby="book-recommendation-title"
-      className="page-content min-w-0 overflow-x-clip flex flex-col gap-4 py-8 first:pt-5"
+      className="page-content min-w-0 flex flex-col gap-4 py-8 first:pt-5"
     >
       <HomeSectionHeader
         id="book-recommendation-title"
