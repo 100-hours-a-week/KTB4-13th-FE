@@ -95,7 +95,7 @@ function CoverflowRecommendations({
     >
       <div
         className="relative left-1/2 h-[255px] w-[calc(100vw-16px)] max-w-[900px] -translate-x-1/2 overflow-hidden sm:h-[330px]"
-        style={{ perspective: "950px", perspectiveOrigin: "50% 43%", ["--coverflow-radius" as string]: "clamp(164px, 41vw, 305px)" }}
+        style={{ perspective: "950px", perspectiveOrigin: "50% 43%", ["--coverflow-step" as string]: "clamp(76px, 23vw, 152px)" }}
       >
         <div aria-hidden="true" className="pointer-events-none absolute bottom-3 left-1/2 h-10 w-[72%] max-w-[560px] -translate-x-1/2 rounded-full bg-black/10 blur-2xl" />
         {books.map((book, index) => {
@@ -105,7 +105,10 @@ function CoverflowRecommendations({
           const isActive = distance === 0;
           const depth = Math.abs(distance);
           const visible = depth <= VISIBLE_NEIGHBORS;
-          const angle = distance * 34;
+          // Space the rear books outward so they remain visible beyond the front neighbors.
+          const ringOffset = depth === 0 ? 0 : depth === 1 ? 1 : depth === 2 ? 1.72 : 2.32;
+          const angle = Math.sign(distance) * (depth === 1 ? 24 : depth === 2 ? 48 : 70);
+          const z = depth === 0 ? 40 : depth === 1 ? -25 : depth === 2 ? -115 : -205;
           return (
             <button
               aria-label={isActive ? `${book.title}, 현재 선택됨` : `${book.title} 선택`}
@@ -118,7 +121,7 @@ function CoverflowRecommendations({
               style={{
                 opacity: visible ? (isActive ? 1 : Math.max(0.48, 0.96 - depth * 0.12)) : 0,
                 pointerEvents: visible ? "auto" : "none",
-                transform: `translateX(-50%) rotateY(${angle}deg) translateZ(var(--coverflow-radius))`,
+                transform: `translateX(calc(-50% + ${distance < 0 ? -1 : 1} * ${ringOffset} * var(--coverflow-step))) translateZ(${z}px) rotateY(${-angle}deg)`,
                 transformStyle: "preserve-3d",
                 backfaceVisibility: "visible",
                 zIndex: books.length - Math.abs(distance),
