@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
@@ -17,6 +17,7 @@ interface RecommendationSectionProps {
 const priceFormatter = new Intl.NumberFormat("ko-KR");
 const SKELETON_COUNT = 3;
 const SWIPE_THRESHOLD = 40;
+const AUTO_ADVANCE_MS = 3500;
 
 function CoverflowRecommendations({
   books,
@@ -27,6 +28,24 @@ function CoverflowRecommendations({
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const touchStartX = useRef<number | null>(null);
+  const [paused, setPaused] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (paused || reducedMotion || books.length <= 1) return;
+    const timer = window.setInterval(() => {
+      if (!document.hidden) setActiveIndex((current) => (current + 1) % books.length);
+    }, AUTO_ADVANCE_MS);
+    return () => window.clearInterval(timer);
+  }, [books.length, paused, reducedMotion]);
   const activeBook = books[activeIndex] ?? books[0];
 
   const move = (direction: number) => {
@@ -45,6 +64,12 @@ function CoverflowRecommendations({
       aria-label="추천 도서 캐러셀"
       aria-roledescription="캐러셀"
       className="w-full"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false);
+      }}
       onKeyDown={(event) => {
         if (event.target !== event.currentTarget) return;
         if (event.key === "ArrowLeft") {
@@ -68,8 +93,8 @@ function CoverflowRecommendations({
       tabIndex={0}
     >
       <div
-        className="relative mx-auto h-[270px] w-full overflow-hidden sm:h-[340px]"
-        style={{ perspective: "1100px" }}
+        className="relative left-1/2 h-[310px] w-[calc(100vw-24px)] max-w-[1100px] -translate-x-1/2 overflow-hidden sm:h-[430px]"
+        style={{ perspective: "1300px" }}
       >
         {books.map((book, index) => {
           const forward = (index - activeIndex + books.length) % books.length;
@@ -77,20 +102,20 @@ function CoverflowRecommendations({
           const distance = Math.abs(forward) <= Math.abs(backward) ? forward : backward;
           const isActive = distance === 0;
           const visible = Math.abs(distance) <= 3;
-          const offset = Math.sign(distance) * (Math.abs(distance) === 1 ? 70 : Math.abs(distance) === 2 ? 122 : 155);
+          const offset = Math.sign(distance) * (Math.abs(distance) === 1 ? 80 : Math.abs(distance) === 2 ? 149 : 205);
           return (
             <button
               aria-label={isActive ? `${book.title}, 현재 선택됨` : `${book.title} 선택`}
               aria-pressed={isActive}
-              className="absolute left-1/2 top-3 w-[146px] origin-center cursor-pointer rounded-cover outline-offset-4 transition-[transform,opacity,filter] duration-500 ease-out focus-visible:outline-2 focus-visible:outline-primary sm:top-5 sm:w-[190px]"
+              className="absolute left-1/2 top-5 w-[155px] origin-center cursor-pointer rounded-cover outline-offset-4 transition-[transform,opacity,filter] duration-700 ease-in-out focus-visible:outline-2 focus-visible:outline-primary sm:top-8 sm:w-[245px]"
               key={book.bookId}
               onClick={() => {
                 if (!isActive) setActiveIndex(index);
               }}
               style={{
-                opacity: visible ? (isActive ? 1 : Math.max(0.32, 0.83 - Math.abs(distance) * 0.2)) : 0,
+                opacity: visible ? (isActive ? 1 : Math.max(0.42, 0.95 - Math.abs(distance) * 0.14)) : 0,
                 pointerEvents: visible ? "auto" : "none",
-                transform: `translateX(-50%) translateX(${offset}%) translateZ(${isActive ? 75 : -Math.abs(distance) * 75}px) rotateY(${distance === 0 ? 0 : distance < 0 ? 32 : -32}deg) scale(${isActive ? 1 : Math.max(0.68, 1 - Math.abs(distance) * 0.1)})`,
+                transform: `translateX(-50%) translateX(${offset}%) translateZ(${isActive ? 85 : -Math.abs(distance) * 65}px) rotateY(${distance === 0 ? 0 : distance < 0 ? 38 : -38}deg) scale(${isActive ? 1 : Math.max(0.68, 1 - Math.abs(distance) * 0.10)})`,
                 zIndex: books.length - Math.abs(distance),
               }}
               tabIndex={visible ? 0 : -1}
@@ -128,17 +153,17 @@ function CoverflowRecommendations({
         </button>
       </div>
 
-      <div className="mt-4 flex min-h-20 flex-col items-center gap-1 px-5 text-center">
+      <div className="mt-5 flex min-h-24 flex-col items-center gap-2 px-5 text-center">
         {activeBook.productId !== null ? (
           <Link
-            className="max-w-full rounded-cover type-body font-semibold text-text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-primary"
+            className="max-w-full rounded-cover text-xl font-bold text-text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-primary"
             onClick={onProductClick}
             to={`/products/${activeBook.productId}`}
           >
             {activeBook.title}
           </Link>
         ) : (
-          <p className="type-body font-semibold text-text-primary">{activeBook.title}</p>
+          <p className="text-xl font-bold text-text-primary">{activeBook.title}</p>
         )}
         {activeBook.author ? (
           <p className="type-body-small text-text-secondary">{activeBook.author}</p>
