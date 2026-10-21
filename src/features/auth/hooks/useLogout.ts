@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 
 import { requestLogout } from "@/features/auth/api/logoutApi";
 import { useAuth } from "@/features/auth/context/useAuth";
+import { clearProfileImage } from "@/features/profile/lib/profileImageStore";
 
 export function useLogout() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export function useLogout() {
     // On failure the HttpOnly refresh cookie and server session remain, so a reload can
     // restore the session through the app-start reissue; the result is returned for that.
     clearAccessToken();
+    clearProfileImage();
     navigate("/login", { replace: true });
 
     return isServerLogoutSucceeded;

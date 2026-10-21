@@ -66,8 +66,8 @@ export function ReviewListPage() {
   }
 
   const productData = product.state.kind === "ready" ? product.state.data : null;
-  const reviewCount = productData?.reviewCount ?? reviews.length;
-  const average = productData?.reviewRate ?? (reviews.length
+  const reviewCount = Math.max(productData?.reviewCount ?? 0, reviews.length);
+  const average = reviews.length && reviews.length >= (productData?.reviewCount ?? 0) ? (reviews.reduce((sum, review) => sum + review.rate, 0) / reviews.length) : productData?.reviewRate ?? (reviews.length
     ? reviews.reduce((sum, review) => sum + review.rate, 0) / reviews.length
     : 0);
   const notice =
