@@ -133,12 +133,11 @@ export function ProductDetailContent({
 
   useEffect(() => {
     const controller = new AbortController();
-    void fetchProductReviews(product.productId, 0, 20, controller.signal).then((result) => {
+    void fetchProductReviews(product.productId, 0, 20, controller.signal, true).then((result) => {
       if (controller.signal.aborted || !result.ok) return;
       const reviews = result.data.reviews;
-      if (reviews.length === 0) return;
       const count = Math.max(product.reviewCount, reviews.length);
-      const rate = !result.data.hasNext
+      const rate = reviews.length > 0 && !result.data.hasNext
         ? reviews.reduce((sum, review) => sum + review.rate, 0) / reviews.length
         : product.reviewRate;
       setReviewSummary({ productId: product.productId, count, rate });
