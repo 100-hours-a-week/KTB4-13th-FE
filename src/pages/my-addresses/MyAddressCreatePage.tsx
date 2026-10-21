@@ -51,7 +51,7 @@ export function MyAddressCreatePage() {
   };
 
   return (
-    <div className="relative flex h-dvh min-w-0 flex-col bg-surface">
+    <div className="relative flex h-full min-w-0 flex-col bg-surface">
       <AddressPageHeader fallbackPath="/my/addresses" title="배송지 추가" />
 
       {state.kind === "loading" ? (

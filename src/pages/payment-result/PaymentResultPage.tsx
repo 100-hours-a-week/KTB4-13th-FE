@@ -95,7 +95,7 @@ export function PaymentResultPage({ kind }: { kind: "success" | "fail" }) {
   }, [kind, location.search, orderKey, requestKey]);
 
   return (
-    <main className="page-content flex h-dvh flex-col items-center justify-center bg-surface text-center">
+    <main className="page-content flex h-full flex-col items-center justify-center bg-surface text-center">
       {state.kind === "loading" ? <p aria-busy="true" className="type-body-small text-text-tertiary" role="status">결제 결과를 확인하고 있어요</p> : null}
       {state.kind === "success" ? <><div aria-hidden="true" className="flex size-12 items-center justify-center rounded-full border border-success text-success">✓</div><h1 className="mt-6 type-section">결제가 완료되었어요</h1><p className="mt-3 type-body text-text-secondary">주문 내역에서 배송 상태를 확인할 수 있어요.</p></> : null}
       {state.kind === "error" ? <><div aria-hidden="true" className="flex size-12 items-center justify-center rounded-full border border-error text-error">!</div><h1 className="mt-6 type-section">결제를 완료하지 못했어요</h1><p className="mt-3 max-w-xs break-keep type-body text-text-secondary">{state.message}</p></> : null}

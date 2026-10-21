@@ -182,7 +182,7 @@ export function OrderPage() {
   };
 
   return (
-    <div className="relative flex h-dvh min-w-0 flex-col bg-surface">
+    <div className="relative flex h-full min-w-0 flex-col bg-surface">
       <header className="page-content grid min-h-16 shrink-0 grid-cols-[2.75rem_1fr_2.75rem] items-center bg-surface">
         <button
           aria-label="이전 화면으로 돌아가기"
@@ -231,7 +231,7 @@ export function OrderPage() {
         </div>
       ) : null}
 
-      <div className="safe-area-bottom shrink-0 border-t border-hairline bg-surface px-5 pt-3">
+      <div className="shrink-0 border-t border-hairline bg-surface px-5 pb-5 pt-3">
         <Button
           className="min-h-12 w-full"
           disabled={!canSubmit}

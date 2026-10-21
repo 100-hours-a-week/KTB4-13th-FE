@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { BottomNavigation } from "@/common/components/BottomNavigation";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
 import { ChatComposer } from "@/pages/recommendation-chat/components/ChatComposer";
@@ -31,7 +30,7 @@ export function AiRecommendationChatPage() {
   };
 
   return (
-    <div className="relative flex h-dvh min-w-0 flex-col overflow-hidden bg-surface">
+    <div className="relative flex h-full min-w-0 flex-col overflow-hidden bg-surface">
       <ChatHeader
         onBack={handleBack}
         onCartClick={() => navigate("/cart")}
@@ -89,7 +88,6 @@ export function AiRecommendationChatPage() {
         onSend={chat.sendMessage}
         status={chat.status}
       />
-      <BottomNavigation />
       <ChatSessionList activeSessionId={chat.sessionId} hasError={chat.sessionsError} isOpen={isSessionListOpen} onClose={() => setIsSessionListOpen(false)} onNewSession={chat.startNewSession} onRetry={() => { void chat.loadSessions(); }} onSelect={chat.selectSession} sessions={chat.sessions} />
     </div>
   );

@@ -8,7 +8,7 @@ export function OrderHistoryPage() {
   const notice = typeof location.state === "object" && location.state !== null && typeof Reflect.get(location.state, "notice") === "string" ? String(Reflect.get(location.state, "notice")) : null;
 
   return (
-    <div className="relative flex h-dvh min-w-0 flex-col bg-surface">
+    <div className="relative flex h-full min-w-0 flex-col bg-surface">
       <OrderHistoryHeader />
       <main className="min-h-0 flex-1 overflow-y-auto">
         {notice ? <div className="page-content pt-4"><Toast>{notice}</Toast></div> : null}
@@ -21,11 +21,9 @@ export function OrderHistoryPage() {
           status={history.status}
         />
       </main>
-      <BottomNavigation />
     </div>
   );
 }
 import { useLocation } from "react-router-dom";
 
-import { BottomNavigation } from "@/common/components/BottomNavigation";
 import { Toast } from "@/common/components/Toast";

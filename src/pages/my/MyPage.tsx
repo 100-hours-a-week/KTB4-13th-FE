@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
-import { BottomNavigation } from "@/common/components/BottomNavigation";
 import { Toast } from "@/common/components/Toast";
 import { RetryButton } from "@/common/components/RetryButton";
 import { CartButton } from "@/features/cart/components/CartButton";
@@ -79,7 +78,7 @@ export function MyPage() {
   };
 
   return (
-    <div className="relative flex h-dvh min-w-0 flex-col bg-surface">
+    <div className="relative flex h-full min-w-0 flex-col bg-surface">
       <header className="page-content grid min-h-16 shrink-0 grid-cols-[2.75rem_1fr_2.75rem] items-center border-b border-hairline bg-surface">
         <Link
           aria-label="홈으로 이동"
@@ -169,7 +168,6 @@ export function MyPage() {
         </section>
       </main>
 
-      <BottomNavigation />
       <LogoutDialog
         isLoggingOut={isLoggingOut}
         isOpen={isLogoutDialogOpen}

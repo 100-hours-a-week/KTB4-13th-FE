@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { BottomNavigation } from "@/common/components/BottomNavigation";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
 import { useTransientNotice } from "@/common/hooks/useTransientNotice";
@@ -151,7 +150,7 @@ export function MyAddressesPage() {
   };
 
   return (
-    <div className="relative flex h-dvh min-w-0 flex-col bg-surface">
+    <div className="relative flex h-full min-w-0 flex-col bg-surface">
       <AddressPageHeader fallbackPath="/my" title="배송지 관리" />
 
       <main className="page-content min-h-0 flex-1 overflow-y-auto py-6">
@@ -241,7 +240,6 @@ export function MyAddressesPage() {
         </div>
       ) : null}
 
-      <BottomNavigation />
 
       <DeleteAddressDialog
         addressLabel={deleteTarget?.label ?? ""}

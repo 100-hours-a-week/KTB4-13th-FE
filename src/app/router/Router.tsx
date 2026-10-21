@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
+import { BottomNavigationLayout } from "@/app/layouts/BottomNavigationLayout";
 import { OnboardingEntryGuard } from "@/app/router/OnboardingEntryGuard";
 import { RequireAuth } from "@/app/router/RequireAuth";
 import { KakaoCallbackPage } from "@/pages/auth/KakaoCallbackPage";
@@ -36,52 +37,56 @@ export function Router() {
         <Route path="/auth/kakao/callback" element={<KakaoCallbackPage />} />
         <Route element={<OnboardingEntryGuard />}>
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/" element={<HomePage />} />
-          <Route path="/products/:productId" element={<ProductDetailPage />} />
-          <Route path="/products/:productId/reviews" element={<ReviewListPage />} />
-          <Route
-            path="/catalog/ranking"
-            element={<CatalogPage mode="ranking" />}
-          />
-          <Route path="/search" element={<SearchResultsPage />} />
+          <Route element={<BottomNavigationLayout />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/products/:productId" element={<ProductDetailPage />} />
+            <Route path="/products/:productId/reviews" element={<ReviewListPage />} />
+            <Route
+              path="/catalog/ranking"
+              element={<CatalogPage mode="ranking" />}
+            />
+            <Route path="/search" element={<SearchResultsPage />} />
+            <Route element={<RequireAuth />}>
+              <Route path="/cart" element={<CartPage />} />
+              <Route path="/my" element={<MyPage />} />
+              <Route path="/my/benefits" element={<MyBenefitsPage />} />
+              <Route path="/my/profile" element={<ProfileEditPage />} />
+              <Route path="/my/preferences" element={<PreferenceEditPage />} />
+              <Route path="/my/library" element={<LibraryPage />} />
+              <Route path="/my/withdraw" element={<WithdrawPage />} />
+              <Route path="/notifications" element={<NotificationPage />} />
+              <Route path="/my/addresses" element={<MyAddressesPage />} />
+              <Route
+                path="/my/addresses/new"
+                element={<MyAddressCreatePage />}
+              />
+              <Route
+                path="/my/addresses/:addressId/edit"
+                element={<MyAddressEditPage />}
+              />
+              <Route
+                path="/catalog/recommendations"
+                element={<CatalogPage mode="recommendation" />}
+              />
+              <Route path="/order" element={<OrderPage />} />
+              <Route path="/payment" element={<PaymentPage />} />
+              <Route path="/payment/success" element={<PaymentResultPage kind="success" />} />
+              <Route path="/payment/fail" element={<PaymentResultPage kind="fail" />} />
+              <Route path="/my/orders" element={<OrderHistoryPage />} />
+              <Route path="/my/orders/:orderKey" element={<OrderDetailPage />} />
+              <Route
+                path="/recommendations/chat"
+                element={<AiRecommendationChatPage />}
+              />
+              <Route path="/products/:productId/reviews/new" element={<ReviewWritePage />} />
+              <Route path="/products/:productId/reviews/:reviewId/edit" element={<ReviewWritePage />} />
+            </Route>
+          </Route>
           <Route element={<RequireAuth />}>
-            <Route path="/cart" element={<CartPage />} />
-            <Route path="/my" element={<MyPage />} />
-            <Route path="/my/benefits" element={<MyBenefitsPage />} />
-            <Route path="/my/profile" element={<ProfileEditPage />} />
-            <Route path="/my/preferences" element={<PreferenceEditPage />} />
             <Route
               path="/my/preferences/onboarding"
               element={<OnboardingPage mode="edit" />}
             />
-            <Route path="/my/library" element={<LibraryPage />} />
-            <Route path="/my/withdraw" element={<WithdrawPage />} />
-            <Route path="/notifications" element={<NotificationPage />} />
-            <Route path="/my/addresses" element={<MyAddressesPage />} />
-            <Route
-              path="/my/addresses/new"
-              element={<MyAddressCreatePage />}
-            />
-            <Route
-              path="/my/addresses/:addressId/edit"
-              element={<MyAddressEditPage />}
-            />
-            <Route
-              path="/catalog/recommendations"
-              element={<CatalogPage mode="recommendation" />}
-            />
-            <Route path="/order" element={<OrderPage />} />
-            <Route path="/payment" element={<PaymentPage />} />
-            <Route path="/payment/success" element={<PaymentResultPage kind="success" />} />
-            <Route path="/payment/fail" element={<PaymentResultPage kind="fail" />} />
-            <Route path="/my/orders" element={<OrderHistoryPage />} />
-            <Route path="/my/orders/:orderKey" element={<OrderDetailPage />} />
-            <Route
-              path="/recommendations/chat"
-              element={<AiRecommendationChatPage />}
-            />
-            <Route path="/products/:productId/reviews/new" element={<ReviewWritePage />} />
-            <Route path="/products/:productId/reviews/:reviewId/edit" element={<ReviewWritePage />} />
           </Route>
         </Route>
         <Route element={<RequireAuth />}>

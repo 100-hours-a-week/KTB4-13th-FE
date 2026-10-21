@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
-import { BottomNavigation } from "@/common/components/BottomNavigation";
 import { Button } from "@/common/components/Button";
 import { ConfirmDialog } from "@/common/components/ConfirmDialog/ConfirmDialog";
 import { RetryButton } from "@/common/components/RetryButton";
@@ -106,7 +105,7 @@ export function OrderDetailPage() {
   };
 
   return (
-    <div className="flex h-dvh flex-col bg-surface">
+    <div className="flex h-full flex-col bg-surface">
       <AppPageHeader fallbackPath="/my/orders" title="주문 상세" />
       <main className="page-content min-h-0 flex-1 overflow-y-auto py-5">
         {state.kind === "loading" ? <p aria-busy="true" className="type-body-small text-text-tertiary" role="status">주문 상세를 불러오는 중이에요</p> : null}
@@ -131,7 +130,6 @@ export function OrderDetailPage() {
           </div>
         ) : null}
       </main>
-      <BottomNavigation />
       <ConfirmDialog confirmLabel="전체 취소" description="결제한 모든 상품을 취소할까요? 취소 후에는 되돌릴 수 없어요." isOpen={isFullCancelOpen} onCancel={() => setIsFullCancelOpen(false)} onConfirm={() => { void handleFullCancel(); }} title="주문 전체 취소" />
     </div>
   );

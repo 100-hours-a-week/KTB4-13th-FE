@@ -5,7 +5,6 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-import { BottomNavigation } from "@/common/components/BottomNavigation";
 import { LoginRequiredDialog } from "@/features/auth/components/LoginRequiredDialog";
 import { useAuth } from "@/features/auth/context/useAuth";
 import { BookRankingSection } from "@/pages/home/components/BookRankingSection";
@@ -72,7 +71,7 @@ export function HomePage() {
   };
 
   return (
-    <div className="relative flex h-dvh flex-col bg-surface">
+    <div className="relative flex h-full flex-col bg-surface">
       <HomeHeader
         isGuest={status === "unauthenticated"}
         onCartClick={() => {
@@ -107,7 +106,6 @@ export function HomePage() {
         </div>
       </main>
 
-      <BottomNavigation />
       <LoginRequiredDialog
         description={LOGIN_PROMPT_CONTENT[loginPrompt ?? "cart"].description}
         isOpen={loginPrompt !== null}

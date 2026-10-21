@@ -1,6 +1,5 @@
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
-import { BottomNavigation } from "@/common/components/BottomNavigation";
 import { SearchFilters } from "@/pages/search/components/SearchFilters";
 import { SearchHeader } from "@/pages/search/components/SearchHeader";
 import { SearchResultToolbar } from "@/pages/search/components/SearchResultToolbar";
@@ -48,7 +47,7 @@ export function SearchResultsPage() {
   };
 
   return (
-    <div className="relative flex h-dvh min-w-0 flex-col overflow-x-hidden bg-surface">
+    <div className="relative flex h-full min-w-0 flex-col overflow-x-hidden bg-surface">
       <SearchHeader
         key={request.query}
         onBack={handleBack}
@@ -69,7 +68,6 @@ export function SearchResultsPage() {
         />
       </main>
 
-      <BottomNavigation />
     </div>
   );
 }

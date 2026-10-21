@@ -116,7 +116,7 @@ export function PreferenceEditPage() {
   const items = state.kind === "ready" ? state.items : [];
   const onboarding = state.kind === "ready" ? [...state.onboarding].sort((a, b) => a.questionId - b.questionId) : [];
 
-  return <div className="relative flex h-dvh flex-col bg-surface">
+  return <div className="relative flex h-full flex-col bg-surface">
     <AppPageHeader fallbackPath="/my" title="취향 정보 수정" />
     <main className="page-content min-h-0 flex-1 overflow-y-auto py-5">
       <div className="mx-auto w-full max-w-2xl">

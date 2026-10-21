@@ -32,7 +32,7 @@ export function WithdrawPage() {
     setIsConfirming(false);
     window.setTimeout(() => { void logout(); }, 900);
   };
-  return <div className="relative flex h-dvh flex-col bg-surface">
+  return <div className="relative flex h-full flex-col bg-surface">
     <AppPageHeader fallbackPath="/my" title="회원탈퇴" />
     <main className="page-content min-h-0 flex-1 overflow-y-auto pb-5 pt-6">
       {isDone ? <div className="mb-4"><Toast>탈퇴 처리가 완료됐어요.</Toast></div> : null}
@@ -42,7 +42,7 @@ export function WithdrawPage() {
       <fieldset className="mt-8"><legend className="type-title">탈퇴하는 이유를 알려주세요 <span className="font-normal text-text-tertiary">(선택)</span></legend><div className="mt-3 space-y-1">{REASONS.map((item) => <label className="flex min-h-12 items-center gap-3 border-b border-hairline type-body" key={item}><input checked={reason === item} className="size-5 accent-accent" name="withdraw-reason" onChange={() => setReason(item)} type="radio" />{item}</label>)}</div></fieldset>
       <label className="mt-8 flex items-start gap-3 rounded-panel border border-border p-4"><input checked={agreed} className="mt-0.5 size-5 accent-accent" onChange={(event) => setAgreed(event.target.checked)} type="checkbox" /><span className="type-body-small">안내 사항을 모두 확인했으며 탈퇴 시 정보를 복구할 수 없음에 동의합니다.</span></label>
     </main>
-    <div className="safe-area-bottom page-content border-t border-hairline bg-surface pt-3"><Button className="w-full bg-error" disabled={!agreed || isDone} isLoading={isSubmitting} onClick={() => { setError(null); setIsConfirming(true); }}>탈퇴하기</Button></div>
+    <div className="page-content border-t border-hairline bg-surface pb-5 pt-3"><Button className="w-full bg-error" disabled={!agreed || isDone} isLoading={isSubmitting} onClick={() => { setError(null); setIsConfirming(true); }}>탈퇴하기</Button></div>
     <ConfirmDialog confirmLabel="탈퇴하기" description="탈퇴 신청 후 7일 이내 다시 로그인하면 계정을 복구할 수 있어요." isOpen={isConfirming} onCancel={() => setIsConfirming(false)} onConfirm={() => { void confirm(); }} title="정말 탈퇴할까요?" />
   </div>;
 }

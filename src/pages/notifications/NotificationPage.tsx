@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 
-import { BottomNavigation } from "@/common/components/BottomNavigation";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
 import {
@@ -67,7 +66,7 @@ export function NotificationPage() {
   };
 
   return (
-    <div className="flex h-dvh flex-col bg-surface">
+    <div className="flex h-full flex-col bg-surface">
       <AppPageHeader fallbackPath="/" title="알림" />
       <main className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-2xl">
@@ -131,7 +130,6 @@ export function NotificationPage() {
         ) : null}
         </div>
       </main>
-      <BottomNavigation />
     </div>
   );
 }

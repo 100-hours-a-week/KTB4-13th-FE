@@ -57,7 +57,7 @@ export function ProfileEditPage() {
     saveProfileImage(imageDataUrl);
     navigate("/my", { replace: true, state: { notice: "프로필을 저장했어요." } });
   };
-  return <form className="relative flex h-dvh flex-col bg-surface" onSubmit={submit}>
+  return <form className="relative flex h-full flex-col bg-surface" onSubmit={submit}>
     <AppPageHeader fallbackPath="/my" title="프로필 수정" />
     <main className="page-content min-h-0 flex-1 overflow-y-auto py-8">
       {error ? <div className="mb-5"><Toast variant="error">{error}</Toast></div> : null}
@@ -67,6 +67,6 @@ export function ProfileEditPage() {
       </div>
       <section className="mt-10"><label className="type-title" htmlFor="nickname">닉네임</label><div className="mt-3"><input className="min-h-12 w-full rounded-control border border-border px-3 outline-none focus:border-primary focus:outline-2 focus:outline-primary" disabled={isLoading} id="nickname" maxLength={20} onChange={(event) => { setNickname(event.target.value); setError(null); }} value={nickname} /></div><p className="mt-2 type-caption text-text-tertiary">2~20자의 닉네임을 입력해 주세요.</p></section>
     </main>
-    <div className="safe-area-bottom page-content border-t border-hairline bg-surface pt-3"><Button className="w-full" disabled={isLoading || !isNicknameValid} isLoading={isSubmitting} type="submit">저장하기</Button></div>
+    <div className="page-content border-t border-hairline bg-surface pb-5 pt-3"><Button className="w-full" disabled={isLoading || !isNicknameValid} isLoading={isSubmitting} type="submit">저장하기</Button></div>
   </form>;
 }

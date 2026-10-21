@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 
-import { BottomNavigation } from "@/common/components/BottomNavigation";
 import { CatalogBookList } from "@/pages/catalog/components/CatalogBookList";
 import { CatalogFilters } from "@/pages/catalog/components/CatalogFilters";
 import { CatalogHeader } from "@/pages/catalog/components/CatalogHeader";
@@ -42,7 +41,7 @@ export function CatalogPage({ mode }: { mode: CatalogMode }) {
   };
 
   return (
-    <div className="relative flex h-dvh flex-col bg-surface">
+    <div className="relative flex h-full flex-col bg-surface">
       <CatalogHeader mode={mode} recommendationSort={sort} />
 
       <main className="min-h-0 flex-1 overflow-y-auto">
@@ -69,7 +68,6 @@ export function CatalogPage({ mode }: { mode: CatalogMode }) {
         />
       </main>
 
-      <BottomNavigation />
     </div>
   );
 }

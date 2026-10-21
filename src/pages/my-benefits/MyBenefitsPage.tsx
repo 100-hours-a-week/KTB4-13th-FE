@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 
-import { BottomNavigation } from "@/common/components/BottomNavigation";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
 import { fetchOwnedCoupons, fetchPointSummary } from "@/features/benefit/api/benefitApi";
@@ -52,7 +51,7 @@ export function MyBenefitsPage() {
   }, [requestKey]);
 
   return (
-    <div className="flex h-dvh flex-col bg-surface">
+    <div className="flex h-full flex-col bg-surface">
       <AppPageHeader fallbackPath="/my" title="쿠폰·포인트" />
       <main className="page-content min-h-0 flex-1 overflow-y-auto py-5">
         {state.kind === "loading" ? (
@@ -112,7 +111,6 @@ export function MyBenefitsPage() {
           </div>
         ) : null}
       </main>
-      <BottomNavigation />
     </div>
   );
 }

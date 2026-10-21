@@ -6,7 +6,6 @@ import {
   useParams,
 } from "react-router-dom";
 
-import { BottomNavigation } from "@/common/components/BottomNavigation";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
 import { useTransientNotice } from "@/common/hooks/useTransientNotice";
@@ -132,7 +131,7 @@ export function ProductDetailPage() {
   };
 
   return (
-    <div className="relative flex h-dvh w-full min-w-0 flex-col overflow-x-hidden bg-surface">
+    <div className="relative flex h-full w-full min-w-0 flex-col overflow-x-hidden bg-surface">
       <ProductHeader
         isCartCountEnabled={authStatus === "authenticated"}
         onBack={handleBack}
@@ -207,7 +206,6 @@ export function ProductDetailPage() {
           onBuyNow={handleBuyNow}
         />
       ) : null}
-      <BottomNavigation />
       <LoginRequiredDialog
         description="로그인하면 보고 있던 책에서 계속할 수 있어요."
         isOpen={loginRequiredAction !== null}

@@ -128,7 +128,7 @@ export function PaymentPage() {
   const isPaymentConfigured = Boolean(getTossClientKey()) || draft?.amount === 0;
 
   return (
-    <div className="flex h-dvh flex-col bg-surface">
+    <div className="flex h-full flex-col bg-surface">
       <AppPageHeader fallbackPath="/order" title="결제" />
       <main className="page-content min-h-0 flex-1 overflow-y-auto py-5">
         {state.kind === "loading" ? <p aria-busy="true" className="type-body-small text-text-tertiary" role="status">주문 정보를 확인하고 있어요</p> : null}

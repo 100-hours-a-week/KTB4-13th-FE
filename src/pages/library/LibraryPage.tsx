@@ -68,7 +68,7 @@ export function LibraryPage() {
   };
 
   return (
-    <div className="relative flex h-dvh flex-col bg-surface">
+    <div className="relative flex h-full flex-col bg-surface">
       <AppPageHeader
         action={
           status === "ready" && books.length > 0 ? (
@@ -152,7 +152,7 @@ export function LibraryPage() {
         ) : null}
       </main>
       {isEditing ? (
-        <div className="safe-area-bottom page-content absolute inset-x-0 bottom-0 border-t border-hairline bg-surface pt-3">
+        <div className="page-content absolute inset-x-0 bottom-0 border-t border-hairline bg-surface pb-5 pt-3">
           <Button className="w-full bg-error" disabled={selected.length === 0} isLoading={isDeleting} onClick={() => setIsConfirming(true)}>
             선택한 책 삭제{selected.length ? ` (${selected.length})` : ""}
           </Button>

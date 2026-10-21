@@ -109,7 +109,7 @@ export function ReviewListPage() {
   };
 
   return (
-    <div className="relative flex h-dvh flex-col bg-surface">
+    <div className="relative flex h-full flex-col bg-surface">
       <AppPageHeader fallbackPath={`/products/${productId}`} title={`리뷰 ${reviewCount}`} />
       <main className="min-h-0 flex-1 overflow-y-auto pb-24">
         {notice ? <div className="page-content pt-4"><Toast>{notice}</Toast></div> : null}
@@ -171,7 +171,7 @@ export function ReviewListPage() {
         </ul> : null}
         {hasNext ? <div className="page-content pb-5">{hasLoadMoreError ? <p className="mb-2 text-center type-caption text-error">리뷰를 더 불러오지 못했어요</p> : null}<button className="min-h-11 w-full rounded-control type-body-small font-semibold text-text-secondary hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary disabled:cursor-wait disabled:text-text-tertiary" disabled={listStatus === "loadingMore"} onClick={() => { void loadMore(); }} type="button">{listStatus === "loadingMore" ? "리뷰를 더 불러오는 중이에요" : hasLoadMoreError ? "다시 불러오기" : "리뷰 더 보기"}</button></div> : null}
       </main>
-      <div className="safe-area-bottom page-content absolute inset-x-0 bottom-0 border-t border-hairline bg-surface pt-3">
+      <div className="page-content absolute inset-x-0 bottom-0 border-t border-hairline bg-surface pb-5 pt-3">
         <Button className="w-full" onClick={() => status === "authenticated" ? navigate(writePath) : navigate("/login", { state: { returnTo: writePath } })}>리뷰 쓰기</Button>
       </div>
       <ConfirmDialog

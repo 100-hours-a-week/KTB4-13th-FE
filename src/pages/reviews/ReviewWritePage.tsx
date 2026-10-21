@@ -78,7 +78,7 @@ export function ReviewWritePage() {
 
   if (isEditing && !canEdit) {
     return (
-      <div className="flex h-dvh flex-col bg-surface">
+      <div className="flex h-full flex-col bg-surface">
         <AppPageHeader fallbackPath={`/products/${productId}/reviews`} title="리뷰 수정" />
         <main className="page-content flex flex-1 flex-col items-center justify-center text-center">
           <h2 className="type-title">수정할 리뷰 정보를 찾지 못했어요</h2>
@@ -90,7 +90,7 @@ export function ReviewWritePage() {
   }
 
   return (
-    <form className="relative flex h-dvh flex-col bg-surface" onSubmit={submit}>
+    <form className="relative flex h-full flex-col bg-surface" onSubmit={submit}>
       <AppPageHeader fallbackPath={`/products/${productId}/reviews`} title={isEditing ? "리뷰 수정" : "리뷰 쓰기"} />
       <main className="min-h-0 flex-1 overflow-y-auto pb-24">
         {error ? <div className="page-content pt-4"><Toast variant="error">{error}</Toast></div> : null}
@@ -110,7 +110,7 @@ export function ReviewWritePage() {
           <label className="mt-6 flex min-h-14 items-center justify-between border-y border-hairline py-2"><span><strong className="block type-body">스포일러 포함</strong><span className="type-caption text-text-tertiary">내용을 가려서 보여드려요.</span></span><input checked={isSpoiler} className="size-5 accent-accent" onChange={(event) => setIsSpoiler(event.target.checked)} type="checkbox" /></label>
         </section>
       </main>
-      <div className="safe-area-bottom page-content absolute inset-x-0 bottom-0 border-t border-hairline bg-surface pt-3"><Button className="w-full" isLoading={isSubmitting} type="submit">{isEditing ? "리뷰 수정" : "리뷰 등록"}</Button></div>
+      <div className="page-content absolute inset-x-0 bottom-0 border-t border-hairline bg-surface pb-5 pt-3"><Button className="w-full" isLoading={isSubmitting} type="submit">{isEditing ? "리뷰 수정" : "리뷰 등록"}</Button></div>
     </form>
   );
 }

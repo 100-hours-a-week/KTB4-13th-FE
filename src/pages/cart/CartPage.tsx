@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { ArrowLeftIcon } from "@/common/components/AppIcons";
-import { BottomNavigation } from "@/common/components/BottomNavigation";
 import { Button } from "@/common/components/Button";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
@@ -251,7 +250,7 @@ export function CartPage() {
   };
 
   return (
-    <div className="relative flex h-dvh min-w-0 flex-col bg-surface">
+    <div className="relative flex h-full min-w-0 flex-col bg-surface">
       <header className="page-content grid min-h-16 shrink-0 grid-cols-[2.75rem_1fr_2.75rem] items-center bg-surface">
         <button
           aria-label="이전 화면으로 돌아가기"
@@ -371,7 +370,6 @@ export function CartPage() {
         </div>
       ) : null}
 
-      <BottomNavigation />
 
       <OrderedCartCleanupDialog
         fallbackFocusRef={headingRef}
