@@ -4,16 +4,18 @@ import { BookCover } from "@/common/components/BookCover";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
 import { HomeSectionHeader } from "@/pages/home/components/HomeSectionHeader";
-import { useBookRanking } from "@/pages/home/hooks/useBookRanking";
+import type { BookRankingState } from "@/pages/home/hooks/useBookRanking";
 
 const TOP_RANK = 3;
 const SKELETON_COUNT = 3;
-// One row ranked left to right; about 2.5 covers fit on a phone and the rest scroll sideways.
-const RANK_CARD_CLASS_NAME = "w-[40%] shrink-0";
+// One row ranked left to right; about two products fit on a phone.
+const RANK_CARD_CLASS_NAME = "w-[48%] shrink-0";
 
 interface BookRankingSectionProps {
   onMoreClick: () => void;
   onProductClick: () => void;
+  ranking: BookRankingState;
+  retry: () => void;
 }
 
 function RankNumeral({ rank }: { rank: number }) {
@@ -21,12 +23,12 @@ function RankNumeral({ rank }: { rank: number }) {
 
   return (
     <span
-      className={`mt-2.5 block type-numeral ${
-        isTopRank ? "text-text-primary" : "text-text-tertiary"
+      aria-hidden="true"
+      className={`rank-number absolute bottom-0 left-0 z-0 select-none tabular-nums ${
+        isTopRank ? "rank-number-top" : ""
       }`}
     >
-      {String(rank).padStart(2, "0")}
-      <span className="sr-only">위</span>
+      {rank}
     </span>
   );
 }
@@ -34,13 +36,13 @@ function RankNumeral({ rank }: { rank: number }) {
 export function BookRankingSection({
   onMoreClick,
   onProductClick,
+  ranking,
+  retry,
 }: BookRankingSectionProps) {
-  const { ranking, retry } = useBookRanking();
-
   return (
     <section
       aria-labelledby="book-ranking-title"
-      className="page-content flex flex-col gap-4 py-8 first:pt-5"
+      className="page-content flex min-w-0 flex-col gap-5 py-8"
     >
       <HomeSectionHeader
         id="book-ranking-title"
@@ -84,22 +86,29 @@ export function BookRankingSection({
           role="region"
           tabIndex={0}
         >
-          <ol className="flex gap-4">
+          <ol className="flex gap-3 py-2">
             {ranking.items.map((item, index) => (
               <li className={RANK_CARD_CLASS_NAME} key={item.itemId}>
                 <Link
-                  aria-label={`${item.itemName} 상세 보기`}
-                  className="block rounded-cover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  aria-label={`${index + 1}위, ${item.itemName} 상세 보기`}
+                  className="group block rounded-panel focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   onClick={onProductClick}
                   to={`/products/${item.itemId}`}
                 >
-                  <BookCover
-                    alt=""
-                    fallbackTitle={item.itemName}
-                    radius="cover"
-                    thumbnailUrl={item.thumbnailUrl}
-                  />
-                  <RankNumeral rank={index + 1} />
+                  <div className="relative pt-2">
+                    <RankNumeral rank={index + 1} />
+                    <div className="relative z-10 ml-8 rounded-control bg-muted shadow-[0_16px_32px_-18px_rgba(36,33,31,0.7)] transition-transform duration-300 group-hover:-translate-y-1 group-focus-visible:-translate-y-1 [&>div]:!rounded-control [&>div]:!border-transparent">
+                      <BookCover
+                        alt=""
+                        fallbackTitle={item.itemName}
+                        radius="control"
+                        thumbnailUrl={item.thumbnailUrl}
+                      />
+                    </div>
+                  </div>
+                  <p className="ml-8 mt-3 line-clamp-2 min-h-10 break-keep type-body-small font-semibold text-text-primary">
+                    {item.itemName}
+                  </p>
                 </Link>
               </li>
             ))}

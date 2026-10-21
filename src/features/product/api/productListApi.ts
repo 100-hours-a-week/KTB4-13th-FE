@@ -39,8 +39,12 @@ function isProductListPage(data: unknown): data is ProductListPage {
   );
 }
 
+// Same-origin path served by the Vite dev proxy; never active in production builds.
+const DEV_CATALOG_PROXY_PREFIX = "/__dev-catalog";
+
 export async function fetchPopularProducts(
   query: PopularProductQuery,
+  { useDevCatalog = false }: { useDevCatalog?: boolean } = {},
 ): Promise<ProductListPage | null> {
   const searchParams = new URLSearchParams({
     sort: "POPULARITY",
@@ -63,9 +67,13 @@ export async function fetchPopularProducts(
     searchParams.set("publishedTo", query.publishedTo);
   }
 
+  const path = `/api/v1/items?${searchParams.toString()}`;
+
   try {
     const result = await parseApiResponse(
-      await fetchPublic(`/api/v1/items?${searchParams.toString()}`),
+      useDevCatalog && import.meta.env.DEV
+        ? await fetch(`${DEV_CATALOG_PROXY_PREFIX}${path}`, { credentials: "omit" })
+        : await fetchPublic(path),
     );
 
     return result.ok && isProductListPage(result.data) ? result.data : null;

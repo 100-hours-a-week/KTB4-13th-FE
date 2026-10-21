@@ -30,4 +30,22 @@ export default defineConfig({
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
+  // Dev server only: lets the home ranking read the dev catalog while every other API stays local.
+  // Only GET product lists pass, without cookies or tokens.
+  server: {
+    proxy: {
+      "^/__dev-catalog/api/v1/items(\\?|$)": {
+        bypass: (request) => (request.method === "GET" ? undefined : false),
+        changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on("proxyReq", (proxyRequest) => {
+            proxyRequest.removeHeader("authorization");
+            proxyRequest.removeHeader("cookie");
+          });
+        },
+        rewrite: (path) => path.replace(/^\/__dev-catalog/, ""),
+        target: "https://api-dev.bookjeok.site",
+      },
+    },
+  },
 });
