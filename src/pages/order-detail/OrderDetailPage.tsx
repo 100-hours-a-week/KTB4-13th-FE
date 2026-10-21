@@ -83,7 +83,6 @@ export function OrderDetailPage() {
       setNotice({ message: result.message ?? "부분 취소를 완료하지 못했어요. 다시 시도해 주세요.", variant: "error" });
       return;
     }
-    requestKeysRef.current.delete(action);
     setNotice({ message: `${item.itemName} ${quantity}권을 취소했어요.` });
     retry();
   };
