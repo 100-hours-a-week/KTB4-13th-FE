@@ -1,3 +1,4 @@
+import { fetchPublic } from "@/common/api/httpClient";
 import { parseApiResponse } from "@/common/api/apiResponse";
 import { fetchWithAuth } from "@/features/auth/lib/httpClient";
 import type {
@@ -60,6 +61,7 @@ export async function fetchProductReviews(
   offset: number,
   limit: number,
   signal?: AbortSignal,
+  publicAccess = false,
 ): Promise<ReviewListResult> {
   const params = new URLSearchParams({
     limit: String(limit),
@@ -70,7 +72,7 @@ export async function fetchProductReviews(
 
   try {
     const result = await parseApiResponse(
-      await fetchWithAuth(`/api/v1/reviews?${params.toString()}`, { signal }),
+      await (publicAccess ? fetchPublic : fetchWithAuth)(`/api/v1/reviews?${params.toString()}`, { signal, cache: "no-store" }),
     );
     if (!result.ok) {
       return {
