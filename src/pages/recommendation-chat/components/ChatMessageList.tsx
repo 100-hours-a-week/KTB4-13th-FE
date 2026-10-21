@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
 import { ProductAvailabilityBadge } from "@/common/components/ProductAvailabilityBadge";
-import { MAX_CHAT_MESSAGE_LENGTH } from "@/pages/recommendation-chat/lib/chatMessage";
+import { LoginRequiredDialog } from "@/features/auth/components/LoginRequiredDialog";
+import { useAuth } from "@/features/auth/context/useAuth";
+import { addCartItem, fetchCart } from "@/features/cart/api/cartApi";
+import { notifyCartChanged } from "@/features/cart/lib/cartEvents";
 import type {
   CartProposalItemViewModel,
   ChatErrorReason,
@@ -15,6 +18,7 @@ import type {
 
 const priceFormatter = new Intl.NumberFormat("ko-KR");
 const MAX_RECOMMENDATIONS = 3;
+const MAX_CART_ITEMS = 30;
 
 const ERROR_MESSAGES: Record<ChatErrorReason, string> = {
   busy: "요청이 많아요. 잠시 후 다시 보내 주세요",
@@ -149,22 +153,22 @@ function RecommendationCard({
 
 function RecommendationCardList({
   isSending,
-  onRequestCart,
   recommendations,
 }: {
   isSending: boolean;
-  onRequestCart: (title: string) => void;
   recommendations: RecommendationCardViewModel[];
 }) {
+  const location = useLocation();
+  const { status: authStatus } = useAuth();
   const visibleRecommendations = recommendations.slice(0, MAX_RECOMMENDATIONS);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [results, setResults] = useState<Record<string, string>>({});
+  const [isAdding, setIsAdding] = useState(false);
+  const [isLoginRequired, setIsLoginRequired] = useState(false);
+  const isAddingRef = useRef(false);
   const selectedRecommendations = visibleRecommendations.filter(
     (recommendation) => selectedIds.has(recommendation.id),
   );
-  const cartRequest = `이 책들을 각 1권씩 장바구니에 담는 제안을 보여줘: ${selectedRecommendations
-    .map((recommendation) => `『${recommendation.title}』`)
-    .join(", ")}`;
-  const isRequestTooLong = cartRequest.length > MAX_CHAT_MESSAGE_LENGTH;
 
   const handleToggle = (recommendationId: string) => {
     setSelectedIds((current) => {
@@ -178,14 +182,64 @@ function RecommendationCardList({
     });
   };
 
-  const handleRequestCart = () => {
-    if (
-      selectedRecommendations.length === 0 ||
-      isSending ||
-      isRequestTooLong
-    ) return;
-    onRequestCart(cartRequest);
-    setSelectedIds(new Set());
+  const handleAddToCart = async () => {
+    if (selectedRecommendations.length === 0 || isSending || isAddingRef.current) {
+      return;
+    }
+    if (authStatus !== "authenticated") {
+      setIsLoginRequired(true);
+      return;
+    }
+
+    isAddingRef.current = true;
+    setIsAdding(true);
+    setResults({});
+    try {
+      const cart = await fetchCart();
+      if (!cart.ok) {
+        if (cart.reason === "unauthorized") {
+          setIsLoginRequired(true);
+        } else {
+          setResults(Object.fromEntries(selectedRecommendations.map((book) => [
+            book.id,
+            "장바구니를 확인하지 못했어요. 다시 시도해 주세요",
+          ])));
+        }
+        return;
+      }
+
+      const cartProductIds = new Set(cart.data.items.map((item) => item.productId));
+      const nextResults: Record<string, string> = {};
+      let hasAdded = false;
+      for (const book of selectedRecommendations) {
+        if (book.productId === null) continue;
+        if (cartProductIds.has(book.productId)) {
+          nextResults[book.id] = "이미 담긴 책이에요";
+        } else if (cartProductIds.size >= MAX_CART_ITEMS) {
+          nextResults[book.id] = "장바구니는 최대 30종까지 담을 수 있어요";
+        } else {
+          const result = await addCartItem(book.productId, 1);
+          if (result.ok) {
+            cartProductIds.add(book.productId);
+            nextResults[book.id] = "장바구니에 담았어요";
+            hasAdded = true;
+          } else if (result.reason === "stock") {
+            nextResults[book.id] = "재고가 부족해 담지 못했어요";
+          } else if (result.reason === "unauthorized") {
+            nextResults[book.id] = "로그인이 필요해요";
+            setIsLoginRequired(true);
+            break;
+          } else {
+            nextResults[book.id] = "담지 못했어요. 다시 시도해 주세요";
+          }
+        }
+      }
+      setResults(nextResults);
+      if (hasAdded) notifyCartChanged({ animate: true });
+    } finally {
+      isAddingRef.current = false;
+      setIsAdding(false);
+    }
   };
 
   return (
@@ -200,7 +254,7 @@ function RecommendationCardList({
           {visibleRecommendations.map((recommendation) => (
             <li className="w-36 shrink-0 sm:w-40" key={recommendation.id}>
               <RecommendationCard
-                isSending={isSending}
+                isSending={isSending || isAdding}
                 isSelected={selectedIds.has(recommendation.id)}
                 onToggle={() => handleToggle(recommendation.id)}
                 recommendation={recommendation}
@@ -211,23 +265,37 @@ function RecommendationCardList({
       </div>
       <div className="mt-2 flex min-h-11 max-w-md items-center justify-between gap-3">
         <p className="min-w-0 type-caption text-text-secondary" role="status">
-          {selectedRecommendations.length > 0
-            ? isRequestTooLong
-              ? "제목이 길어 선택을 줄여 주세요"
-              : <><strong className="font-semibold text-text-primary">{selectedRecommendations.length}권 선택</strong> · 승인 전까지 담기지 않아요</>
-            : "표지의 체크를 눌러 담을 책을 고르세요"}
+          {selectedRecommendations.length > 0 ? (
+            <strong className="font-semibold text-text-primary">{selectedRecommendations.length}권 선택</strong>
+          ) : "표지의 체크를 눌러 담을 책을 고르세요"}
         </p>
         {selectedRecommendations.length > 0 ? (
           <button
             className="min-h-10 shrink-0 rounded-control bg-primary px-3.5 type-body-small font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:bg-border-strong disabled:text-text-tertiary"
-            disabled={isSending || isRequestTooLong}
-            onClick={handleRequestCart}
+            disabled={isSending || isAdding}
+            onClick={() => { void handleAddToCart(); }}
             type="button"
           >
-            담기 제안 받기
+            {isAdding ? "담는 중" : "담기"}
           </button>
         ) : null}
       </div>
+      {Object.keys(results).length > 0 ? (
+        <ul aria-label="장바구니 담기 결과" className="mt-2 space-y-1" role="status">
+          {visibleRecommendations.filter((book) => results[book.id]).map((book) => (
+            <li className="type-caption text-text-secondary" key={book.id}>
+              <span className="font-semibold text-text-primary">{book.title}</span>: {results[book.id]}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <LoginRequiredDialog
+        description="로그인하면 보고 있던 책에서 계속할 수 있어요."
+        isOpen={isLoginRequired}
+        onClose={() => setIsLoginRequired(false)}
+        returnTo={`${location.pathname}${location.search}`}
+        title="장바구니를 이용하려면 로그인이 필요해요"
+      />
     </div>
   );
 }
@@ -418,7 +486,6 @@ function ChatBubble({
         <>
           <RecommendationCardList
             isSending={status === "sending"}
-            onRequestCart={onQuickMessage}
             recommendations={message.recommendations}
           />
           <button
@@ -461,9 +528,9 @@ function ChatBubble({
 }
 
 const STARTER_QUESTIONS = [
-  "내 독서 취향에 맞는 책을 추천해줘",
-  "기분 전환이 필요할 때 읽을 책 있을까?",
-  "출퇴근길에 가볍게 읽을 책을 찾아줘",
+  "살인 사건을 수사하는 추리소설을 추천해줘",
+  "인간관계를 다룬 책을 추천해줘",
+  "개발 공부를 하고싶어",
 ];
 
 // FE-only greeting shown before the first message; it is never sent to or stored by the server.
