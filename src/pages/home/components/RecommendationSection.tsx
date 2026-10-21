@@ -17,9 +17,9 @@ interface RecommendationSectionProps {
 const priceFormatter = new Intl.NumberFormat("ko-KR");
 const SKELETON_COUNT = 3;
 const SWIPE_THRESHOLD = 40;
-const AUTO_ADVANCE_MS = 3500;
+const AUTO_HOLD_MS = 1500;
 const ANIMATION_MS = 900;
-const MIN_CYLINDER_SLOTS = 18;
+const REFERENCE_ANGLE_STEP = 20;
 
 function wrapAngle(angle: number) {
   return ((angle + 180) % 360 + 360) % 360 - 180;
@@ -42,13 +42,23 @@ export function CoverflowRecommendations({
   const [reducedMotion, setReducedMotion] = useState(false);
   const wheelRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const shadeRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const rotationRef = useRef(0);
   const activeSlotRef = useRef(0);
   const animationRef = useRef<{ from: number; startedAt: number | null; to: number } | null>(null);
-  const slotCount = books.length === 1
-    ? 1
-    : Math.ceil(MIN_CYLINDER_SLOTS / books.length) * books.length;
+  const slotCount = books.length;
   const angleStep = 360 / slotCount;
+  const visualAngleScale = Math.min(1, REFERENCE_ANGLE_STEP / angleStep);
+  const radiusScale = books.length <= 2
+    ? 1
+    : Math.min(
+        1.15,
+        Math.max(
+          0.75,
+          Math.sin((REFERENCE_ANGLE_STEP * Math.PI) / 180) /
+            Math.sin((angleStep * Math.PI) / 180),
+        ),
+      );
   const activeIndex = activeSlot % books.length;
 
   useEffect(() => {
@@ -61,8 +71,8 @@ export function CoverflowRecommendations({
 
   useEffect(() => {
     let frame = 0;
-    let previousTime = 0;
     let lastRotation = rotationRef.current;
+    let nextAdvanceAt: number | null = null;
 
     const render = (rotation: number) => {
       if (wheelRef.current) {
@@ -70,12 +80,16 @@ export function CoverflowRecommendations({
       }
       cardRefs.current.forEach((card, slot) => {
         if (!card) return;
-        const distance = Math.abs(wrapAngle(slot * angleStep - rotation));
-        const depth = distance / 180;
-        card.style.opacity = String(1 - depth * 0.84);
-        card.style.transform = `scale(${1 - depth * 0.31})`;
+        const signedDistance = wrapAngle(slot * angleStep - rotation);
+        const distance = Math.abs(signedDistance);
+        const visualDistance = distance * visualAngleScale;
+        const facingCorrection = -signedDistance * (1 - visualAngleScale);
+        card.style.opacity = String(Math.max(0.15, 1 - visualDistance / 150));
+        card.style.transform = `rotateY(${facingCorrection}deg) scale(${Math.max(0.65, 1.05 - visualDistance / 400)})`;
         card.style.zIndex = String(200 - Math.round(distance));
-        card.style.pointerEvents = distance < angleStep * 3.5 ? "auto" : "none";
+        card.style.pointerEvents = visualDistance <= 100 ? "auto" : "none";
+        const shade = shadeRefs.current[slot];
+        if (shade) shade.style.opacity = String(Math.min(0.45, visualDistance / 200));
       });
       const next = wrapIndex(Math.round(rotation / angleStep), slotCount);
       if (next !== activeSlotRef.current) {
@@ -85,17 +99,30 @@ export function CoverflowRecommendations({
     };
 
     const tick = (time: number) => {
-      const elapsed = previousTime ? Math.min(time - previousTime, 50) : 0;
-      previousTime = time;
       const animation = animationRef.current;
       if (animation) {
         if (animation.startedAt === null) animation.startedAt = time;
         const progress = Math.min(1, (time - animation.startedAt) / ANIMATION_MS);
         const eased = 1 - Math.pow(1 - progress, 3);
         rotationRef.current = animation.from + (animation.to - animation.from) * eased;
-        if (progress === 1) animationRef.current = null;
+        if (progress === 1) {
+          animationRef.current = null;
+          nextAdvanceAt = time + AUTO_HOLD_MS;
+        }
       } else if (!paused && !reducedMotion && !document.hidden && books.length > 1) {
-        rotationRef.current += (elapsed * angleStep) / AUTO_ADVANCE_MS;
+        if (nextAdvanceAt === null) {
+          nextAdvanceAt = time + AUTO_HOLD_MS;
+        } else if (time >= nextAdvanceAt) {
+          const nextStep = Math.round(rotationRef.current / angleStep) + 1;
+          animationRef.current = {
+            from: rotationRef.current,
+            startedAt: time,
+            to: nextStep * angleStep,
+          };
+          nextAdvanceAt = null;
+        }
+      } else {
+        nextAdvanceAt = null;
       }
       if (rotationRef.current !== lastRotation) {
         render(rotationRef.current);
@@ -107,7 +134,7 @@ export function CoverflowRecommendations({
     render(rotationRef.current);
     frame = window.requestAnimationFrame(tick);
     return () => window.cancelAnimationFrame(frame);
-  }, [angleStep, books.length, paused, reducedMotion, slotCount]);
+  }, [angleStep, books.length, paused, reducedMotion, slotCount, visualAngleScale]);
   const activeBook = books[activeIndex] ?? books[0];
 
   const move = (direction: number) => {
@@ -141,7 +168,7 @@ export function CoverflowRecommendations({
     <div
       aria-label="추천 도서 캐러셀"
       aria-roledescription="캐러셀"
-      className="-mx-5 w-[calc(100%+2.5rem)] min-w-0 overflow-x-clip [--book-width:110px] [--book-height:165px] [--cylinder-radius:350px] sm:[--book-width:130px] sm:[--book-height:195px] sm:[--cylinder-radius:420px]"
+      className="-mx-5 w-[calc(100%+2.5rem)] min-w-0 overflow-x-clip [--book-width:110px] [--book-height:165px] [--cylinder-radius:calc(350px*var(--radius-scale))] sm:[--book-width:130px] sm:[--book-height:195px] sm:[--cylinder-radius:calc(420px*var(--radius-scale))]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
@@ -168,6 +195,7 @@ export function CoverflowRecommendations({
         touchStartX.current = null;
       }}
       role="region"
+      style={{ ["--radius-scale" as string]: radiusScale }}
       tabIndex={0}
     >
       <div
@@ -180,15 +208,14 @@ export function CoverflowRecommendations({
           ref={wheelRef}
           style={{ transformStyle: "preserve-3d" }}
         >
-          {Array.from({ length: slotCount }, (_, slot) => {
-            const book = books[slot % books.length];
+          {books.map((book, slot) => {
             const angle = slot * angleStep;
             const isActive = slot === activeSlot;
             const distance = Math.abs(wrapAngle(angle - activeSlot * angleStep));
             return (
               <div
                 className="absolute inset-0"
-                key={`${book.bookId}-${slot}`}
+                key={book.bookId}
                 style={{
                   transform: `rotateY(${angle}deg) translateZ(var(--cylinder-radius))`,
                   transformStyle: "preserve-3d",
@@ -205,15 +232,15 @@ export function CoverflowRecommendations({
                     type="button"
                   >
                     <span aria-hidden="true" className="pointer-events-none absolute -bottom-4 left-[5%] h-8 w-[90%] rounded-full bg-black/20 blur-xl" />
-                    <div className="relative size-full overflow-hidden rounded-cover bg-muted shadow-[0_12px_24px_-8px_rgba(0,0,0,0.35)] [&>div]:!h-full [&>div]:!aspect-auto">
+                    <div className="relative size-full overflow-hidden rounded-cover border border-hairline bg-muted shadow-[0_12px_24px_-8px_rgba(0,0,0,0.35)] [&>div]:!h-full [&>div]:!aspect-auto">
                       <BookCover alt={book.title} fallbackTitle={book.title} radius="cover" thumbnailUrl={book.coverUrl} />
-                      <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/5" />
+                      <span
+                        aria-hidden="true"
+                        className="pointer-events-none absolute inset-0 bg-black"
+                        ref={(node) => { shadeRefs.current[slot] = node; }}
+                      />
                     </div>
                   </button>
-                  <div aria-hidden="true" className="absolute inset-0 overflow-hidden rounded-cover bg-muted shadow-lg [&>div]:!h-full [&>div]:!aspect-auto" style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}>
-                    <BookCover alt="" fallbackTitle={book.title} radius="cover" thumbnailUrl={book.coverUrl} />
-                    <span className="pointer-events-none absolute inset-0 bg-surface/70" />
-                  </div>
                 </div>
               </div>
             );
@@ -245,27 +272,32 @@ export function CoverflowRecommendations({
         </button>
       </div>
 
-      <div className="mt-5 flex min-h-24 flex-col items-center gap-2 px-5 text-center">
-        {activeBook.productId !== null ? (
-          <Link
-            className="max-w-full rounded-cover text-xl font-bold text-text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-primary"
-            onClick={onProductClick}
-            to={`/products/${activeBook.productId}`}
-          >
-            {activeBook.title}
-          </Link>
-        ) : (
-          <p className="text-xl font-bold text-text-primary">{activeBook.title}</p>
-        )}
-        {activeBook.author ? (
-          <p className="type-body-small text-text-secondary">{activeBook.author}</p>
-        ) : null}
-        {activeBook.price !== null ? (
-          <p className="type-body-small tabular-nums text-text-secondary">
-            {priceFormatter.format(activeBook.price)}원
-          </p>
-        ) : null}
-        {activeBook.productId === null ? <ProductAvailabilityBadge /> : null}
+      <div className="mt-5 min-h-24 overflow-hidden px-5 text-center">
+        <div
+          className="recommendation-info-enter flex flex-col items-center gap-2"
+          key={`${activeBook.bookId}-${activeSlot}`}
+        >
+          {activeBook.productId !== null ? (
+            <Link
+              className="max-w-full rounded-cover text-xl font-bold text-text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-primary"
+              onClick={onProductClick}
+              to={`/products/${activeBook.productId}`}
+            >
+              {activeBook.title}
+            </Link>
+          ) : (
+            <p className="text-xl font-bold text-text-primary">{activeBook.title}</p>
+          )}
+          {activeBook.author ? (
+            <p className="type-body-small text-text-secondary">{activeBook.author}</p>
+          ) : null}
+          {activeBook.price !== null ? (
+            <p className="type-body-small tabular-nums text-text-secondary">
+              {priceFormatter.format(activeBook.price)}원
+            </p>
+          ) : null}
+          {activeBook.productId === null ? <ProductAvailabilityBadge /> : null}
+        </div>
       </div>
     </div>
   );
