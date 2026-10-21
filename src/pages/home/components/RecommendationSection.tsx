@@ -17,7 +17,7 @@ interface RecommendationSectionProps {
 const priceFormatter = new Intl.NumberFormat("ko-KR");
 const SKELETON_COUNT = 3;
 const SWIPE_THRESHOLD = 40;
-const AUTO_ADVANCE_MS = 3500;
+const AUTO_HOLD_MS = 1500;
 const ANIMATION_MS = 900;
 const REFERENCE_ANGLE_STEP = 20;
 
@@ -71,8 +71,8 @@ export function CoverflowRecommendations({
 
   useEffect(() => {
     let frame = 0;
-    let previousTime = 0;
     let lastRotation = rotationRef.current;
+    let nextAdvanceAt: number | null = null;
 
     const render = (rotation: number) => {
       if (wheelRef.current) {
@@ -99,17 +99,30 @@ export function CoverflowRecommendations({
     };
 
     const tick = (time: number) => {
-      const elapsed = previousTime ? Math.min(time - previousTime, 50) : 0;
-      previousTime = time;
       const animation = animationRef.current;
       if (animation) {
         if (animation.startedAt === null) animation.startedAt = time;
         const progress = Math.min(1, (time - animation.startedAt) / ANIMATION_MS);
         const eased = 1 - Math.pow(1 - progress, 3);
         rotationRef.current = animation.from + (animation.to - animation.from) * eased;
-        if (progress === 1) animationRef.current = null;
+        if (progress === 1) {
+          animationRef.current = null;
+          nextAdvanceAt = time + AUTO_HOLD_MS;
+        }
       } else if (!paused && !reducedMotion && !document.hidden && books.length > 1) {
-        rotationRef.current += (elapsed * angleStep) / AUTO_ADVANCE_MS;
+        if (nextAdvanceAt === null) {
+          nextAdvanceAt = time + AUTO_HOLD_MS;
+        } else if (time >= nextAdvanceAt) {
+          const nextStep = Math.round(rotationRef.current / angleStep) + 1;
+          animationRef.current = {
+            from: rotationRef.current,
+            startedAt: time,
+            to: nextStep * angleStep,
+          };
+          nextAdvanceAt = null;
+        }
+      } else {
+        nextAdvanceAt = null;
       }
       if (rotationRef.current !== lastRotation) {
         render(rotationRef.current);
@@ -259,27 +272,32 @@ export function CoverflowRecommendations({
         </button>
       </div>
 
-      <div className="mt-5 flex min-h-24 flex-col items-center gap-2 px-5 text-center">
-        {activeBook.productId !== null ? (
-          <Link
-            className="max-w-full rounded-cover text-xl font-bold text-text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-primary"
-            onClick={onProductClick}
-            to={`/products/${activeBook.productId}`}
-          >
-            {activeBook.title}
-          </Link>
-        ) : (
-          <p className="text-xl font-bold text-text-primary">{activeBook.title}</p>
-        )}
-        {activeBook.author ? (
-          <p className="type-body-small text-text-secondary">{activeBook.author}</p>
-        ) : null}
-        {activeBook.price !== null ? (
-          <p className="type-body-small tabular-nums text-text-secondary">
-            {priceFormatter.format(activeBook.price)}원
-          </p>
-        ) : null}
-        {activeBook.productId === null ? <ProductAvailabilityBadge /> : null}
+      <div className="mt-5 min-h-24 overflow-hidden px-5 text-center">
+        <div
+          className="recommendation-info-enter flex flex-col items-center gap-2"
+          key={`${activeBook.bookId}-${activeSlot}`}
+        >
+          {activeBook.productId !== null ? (
+            <Link
+              className="max-w-full rounded-cover text-xl font-bold text-text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-primary"
+              onClick={onProductClick}
+              to={`/products/${activeBook.productId}`}
+            >
+              {activeBook.title}
+            </Link>
+          ) : (
+            <p className="text-xl font-bold text-text-primary">{activeBook.title}</p>
+          )}
+          {activeBook.author ? (
+            <p className="type-body-small text-text-secondary">{activeBook.author}</p>
+          ) : null}
+          {activeBook.price !== null ? (
+            <p className="type-body-small tabular-nums text-text-secondary">
+              {priceFormatter.format(activeBook.price)}원
+            </p>
+          ) : null}
+          {activeBook.productId === null ? <ProductAvailabilityBadge /> : null}
+        </div>
       </div>
     </div>
   );
