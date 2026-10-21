@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
 import { ProductAvailabilityBadge } from "@/common/components/ProductAvailabilityBadge";
@@ -36,6 +36,7 @@ export function CoverflowRecommendations({
   books: RecommendationFeedItem[];
   onProductClick: () => void;
 }) {
+  const navigate = useNavigate();
   const [activeSlot, setActiveSlot] = useState(0);
   const touchStartX = useRef<number | null>(null);
   const [paused, setPaused] = useState(false);
@@ -226,7 +227,14 @@ export function CoverflowRecommendations({
                     aria-label={isActive ? `${book.title}, 현재 선택됨` : `${book.title} 선택`}
                     aria-pressed={isActive}
                     className="absolute inset-0 cursor-pointer rounded-cover outline-offset-4 focus-visible:outline-2 focus-visible:outline-primary"
-                    onClick={() => { if (!isActive) selectBook(slot); }}
+                    onClick={() => {
+                      if (!isActive) {
+                        selectBook(slot);
+                      } else if (book.productId !== null) {
+                        onProductClick();
+                        navigate(`/products/${book.productId}`);
+                      }
+                    }}
                     style={{ backfaceVisibility: "hidden" }}
                     tabIndex={distance <= angleStep * 3 ? 0 : -1}
                     type="button"

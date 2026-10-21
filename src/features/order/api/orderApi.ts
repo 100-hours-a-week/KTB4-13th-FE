@@ -298,8 +298,9 @@ export function partiallyCancelPaidOrder(
   orderKey: string,
   orderItemId: number,
   quantity: number,
- ) {
-  return requestPaidCancellation("/api/v1/partial-cancel", {
+  requestKey: string,
+) {
+  return requestPaidCancellation("/api/v1/partial-cancel", requestKey, {
     orderItemId,
     orderKey,
     quantity,
