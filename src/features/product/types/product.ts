@@ -5,6 +5,8 @@ export interface ProductListItem {
   discountedPrice: number | null;
   itemId: number;
   itemName: string;
+  reviewCount?: number;
+  reviewRate?: number;
   salePrice: number;
   thumbnailUrl: string | null;
 }

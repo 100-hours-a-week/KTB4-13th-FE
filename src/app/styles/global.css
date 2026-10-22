@@ -246,21 +246,19 @@
 }
 
 .rank-number {
-  color: var(--color-background);
-  font-size: 5.25rem;
+  font-family: var(--font-sans);
+  font-size: 4rem;
+  font-style: italic;
   font-weight: 800;
-  line-height: 0.8;
-  letter-spacing: -0.08em;
-  -webkit-text-stroke: 1.5px var(--color-border-strong);
+  line-height: 0.86;
+  letter-spacing: -0.13em;
+  transform: skewX(-8deg);
+  transform-origin: center;
 }
 
-.rank-number-top {
-  color: color-mix(in srgb, var(--color-accent-soft) 64%, var(--color-background));
-  -webkit-text-stroke-color: color-mix(
-    in srgb,
-    var(--color-accent) 48%,
-    var(--color-border-strong)
-  );
+.rank-number-double {
+  font-size: 2.5rem;
+  letter-spacing: -0.14em;
 }
 
 @media (prefers-reduced-motion: reduce) {
