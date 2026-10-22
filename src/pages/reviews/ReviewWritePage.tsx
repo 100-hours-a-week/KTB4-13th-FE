@@ -1,10 +1,11 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
 import { Button } from "@/common/components/Button";
 import { Toast } from "@/common/components/Toast";
 import { AppPageHeader } from "@/features/navigation/components/AppPageHeader";
+import { fetchOrderDetail } from "@/features/order/api/orderApi";
 import {
   createProductReview,
   updateProductReview,
@@ -24,6 +25,15 @@ export function ReviewWritePage() {
   const isEditing = reviewIdValue !== undefined;
   const navigate = useNavigate();
   const location = useLocation();
+  const query = new URLSearchParams(location.search);
+  const orderKey = query.get("orderKey") ?? "";
+  const orderItemId = Number(query.get("orderItemId"));
+  const hasOrderContext = orderKey.length > 0 && Number.isSafeInteger(orderItemId) && orderItemId > 0;
+  const [orderAccess, setOrderAccess] = useState<{
+    orderKey: string;
+    orderItemId: number;
+    status: "loading" | "allowed" | "denied";
+  } | null>(null);
   const review =
     typeof location.state === "object" &&
     location.state !== null &&
@@ -47,10 +57,28 @@ export function ReviewWritePage() {
   const product = state.kind === "ready" ? state.data : null;
   const isValid = isProductIdValid && rating > 0 && content.trim().length >= MIN_LENGTH;
 
+  useEffect(() => {
+    if (isEditing || !isProductIdValid || !hasOrderContext) return;
+    const controller = new AbortController();
+    void fetchOrderDetail(orderKey, controller.signal).then((result) => {
+      if (controller.signal.aborted) return;
+      const eligibleItem = result.ok && result.data.key === orderKey &&
+        result.data.status === "PAID" && result.data.payment !== null &&
+        result.data.items.some((item) => item.orderItemId === orderItemId &&
+          item.productId === productId && item.quantity > item.canceledQuantity);
+      setOrderAccess({ orderKey, orderItemId, status: eligibleItem ? "allowed" : "denied" });
+    });
+    return () => controller.abort();
+  }, [hasOrderContext, isEditing, isProductIdValid, orderItemId, orderKey, productId]);
+
+  const canCreate = !isEditing && hasOrderContext &&
+    orderAccess?.orderKey === orderKey && orderAccess.orderItemId === orderItemId &&
+    orderAccess.status === "allowed";
+
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setSubmitted(true);
-    if (!isValid || isSubmitting) return;
+    if (!isValid || isSubmitting || (!isEditing && !canCreate)) return;
     setIsSubmitting(true);
     setError(null);
     const result = canEdit
@@ -84,6 +112,26 @@ export function ReviewWritePage() {
           <h2 className="type-title">수정할 리뷰 정보를 찾지 못했어요</h2>
           <p className="mt-2 type-body-small text-text-tertiary">리뷰 목록에서 다시 선택해 주세요.</p>
           <Button className="mt-5" onClick={() => navigate(`/products/${productId}/reviews`, { replace: true })}>리뷰 목록으로</Button>
+        </main>
+      </div>
+    );
+  }
+
+  if (!isEditing && !canCreate) {
+    const isLoading = hasOrderContext && (
+      orderAccess?.orderKey !== orderKey ||
+      orderAccess.orderItemId !== orderItemId ||
+      orderAccess.status === "loading"
+    );
+    return (
+      <div className="flex h-full flex-col bg-surface">
+        <AppPageHeader fallbackPath="/my/orders" title="리뷰 쓰기" />
+        <main className="page-content flex flex-1 flex-col items-center justify-center text-center">
+          <h2 className="type-title">{isLoading ? "구매 내역을 확인하고 있어요" : "구매 내역에서 리뷰를 작성해 주세요"}</h2>
+          <p className="mt-2 type-body-small text-text-secondary">
+            {isLoading ? "잠시만 기다려 주세요." : "결제 완료된 주문상품에서 리뷰 작성으로 이동할 수 있어요."}
+          </p>
+          {!isLoading ? <Button className="mt-5" onClick={() => navigate("/my/orders", { replace: true })}>구매 내역 보기</Button> : null}
         </main>
       </div>
     );
