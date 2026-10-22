@@ -109,7 +109,7 @@ export function ReviewListPage() {
   return (
     <div className="relative flex h-full flex-col bg-surface">
       <AppPageHeader fallbackPath={`/products/${productId}`} title={`리뷰 ${reviewCount}`} />
-      <main className="min-h-0 flex-1 overflow-y-auto pb-6">
+      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-6">
         {notice ? <div className="page-content pt-4"><Toast>{notice}</Toast></div> : null}
         {mutationError ? <div className="page-content pt-4"><Toast variant="error">{mutationError}</Toast></div> : null}
         <section className="page-content border-b border-hairline py-6" aria-label="리뷰 별점 요약">
@@ -130,7 +130,7 @@ export function ReviewListPage() {
         {listStatus === "loading" ? <div aria-busy="true" className="page-content space-y-4 py-5"><p className="sr-only" role="status">리뷰를 불러오는 중이에요</p>{Array.from({ length: 3 }, (_, index) => <div aria-hidden="true" className="h-32 animate-pulse rounded-panel bg-muted" key={index} />)}</div> : null}
         {listStatus === "error" ? <div className="page-content py-5"><Toast action={listError.startsWith("로그인하면") ? <button className="shrink-0 font-semibold text-accent focus-visible:outline-2 focus-visible:outline-primary" onClick={() => navigate("/login", { state: { returnTo: location.pathname } })} type="button">로그인</button> : <RetryButton onClick={() => { setListStatus("loading"); setRequestKey((current) => current + 1); }} />} variant="error">{listError}</Toast></div> : null}
         {listStatus !== "loading" && listStatus !== "error" && reviews.length === 0 ? (
-          <section className="page-content flex min-h-64 flex-col items-center justify-center text-center"><h2 className="type-title">아직 등록된 리뷰가 없어요</h2><p className="mt-2 type-body-small text-text-secondary">이 책을 읽고 첫 번째 리뷰를 남겨보세요.</p><Button className="mt-5" onClick={() => navigate(`/products/${productId}`)}>이 책 구매하러 가기</Button></section>
+          <section className="page-content flex flex-1 flex-col items-center justify-center py-10 text-center"><h2 className="type-title">아직 등록된 리뷰가 없어요</h2><p className="mt-2 type-body-small text-text-secondary">이 책을 읽고 첫 번째 리뷰를 남겨보세요.</p><Button className="mt-5" onClick={() => navigate(`/products/${productId}`)}>이 책 구매하러 가기</Button></section>
         ) : null}
         {reviews.length ? <ul className="page-content divide-y divide-hairline">
           {reviews.map((review) => {
