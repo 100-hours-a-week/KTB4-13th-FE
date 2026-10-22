@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
 import type { ProductDetail } from "@/features/product/types/product";
-import { fetchProductReviews } from "@/features/review/api/reviewApi";
+import { fetchProductReviewCount, fetchProductReviews } from "@/features/review/api/reviewApi";
 
 const priceFormatter = new Intl.NumberFormat("ko-KR");
 
@@ -133,19 +133,30 @@ export function ProductDetailContent({
 
   useEffect(() => {
     const controller = new AbortController();
-    void fetchProductReviews(product.productId, 0, 20, controller.signal, true).then((result) => {
+    void Promise.all([
+      fetchProductReviews(product.productId, 0, 20, controller.signal, true),
+      fetchProductReviewCount(product.productId, controller.signal),
+    ]).then(([reviewsResult, countResult]) => {
       if (controller.signal.aborted) return;
-      if (!result.ok) {
-        setReviewSummary({ productId: product.productId, rate: product.reviewRate, countLabel: "리뷰를 불러오지 못했어요" });
+      if (!reviewsResult.ok) {
+        setReviewSummary({
+          productId: product.productId,
+          rate: product.reviewRate,
+          countLabel: countResult.ok
+            ? `${countResult.count.toLocaleString("ko-KR")}개의 리뷰`
+            : "리뷰를 불러오지 못했어요",
+        });
         return;
       }
-      const reviews = result.data.reviews;
-      const rate = reviews.length > 0 && !result.data.hasNext
+      const reviews = reviewsResult.data.reviews;
+      const rate = reviews.length > 0 && !reviewsResult.data.hasNext
         ? reviews.reduce((sum, review) => sum + review.rate, 0) / reviews.length
         : product.reviewRate;
-      const countLabel = result.data.hasNext
-        ? `${reviews.length.toLocaleString("ko-KR")}개 이상의 리뷰`
-        : `${reviews.length.toLocaleString("ko-KR")}개의 리뷰`;
+      const countLabel = countResult.ok && countResult.count >= reviews.length
+        ? `${countResult.count.toLocaleString("ko-KR")}개의 리뷰`
+        : reviewsResult.data.hasNext
+          ? `${reviews.length.toLocaleString("ko-KR")}개 이상의 리뷰`
+          : `${reviews.length.toLocaleString("ko-KR")}개의 리뷰`;
       setReviewSummary({ productId: product.productId, rate, countLabel });
     });
     return () => controller.abort();
