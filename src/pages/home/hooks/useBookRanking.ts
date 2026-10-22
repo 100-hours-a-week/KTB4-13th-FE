@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 
 import { fetchPopularProducts } from "@/features/product/api/productListApi";
 import type { ProductListItem } from "@/features/product/types/product";
-import { fetchProductReviewCount } from "@/features/review/api/reviewApi";
+import { fetchProductReviewCount, fetchProductReviews } from "@/features/review/api/reviewApi";
 
 // Backend default page size; the API defines no maximum limit.
 const RANKING_LIMIT = 20;
 const REVIEW_COUNT_CONCURRENCY = 4;
+const REVIEW_SUMMARY_LIMIT = 20;
 // Dev-only opt-in to show real dev catalog books while the local DB has none.
 const USE_DEV_CATALOG =
   import.meta.env.DEV && import.meta.env.VITE_DEV_HOME_RANKING_SOURCE === "dev-api";
@@ -47,13 +48,30 @@ export function useBookRanking() {
             const item = missingCounts[nextIndex++];
             const result = await fetchProductReviewCount(item.itemId, controller.signal);
             if (!result.ok || controller.signal.aborted) continue;
+            // Only calculate an average when the fetched page contains every
+            // review; a partial page would produce a misleading rating.
+            const reviews = result.count > 0 && result.count <= REVIEW_SUMMARY_LIMIT
+              ? await fetchProductReviews(item.itemId, 0, result.count, controller.signal, true)
+              : null;
+            if (controller.signal.aborted) continue;
+            const completeReviews = reviews?.ok && !reviews.data.hasNext &&
+              reviews.data.reviews.length === result.count
+              ? reviews.data.reviews
+              : null;
+            const average = completeReviews
+              ? completeReviews.reduce((sum, review) => sum + review.rate, 0) / completeReviews.length
+              : null;
             setState((current) =>
               current.kind === "ready"
                 ? {
                     kind: "ready",
                     items: current.items.map((book) =>
                       book.itemId === item.itemId
-                        ? { ...book, reviewCount: result.count }
+                        ? {
+                            ...book,
+                            reviewCount: result.count,
+                            ...(average !== null ? { reviewRate: average } : {}),
+                          }
                         : book,
                     ),
                   }
