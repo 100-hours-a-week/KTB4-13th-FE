@@ -128,22 +128,33 @@ export function ProductDetailContent({
   const [reviewSummary, setReviewSummary] = useState<{
     productId: number;
     rate: number;
+    countLabel: string;
   } | null>(null);
+
   useEffect(() => {
     const controller = new AbortController();
     void fetchProductReviews(product.productId, 0, 20, controller.signal, true).then((result) => {
-      if (controller.signal.aborted || !result.ok) return;
+      if (controller.signal.aborted) return;
+      if (!result.ok) {
+        setReviewSummary({ productId: product.productId, rate: product.reviewRate, countLabel: "리뷰를 불러오지 못했어요" });
+        return;
+      }
       const reviews = result.data.reviews;
       const rate = reviews.length > 0 && !result.data.hasNext
         ? reviews.reduce((sum, review) => sum + review.rate, 0) / reviews.length
         : product.reviewRate;
-      setReviewSummary({ productId: product.productId, rate });
+      const countLabel = result.data.hasNext
+        ? `${reviews.length.toLocaleString("ko-KR")}개 이상의 리뷰`
+        : `${reviews.length.toLocaleString("ko-KR")}개의 리뷰`;
+      setReviewSummary({ productId: product.productId, rate, countLabel });
     });
     return () => controller.abort();
   }, [product.productId, product.reviewRate]);
 
   const shownReviewRate = reviewSummary?.productId === product.productId
     ? reviewSummary.rate : product.reviewRate;
+  const shownReviewCount = reviewSummary?.productId === product.productId
+    ? reviewSummary.countLabel : "리뷰를 불러오는 중이에요";
 
   return (
     <article className="page-content">
@@ -197,7 +208,7 @@ export function ProductDetailContent({
         </div>
         <Link className="mt-2 flex min-h-16 items-center justify-between rounded-panel bg-muted px-4 focus-visible:outline-2 focus-visible:outline-primary" to={`/products/${product.productId}/reviews`}>
           <span className="flex items-center gap-2"><span aria-hidden="true" className="text-[#f2b84b]">★</span><strong className="type-heading tabular-nums">{shownReviewRate.toFixed(1)}</strong></span>
-          <span aria-live="polite" className="type-body-small text-text-secondary">{`${product.reviewCount.toLocaleString("ko-KR")}개의 리뷰`}</span>
+          <span aria-live="polite" className="type-body-small text-text-secondary">{shownReviewCount}</span>
         </Link>
       </section>
 
