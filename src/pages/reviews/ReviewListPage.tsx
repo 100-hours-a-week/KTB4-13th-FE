@@ -5,7 +5,6 @@ import { Button } from "@/common/components/Button";
 import { ConfirmDialog } from "@/common/components/ConfirmDialog/ConfirmDialog";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
-import { useAuth } from "@/features/auth/context/useAuth";
 import { AppPageHeader } from "@/features/navigation/components/AppPageHeader";
 import { DEFAULT_PROFILE_IMAGE_URL } from "@/features/profile/lib/profileImageStore";
 import {
@@ -28,7 +27,6 @@ export function ReviewListPage() {
   const productId = parseId(value);
   const location = useLocation();
   const navigate = useNavigate();
-  const { status } = useAuth();
   const product = useProductDetail(productId);
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [listStatus, setListStatus] = useState<"loading" | "ready" | "error" | "loadingMore">("loading");
@@ -76,7 +74,6 @@ export function ReviewListPage() {
     typeof Reflect.get(location.state, "notice") === "string"
       ? String(Reflect.get(location.state, "notice"))
       : null;
-  const writePath = `/products/${productId}/reviews/new`;
 
   const loadMore = async () => {
     if (!hasNext || listStatus === "loadingMore") return;
@@ -112,7 +109,7 @@ export function ReviewListPage() {
   return (
     <div className="relative flex h-full flex-col bg-surface">
       <AppPageHeader fallbackPath={`/products/${productId}`} title={`리뷰 ${reviewCount}`} />
-      <main className="min-h-0 flex-1 overflow-y-auto pb-24">
+      <main className="min-h-0 flex-1 overflow-y-auto pb-6">
         {notice ? <div className="page-content pt-4"><Toast>{notice}</Toast></div> : null}
         {mutationError ? <div className="page-content pt-4"><Toast variant="error">{mutationError}</Toast></div> : null}
         <section className="page-content border-b border-hairline py-6" aria-label="리뷰 별점 요약">
@@ -133,7 +130,7 @@ export function ReviewListPage() {
         {listStatus === "loading" ? <div aria-busy="true" className="page-content space-y-4 py-5"><p className="sr-only" role="status">리뷰를 불러오는 중이에요</p>{Array.from({ length: 3 }, (_, index) => <div aria-hidden="true" className="h-32 animate-pulse rounded-panel bg-muted" key={index} />)}</div> : null}
         {listStatus === "error" ? <div className="page-content py-5"><Toast action={listError.startsWith("로그인하면") ? <button className="shrink-0 font-semibold text-accent focus-visible:outline-2 focus-visible:outline-primary" onClick={() => navigate("/login", { state: { returnTo: location.pathname } })} type="button">로그인</button> : <RetryButton onClick={() => { setListStatus("loading"); setRequestKey((current) => current + 1); }} />} variant="error">{listError}</Toast></div> : null}
         {listStatus !== "loading" && listStatus !== "error" && reviews.length === 0 ? (
-          <section className="page-content flex min-h-64 flex-col items-center justify-center text-center"><h2 className="type-title">첫 리뷰를 남겨주세요</h2><p className="mt-2 type-body-small text-text-secondary">이 책을 고민하는 독자에게 도움이 돼요.</p></section>
+          <section className="page-content flex min-h-64 flex-col items-center justify-center text-center"><h2 className="type-title">아직 등록된 리뷰가 없어요</h2><p className="mt-2 type-body-small text-text-secondary">이 책을 읽고 첫 번째 리뷰를 남겨보세요.</p><Button className="mt-5" onClick={() => navigate(`/products/${productId}`)}>이 책 구매하러 가기</Button></section>
         ) : null}
         {reviews.length ? <ul className="page-content divide-y divide-hairline">
           {reviews.map((review) => {
@@ -172,9 +169,6 @@ export function ReviewListPage() {
         </ul> : null}
         {hasNext ? <div className="page-content pb-5">{hasLoadMoreError ? <p className="mb-2 text-center type-caption text-error">리뷰를 더 불러오지 못했어요</p> : null}<button className="min-h-11 w-full rounded-control type-body-small font-semibold text-text-secondary hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary disabled:cursor-wait disabled:text-text-tertiary" disabled={listStatus === "loadingMore"} onClick={() => { void loadMore(); }} type="button">{listStatus === "loadingMore" ? "리뷰를 더 불러오는 중이에요" : hasLoadMoreError ? "다시 불러오기" : "리뷰 더 보기"}</button></div> : null}
       </main>
-      <div className="page-content absolute inset-x-0 bottom-0 border-t border-hairline bg-surface pb-5 pt-3">
-        <Button className="w-full" onClick={() => status === "authenticated" ? navigate(writePath) : navigate("/login", { state: { returnTo: writePath } })}>리뷰 쓰기</Button>
-      </div>
       <ConfirmDialog
         confirmLabel={isDeleting ? "삭제 중" : "삭제"}
         description="삭제한 리뷰는 복구할 수 없어요."
