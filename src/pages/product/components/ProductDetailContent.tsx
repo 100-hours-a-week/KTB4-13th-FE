@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
 import type { ProductDetail } from "@/features/product/types/product";
-import { fetchProductReviewCount, fetchProductReviews } from "@/features/review/api/reviewApi";
+import { fetchProductReviews } from "@/features/review/api/reviewApi";
 
 const priceFormatter = new Intl.NumberFormat("ko-KR");
 
@@ -129,11 +129,6 @@ export function ProductDetailContent({
     productId: number;
     rate: number;
   } | null>(null);
-  const [reviewCount, setReviewCount] = useState<{
-    productId: number;
-    value: number | null;
-  } | null>(null);
-
   useEffect(() => {
     const controller = new AbortController();
     void fetchProductReviews(product.productId, 0, 20, controller.signal, true).then((result) => {
@@ -147,23 +142,6 @@ export function ProductDetailContent({
     return () => controller.abort();
   }, [product.productId, product.reviewRate]);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    void fetchProductReviewCount(product.productId, controller.signal).then((result) => {
-      if (controller.signal.aborted) return;
-      setReviewCount({
-        productId: product.productId,
-        value: result.ok ? result.count : null,
-      });
-    });
-    return () => controller.abort();
-  }, [product.productId]);
-
-  const shownReviewCount = reviewCount?.productId === product.productId
-    ? reviewCount.value === null
-      ? "리뷰 개수를 불러오지 못했어요"
-      : `${reviewCount.value.toLocaleString("ko-KR")}개의 리뷰`
-    : "리뷰 개수를 불러오는 중이에요";
   const shownReviewRate = reviewSummary?.productId === product.productId
     ? reviewSummary.rate : product.reviewRate;
 
@@ -219,7 +197,7 @@ export function ProductDetailContent({
         </div>
         <Link className="mt-2 flex min-h-16 items-center justify-between rounded-panel bg-muted px-4 focus-visible:outline-2 focus-visible:outline-primary" to={`/products/${product.productId}/reviews`}>
           <span className="flex items-center gap-2"><span aria-hidden="true" className="text-[#f2b84b]">★</span><strong className="type-heading tabular-nums">{shownReviewRate.toFixed(1)}</strong></span>
-          <span aria-live="polite" className="type-body-small text-text-secondary">{shownReviewCount}</span>
+          <span aria-live="polite" className="type-body-small text-text-secondary">{`${product.reviewCount.toLocaleString("ko-KR")}개의 리뷰`}</span>
         </Link>
       </section>
 
