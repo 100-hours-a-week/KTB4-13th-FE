@@ -121,7 +121,8 @@ export function BookRankingSection({
                 const hasReviewSummary =
                   typeof item.reviewCount === "number" &&
                   item.reviewCount > 0 &&
-                  typeof item.reviewRate === "number";
+                  typeof item.reviewRate === "number" &&
+                  item.reviewRate > 0;
 
                 return (
                   <li className={RANK_CARD_CLASS_NAME} key={item.itemId}>
@@ -155,6 +156,10 @@ export function BookRankingSection({
                             <span className="tabular-nums">
                               {item.reviewRate?.toFixed(1)} ({item.reviewCount?.toLocaleString("ko-KR")})
                             </span>
+                          </p>
+                        ) : item.reviewCount && item.reviewCount > 0 ? (
+                          <p className="mt-auto flex h-4 shrink-0 items-center gap-1 type-caption text-text-tertiary">
+                            리뷰 {item.reviewCount.toLocaleString("ko-KR")}건
                           </p>
                         ) : (
                           <p className="mt-auto flex h-4 shrink-0 items-center gap-1 type-caption text-text-tertiary">
