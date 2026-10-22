@@ -34,20 +34,10 @@ export function AiRecommendationChatPage() {
       <ChatHeader
         onBack={handleBack}
         onCartClick={() => navigate("/cart")}
+        onSessionListClick={() => setIsSessionListOpen(true)}
       />
 
-      <div className="page-content shrink-0 py-2">
-        <button
-          className="-ml-2 inline-flex min-h-10 items-center gap-2 rounded-control px-2 type-caption text-text-tertiary disabled:cursor-not-allowed"
-          onClick={() => setIsSessionListOpen(true)}
-          type="button"
-        >
-          <span aria-hidden="true">≡</span>
-          대화 목록
-        </button>
-      </div>
-
-      <main className="min-h-0 flex-1 overflow-y-auto">
+      <main className="min-h-0 flex-1 overflow-y-auto bg-background">
         {chat.isHistoryLoading ? (
           <p
             aria-busy="true"
@@ -79,7 +69,7 @@ export function AiRecommendationChatPage() {
       </main>
 
       {attachmentNotice ? (
-        <div className="page-content shrink-0 pb-2">
+        <div className="page-content shrink-0 bg-background pb-2">
           <Toast>사진으로 책 찾기는 아직 지원하지 않아요. 제목이나 작가를 입력해 주세요.</Toast>
         </div>
       ) : null}

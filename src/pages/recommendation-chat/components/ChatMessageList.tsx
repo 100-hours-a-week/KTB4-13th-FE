@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
@@ -7,6 +7,7 @@ import { LoginRequiredDialog } from "@/features/auth/components/LoginRequiredDia
 import { useAuth } from "@/features/auth/context/useAuth";
 import { addCartItem, fetchCart } from "@/features/cart/api/cartApi";
 import { notifyCartChanged } from "@/features/cart/lib/cartEvents";
+import { ASSISTANT_NAME, AssistantAvatar } from "@/pages/recommendation-chat/components/AssistantAvatar";
 import type {
   CartProposalItemViewModel,
   ChatErrorReason,
@@ -19,6 +20,9 @@ import type {
 const priceFormatter = new Intl.NumberFormat("ko-KR");
 const MAX_RECOMMENDATIONS = 3;
 const MAX_CART_ITEMS = 30;
+
+const ASSISTANT_BUBBLE_CLASS_NAME =
+  "w-fit max-w-[88%] whitespace-pre-wrap break-words rounded-panel border border-hairline bg-surface px-3.5 py-2.5 type-body leading-relaxed text-text-primary";
 
 const ERROR_MESSAGES: Record<ChatErrorReason, string> = {
   busy: "요청이 많아요. 잠시 후 다시 보내 주세요",
@@ -246,7 +250,7 @@ function RecommendationCardList({
     <div className="mt-3">
       <div
         aria-label="AI 추천 도서 목록"
-        className="-mx-5 overflow-x-auto px-5 pb-1 [scrollbar-width:none] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+        className="-mr-5 overflow-x-auto pb-1 pr-5 [scrollbar-width:none] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
         role="region"
         tabIndex={0}
       >
@@ -438,6 +442,7 @@ function CartProposalPanel({
 }
 
 interface ChatBubbleProps {
+  isGroupStart: boolean;
   message: ChatPresentationMessage;
   onConfirmProposal: (messageId: string, proposalId: number) => void;
   onDeclineProposal: (messageId: string, proposalId: number) => void;
@@ -446,7 +451,29 @@ interface ChatBubbleProps {
   status: ChatPresentationStatus;
 }
 
+// Keeps the assistant profile beside the first bubble of a group and aligns follow-ups under it.
+function AssistantRow({
+  children,
+  isGroupStart,
+}: {
+  children: ReactNode;
+  isGroupStart: boolean;
+}) {
+  return (
+    <div className="flex min-w-0 gap-2">
+      {isGroupStart ? <AssistantAvatar /> : <span aria-hidden="true" className="w-9 shrink-0" />}
+      <div className="flex min-w-0 flex-1 flex-col">
+        {isGroupStart ? (
+          <p className="mb-1 type-caption font-semibold text-text-secondary">{ASSISTANT_NAME}</p>
+        ) : null}
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function ChatBubble({
+  isGroupStart,
   message,
   onConfirmProposal,
   onDeclineProposal,
@@ -457,7 +484,7 @@ function ChatBubble({
   if (message.role === "user") {
     return (
       <div className="flex justify-end">
-        <p className="max-w-[78%] whitespace-pre-wrap break-words rounded-control bg-primary px-3.5 py-2.5 type-body-small text-white">
+        <p className={`max-w-[78%] whitespace-pre-wrap break-words rounded-panel bg-accent-soft px-3.5 py-2.5 type-body leading-relaxed text-text-primary ${isGroupStart ? "rounded-tr-sm" : ""}`}>
           {message.content}
         </p>
       </div>
@@ -478,10 +505,12 @@ function ChatBubble({
   const hasProposalPanel = proposalId !== null || message.proposal !== undefined || (message.executionStatus !== undefined && message.executionStatus !== "pending");
 
   return (
-    <div className="min-w-0">
-      <p className="whitespace-pre-wrap break-words type-body leading-relaxed text-text-primary">
-        {message.content}
-      </p>
+    <AssistantRow isGroupStart={isGroupStart}>
+      {message.content ? (
+        <p className={`${ASSISTANT_BUBBLE_CLASS_NAME} ${isGroupStart ? "rounded-tl-sm" : ""}`}>
+          {message.content}
+        </p>
+      ) : null}
       {message.recommendations?.length ? (
         <>
           <RecommendationCardList
@@ -489,7 +518,7 @@ function ChatBubble({
             recommendations={message.recommendations}
           />
           <button
-            className="min-h-11 rounded-control px-2 -ml-2 type-body-small font-semibold text-text-secondary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:text-text-disabled"
+            className="min-h-11 w-fit rounded-control px-2 -ml-2 type-body-small font-semibold text-text-secondary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:text-text-disabled"
             disabled={status === "sending"}
             onClick={() =>
               onQuickMessage("방금 추천과 겹치지 않는 다른 책을 추천해줘")
@@ -523,7 +552,7 @@ function ChatBubble({
           ))}
         </div>
       ) : null}
-    </div>
+    </AssistantRow>
   );
 }
 
@@ -540,24 +569,54 @@ function WelcomeMessage({
   onQuickMessage: (message: string) => void;
 }) {
   return (
-    <section aria-label="AI 첫 인사" className="mb-6">
-      <p className="w-fit max-w-[85%] whitespace-pre-line rounded-control bg-muted px-3.5 py-2.5 type-body-small text-text-primary">
-        {"안녕하세요, 북적북적 AI예요.\n요즘 취향이나 기분, 책을 읽을 상황을 알려주시면 어울리는 책을 골라드릴게요."}
-      </p>
-      <ul aria-label="추천 질문" className="mt-3 flex flex-wrap gap-2">
-        {STARTER_QUESTIONS.map((question) => (
-          <li key={question}>
-            <button
-              className="min-h-10 rounded-full border border-border bg-surface px-3.5 type-body-small text-text-primary transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              onClick={() => onQuickMessage(question)}
-              type="button"
-            >
-              {question}
-            </button>
-          </li>
-        ))}
-      </ul>
+    <section aria-label="북적이 첫 인사" className="chat-message-enter">
+      <div className="flex flex-col items-center pb-8 text-center">
+        <AssistantAvatar className="size-16 p-1" />
+        <p className="mt-2 type-title text-text-primary">{ASSISTANT_NAME}</p>
+        <p className="mt-0.5 type-caption text-text-tertiary">취향에 맞는 책을 함께 찾아드려요</p>
+      </div>
+      <AssistantRow isGroupStart>
+        <div className="flex flex-col gap-1.5">
+          <p className={`${ASSISTANT_BUBBLE_CLASS_NAME} rounded-tl-sm`}>안녕! 나는 북적이야 📚</p>
+          <p className={ASSISTANT_BUBBLE_CLASS_NAME}>
+            {"오늘은 어떤 책을 찾고 있어?\n요즘 기분이나 취향, 책을 읽을 상황을 알려주면 어울리는 책을 골라줄게."}
+          </p>
+        </div>
+        <ul aria-label="추천 질문" className="mt-3 flex flex-wrap gap-2">
+          {STARTER_QUESTIONS.map((question) => (
+            <li key={question}>
+              <button
+                className="min-h-10 rounded-full border border-border bg-surface px-3.5 type-body-small text-text-primary transition-colors hover:border-border-strong hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                onClick={() => onQuickMessage(question)}
+                type="button"
+              >
+                {question}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </AssistantRow>
     </section>
+  );
+}
+
+function TypingIndicator({ isGroupStart }: { isGroupStart: boolean }) {
+  return (
+    <div className={`chat-message-enter ${isGroupStart ? "mt-5" : "mt-1.5"}`} role="status">
+      <AssistantRow isGroupStart={isGroupStart}>
+        <div className={`flex h-10 w-fit items-center gap-1 rounded-panel border border-hairline bg-surface px-4 ${isGroupStart ? "rounded-tl-sm" : ""}`}>
+          {[0, 160, 320].map((delay) => (
+            <span
+              aria-hidden="true"
+              className="chat-typing-dot size-1.5 rounded-full bg-text-tertiary"
+              key={delay}
+              style={{ animationDelay: `${delay}ms` }}
+            />
+          ))}
+          <span className="sr-only">북적이가 추천을 준비하고 있어요</span>
+        </div>
+      </AssistantRow>
+    </div>
   );
 }
 
@@ -581,57 +640,67 @@ export function ChatMessageList({
   status,
 }: ChatMessageListProps) {
   const endRef = useRef<HTMLDivElement>(null);
+  const hasScrolledRef = useRef(false);
+  const lastMessage = messages.at(-1);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "end" });
+    // Jump on first paint, then glide to each new message like a messenger.
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    endRef.current?.scrollIntoView({
+      behavior: hasScrolledRef.current && !prefersReducedMotion ? "smooth" : "auto",
+      block: "end",
+    });
+    hasScrolledRef.current = true;
   }, [messages.length, status]);
 
   return (
-    <div className="page-content py-5">
+    <div className="page-content flex min-h-full flex-col justify-end py-5">
       {messages.length === 0 && status !== "sending" ? (
         <WelcomeMessage onQuickMessage={onQuickMessage} />
       ) : null}
-      <ol aria-live="polite" className="flex flex-col gap-6">
-        {messages.map((message) => (
-          <li key={message.id}>
-            <ChatBubble
-              message={message}
-              onConfirmProposal={onConfirmProposal}
-              onDeclineProposal={onDeclineProposal}
-              onQuickMessage={onQuickMessage}
-              onRetryProposal={onRetryProposal}
-              status={status}
-            />
-            {message.role === "user" && message.errorReason ? (
-              <div
-                className="mt-4 flex flex-wrap items-center gap-x-3"
-                role="alert"
-              >
-                <p className="type-body-small text-error">
-                  {ERROR_MESSAGES[message.errorReason]}
-                </p>
-                <button
-                  className="min-h-11 rounded-control px-2 type-body-small font-semibold text-text-primary underline underline-offset-2 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed"
-                  disabled={status === "sending"}
-                  onClick={() => onRetry(message.id)}
-                  type="button"
+      <ol aria-live="polite" className="flex flex-col">
+        {messages.map((message, index) => {
+          const isGroupStart = messages[index - 1]?.role !== message.role;
+
+          return (
+            <li
+              className={`chat-message-enter ${index === 0 ? "" : isGroupStart ? "mt-5" : "mt-1.5"}`}
+              key={message.id}
+            >
+              <ChatBubble
+                isGroupStart={isGroupStart}
+                message={message}
+                onConfirmProposal={onConfirmProposal}
+                onDeclineProposal={onDeclineProposal}
+                onQuickMessage={onQuickMessage}
+                onRetryProposal={onRetryProposal}
+                status={status}
+              />
+              {message.role === "user" && message.errorReason ? (
+                <div
+                  className="mt-1 flex flex-wrap items-center justify-end gap-x-1"
+                  role="alert"
                 >
-                  다시 보내기
-                </button>
-              </div>
-            ) : null}
-          </li>
-        ))}
+                  <p className="type-caption text-error">
+                    {ERROR_MESSAGES[message.errorReason]}
+                  </p>
+                  <button
+                    className="-mr-2 min-h-11 rounded-control px-2 type-caption font-semibold text-text-primary underline underline-offset-2 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed"
+                    disabled={status === "sending"}
+                    onClick={() => onRetry(message.id)}
+                    type="button"
+                  >
+                    다시 보내기
+                  </button>
+                </div>
+              ) : null}
+            </li>
+          );
+        })}
       </ol>
 
       {status === "sending" ? (
-        <p
-          aria-live="polite"
-          className="mt-6 w-fit type-body-small text-text-tertiary"
-          role="status"
-        >
-          추천을 준비하고 있어요
-        </p>
+        <TypingIndicator isGroupStart={lastMessage?.role !== "assistant"} />
       ) : null}
       <div ref={endRef} />
     </div>
