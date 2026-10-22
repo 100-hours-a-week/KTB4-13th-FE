@@ -84,9 +84,9 @@ function OrderCard({ order }: { order: OrderHistoryEntry }) {
                 </p>
               </div>
             </div>
-            <div className={`mt-3 grid gap-2 ${order.status === "PAID" ? "grid-cols-2" : "grid-cols-1"}`}>
+            <div className={`mt-3 grid gap-2 ${order.status === "PAID" && item.quantity > item.canceledQuantity ? "grid-cols-2" : "grid-cols-1"}`}>
               <Link className="inline-flex min-h-11 items-center justify-center rounded-control border border-border type-body-small font-semibold text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" to={`/products/${item.productId}`}>도서 상세</Link>
-              {order.status === "PAID" ? <Link className="inline-flex min-h-11 items-center justify-center rounded-control border border-accent type-body-small font-semibold text-accent hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" to={`/products/${item.productId}/reviews/new`}>리뷰 쓰기</Link> : null}
+              {order.status === "PAID" && item.quantity > item.canceledQuantity ? <Link className="inline-flex min-h-11 items-center justify-center rounded-control border border-accent type-body-small font-semibold text-accent hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" to={`/products/${item.productId}/reviews/new?orderKey=${encodeURIComponent(order.key)}&orderItemId=${item.orderItemId}`}>리뷰 쓰기</Link> : null}
             </div>
           </li>
         ))}
