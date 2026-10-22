@@ -25,6 +25,10 @@ function isProductListItem(value: unknown): value is ProductListItem {
       typeof value.discountedPrice === "number") &&
     typeof value.itemId === "number" &&
     typeof value.itemName === "string" &&
+    (value.reviewCount === undefined ||
+      (Number.isSafeInteger(value.reviewCount) && Number(value.reviewCount) >= 0)) &&
+    (value.reviewRate === undefined ||
+      (typeof value.reviewRate === "number" && value.reviewRate >= 0)) &&
     typeof value.salePrice === "number" &&
     (value.thumbnailUrl === null || typeof value.thumbnailUrl === "string")
   );
