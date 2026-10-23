@@ -108,6 +108,20 @@ export function HomePage() {
             ranking={ranking}
             retry={retryRanking}
           />
+          <footer className="page-content mt-3 border-t border-hairline pt-5">
+            <p className="type-caption leading-relaxed text-text-tertiary">
+              본 사이트는 국립중앙도서관{" "}
+              <a
+                className="underline underline-offset-2 hover:text-text-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                href="https://data4library.kr/"
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                도서관 정보나루
+              </a>
+              의 API 데이터를 활용하고 있습니다.
+            </p>
+          </footer>
         </div>
       </main>
 
