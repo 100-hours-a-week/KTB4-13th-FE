@@ -8,6 +8,7 @@ import {
   fetchChatSessions,
   fetchCartProposal,
   sendSessionMessage,
+  type SendSessionMessageInput,
 } from "@/features/recommendation/api/recommendationSessionApi";
 import { fetchProductDetail } from "@/features/product/api/productDetailApi";
 import type {
@@ -26,6 +27,18 @@ import type {
 import { MAX_CHAT_MESSAGE_LENGTH } from "@/pages/recommendation-chat/lib/chatMessage";
 
 const DECLINED_PROPOSALS_STORAGE_KEY = "bookjeok-chat-declined-proposals";
+// Waits before re-asking with the same key while the server may still be answering (about 26 seconds in total).
+const RECOVERY_DELAYS_MS = [1000, 2000, 3000, 4000, 4000, 4000, 4000, 4000];
+
+function wait(milliseconds: number) {
+  return new Promise<void>((resolve) => {
+    window.setTimeout(resolve, milliseconds);
+  });
+}
+
+function isRecoverable(reason: string) {
+  return reason === "in-progress" || reason === "interrupted";
+}
 
 function replyContent(reply: SessionChatReply) {
   return reply.followup ? `${reply.reply}\n\n${reply.followup}` : reply.reply;
@@ -207,6 +220,8 @@ export function useRecommendationChat(
   const isSendingRef = useRef(false);
   const executingProposalIdsRef = useRef(new Set<number>());
   const proposalIdempotencyKeysRef = useRef(new Map<number, string>());
+  // Kept per user message while its outcome is unknown, so a retry cannot apply a cart change twice.
+  const unresolvedSendsRef = useRef(new Map<string, SendSessionMessageInput>());
   const nextMessageIdRef = useRef(1);
   const skipHistorySessionIdRef = useRef<number | null>(null);
 
@@ -325,23 +340,60 @@ export function useRecommendationChat(
       void loadSessions();
     }
 
-    const result = await sendSessionMessage(
-      activeSessionId,
+    const targetSessionId = activeSessionId;
+    const input = unresolvedSendsRef.current.get(messageId) ?? {
+      excludeBookIds: [...shownBookIdsRef.current],
+      idempotencyKey: crypto.randomUUID(),
       message,
-      shownBookIdsRef.current,
-    );
+    };
+    unresolvedSendsRef.current.set(messageId, input);
+    const assistantMessageId = createMessageId("assistant");
+    const showDraft = (content: string) => {
+      setMessages((current) =>
+        current.some((item) => item.id === assistantMessageId)
+          ? current.map((item) =>
+              item.role === "assistant" && item.id === assistantMessageId
+                ? { ...item, content }
+                : item,
+            )
+          : [
+              ...current,
+              { content, id: assistantMessageId, isPending: true, role: "assistant" },
+            ],
+      );
+    };
+    const sendAttempt = () => {
+      // A resumed attempt streams the reply again from the start.
+      let draft = "";
+      return sendSessionMessage(targetSessionId, input, (text) => {
+        draft += text;
+        showDraft(draft);
+      });
+    };
+
+    let result = await sendAttempt();
+    for (const delay of RECOVERY_DELAYS_MS) {
+      if (result.ok || !isRecoverable(result.reason)) break;
+      await wait(delay);
+      result = await sendAttempt();
+    }
     isSendingRef.current = false;
     if (!result.ok) {
+      const { reason } = result;
+      // A definite failure is replayed for the same key, so the next retry starts a new request.
+      if (!isRecoverable(reason)) unresolvedSendsRef.current.delete(messageId);
       setMessages((current) =>
-        current.map((item) =>
-          item.role === "user" && item.id === messageId
-            ? { ...item, errorReason: result.reason }
-            : item,
-        ),
+        current.flatMap((item) => {
+          if (item.id === assistantMessageId) return [];
+          return item.role === "user" && item.id === messageId
+            ? [{ ...item, errorReason: reason }]
+            : [item];
+        }),
       );
       setStatus("error");
       return;
     }
+    unresolvedSendsRef.current.delete(messageId);
 
     shownBookIdsRef.current = [
       ...new Set([
@@ -353,13 +405,20 @@ export function useRecommendationChat(
       notifyCartChanged({ animate: true });
     }
     const assistantMessage = toAssistantMessage(
-      createMessageId("assistant"),
+      assistantMessageId,
       result.data,
     );
     const [restoredAssistantMessage] = await restoreProposalStatuses([
       assistantMessage,
     ]);
-    setMessages((current) => [...current, restoredAssistantMessage]);
+    // The final reply replaces the streamed draft, which may differ from it.
+    setMessages((current) =>
+      current.some((item) => item.id === assistantMessageId)
+        ? current.map((item) =>
+            item.id === assistantMessageId ? restoredAssistantMessage : item,
+          )
+        : [...current, restoredAssistantMessage],
+    );
     setStatus("idle");
     void loadSessions();
     if (assistantMessage.checkout) onCheckout(assistantMessage.checkout);

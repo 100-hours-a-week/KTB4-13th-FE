@@ -28,6 +28,8 @@ const ASSISTANT_BUBBLE_CLASS_NAME =
 const ERROR_MESSAGES: Record<ChatErrorReason, string> = {
   busy: "요청이 많아요. 잠시 후 다시 보내 주세요",
   error: "메시지를 보내지 못했어요",
+  "in-progress": "이전 답변을 아직 만들고 있어요. 잠시 후 다시 보내 주세요",
+  interrupted: "연결이 끊겼어요. 다시 보내도 한 번만 처리돼요",
   "invalid-request": "메시지를 처리하지 못했어요. 내용을 바꿔 다시 보내 주세요",
   timeout: "답변이 늦어지고 있어요. 다시 보내 주세요",
 };
@@ -153,6 +155,24 @@ function RecommendationCard({
         {recommendation.reasonShort ? ` · ${recommendation.reasonShort}` : null}
       </p>
     </article>
+  );
+}
+
+// Holds the card area while the streamed reply waits for its final cards.
+function PendingRecommendationCards() {
+  return (
+    <div aria-busy="true" className="mt-3">
+      <p className="sr-only" role="status">북적이가 책을 고르고 있어요</p>
+      <ul aria-hidden="true" className="flex gap-2 overflow-hidden">
+        {Array.from({ length: MAX_RECOMMENDATIONS }, (_, index) => (
+          <li className="w-36 shrink-0 sm:w-40" key={index}>
+            <div className="aspect-[2/3] animate-pulse rounded-cover bg-muted" />
+            <div className="mt-2 h-4 w-4/5 animate-pulse rounded bg-muted" />
+            <div className="mt-1.5 h-3 w-1/2 animate-pulse rounded bg-muted" />
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -517,6 +537,7 @@ function ChatBubble({
           {message.content}
         </p>
       ) : null}
+      {message.isPending ? <PendingRecommendationCards /> : null}
       {message.recommendations?.length ? (
         <>
           <RecommendationCardList
@@ -662,6 +683,8 @@ export function ChatMessageList({
   const endRef = useRef<HTMLDivElement>(null);
   const hasScrolledRef = useRef(false);
   const lastMessage = messages.at(-1);
+  const isLastMessagePending =
+    lastMessage?.role === "assistant" && lastMessage.isPending === true;
 
   useEffect(() => {
     // Jump on first paint, then glide to each new message like a messenger.
@@ -671,7 +694,7 @@ export function ChatMessageList({
       block: "end",
     });
     hasScrolledRef.current = true;
-  }, [messages.length, status]);
+  }, [isLastMessagePending, messages.length, status]);
 
   return (
     <div className="page-content flex min-h-full flex-col justify-end py-5">
@@ -721,7 +744,7 @@ export function ChatMessageList({
         })}
       </ol>
 
-      {status === "sending" ? (
+      {status === "sending" && !isLastMessagePending ? (
         <TypingIndicator isGroupStart={lastMessage?.role !== "assistant"} />
       ) : null}
       <div ref={endRef} />
