@@ -13,13 +13,14 @@ import type { SearchResultState } from "@/pages/search/types/search";
 const priceFormatter = new Intl.NumberFormat("ko-KR");
 const SKELETON_COUNT = 12;
 
-function SearchResultCard({ item }: { item: BookSearchItem }) {
+function SearchResultCard({ item, priority }: { item: BookSearchItem; priority: boolean }) {
   const onCoverLinkClick = useCoverLinkClick();
   const card = (
     <article className="flex min-w-0 flex-col gap-1">
       <BookCover
         alt=""
         fallbackTitle={item.title}
+        priority={priority}
         radius="cover"
         thumbnailUrl={item.coverUrl}
       />
@@ -154,9 +155,9 @@ export function SearchResultsContent({
         aria-label="검색된 도서 목록"
         className="grid grid-cols-3 gap-x-3 gap-y-8"
       >
-        {state.items.map((item) => (
+        {state.items.map((item, index) => (
           <li className="min-w-0" key={item.bookId}>
-            <SearchResultCard item={item} />
+            <SearchResultCard item={item} priority={index < 3} />
             {item.productId !== null && item.inStock ? (
               <div className="mt-2">
                 <QuickAddToCartButton productId={item.productId} thumbnailUrl={item.coverUrl} title={item.title} />

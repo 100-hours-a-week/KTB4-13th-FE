@@ -199,19 +199,17 @@
 @keyframes recommendation-info-enter {
   from {
     opacity: 0;
-    filter: blur(4px);
     transform: translateY(10px);
   }
 
   to {
     opacity: 1;
-    filter: blur(0);
     transform: translateY(0);
   }
 }
 
 .recommendation-info-enter {
-  animation: recommendation-info-enter 420ms var(--ease-emphasized) both;
+  animation: recommendation-info-enter var(--duration-fast) var(--ease-emphasized) both;
 }
 
 @keyframes ai-search-highlight {

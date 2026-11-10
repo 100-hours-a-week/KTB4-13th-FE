@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 
 interface BookCoverProps {
   // Empty when adjacent text already names the book.
@@ -7,6 +7,7 @@ interface BookCoverProps {
   fallbackTitle: string;
   radius?: "control" | "cover";
   thumbnailUrl: string | null;
+  priority?: boolean;
 }
 
 const COVER_RADIUS_CLASS_NAMES = {
@@ -31,14 +32,14 @@ function getFallbackCoverTone(title: string) {
   return FALLBACK_COVER_TONES[titleHash % FALLBACK_COVER_TONES.length];
 }
 
-export function BookCover({
+export const BookCover = memo(function BookCover({
   alt,
   fallbackTitle,
   radius = "control",
+  priority = false,
   thumbnailUrl,
 }: BookCoverProps) {
   // Compared with the current URL so a new thumbnailUrl loads again instead of inheriting the previous result.
-  const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const imageUrl = thumbnailUrl?.trim() ?? "";
   const radiusClassName = COVER_RADIUS_CLASS_NAMES[radius];
@@ -51,16 +52,11 @@ export function BookCover({
       >
         <img
           alt={alt}
-          className={`size-full object-cover transition-opacity duration-(--duration-enter) ease-standard motion-reduce:transition-none ${imageUrl === loadedUrl ? "" : "opacity-0"}`}
-          loading="lazy"
+          className="size-full object-cover"
+          decoding="async"
+          fetchPriority={priority ? "high" : "auto"}
+          loading={priority ? "eager" : "lazy"}
           onError={() => setFailedUrl(imageUrl)}
-          onLoad={() => setLoadedUrl(imageUrl)}
-          // A cover already in the browser cache shows at once instead of fading in again on every visit.
-          ref={(image) => {
-            if (image?.complete && image.naturalWidth > 0 && loadedUrl !== imageUrl) {
-              setLoadedUrl(imageUrl);
-            }
-          }}
           src={imageUrl}
         />
       </div>
@@ -96,4 +92,4 @@ export function BookCover({
       </span>
     </div>
   );
-}
+});

@@ -44,9 +44,11 @@ function BookPrice({ price, originalPrice }: { originalPrice: number | null; pri
 
 function CatalogBookRow({
   book,
+  priority,
   rank,
 }: {
   book: CatalogBookItem;
+  priority: boolean;
   rank?: number;
 }) {
   const onCoverLinkClick = useCoverLinkClick();
@@ -55,7 +57,7 @@ function CatalogBookRow({
     // The first place gets its own dark card so the order reads at a glance.
     <article className="my-3 flex gap-4 rounded-panel bg-primary p-4 text-white">
       <div className="w-24 shrink-0 rounded-cover shadow-[0_10px_20px_-12px_rgba(0,0,0,0.8)]">
-        <BookCover alt="" fallbackTitle={book.title} radius="cover" thumbnailUrl={book.thumbnailUrl} />
+        <BookCover alt="" fallbackTitle={book.title} priority={priority} radius="cover" thumbnailUrl={book.thumbnailUrl} />
       </div>
       <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
         <span className="type-numeral text-2xl text-[#f6c3c8]">
@@ -89,6 +91,7 @@ function CatalogBookRow({
         <BookCover
           alt=""
           fallbackTitle={book.title}
+          priority={priority}
           radius="cover"
           thumbnailUrl={book.thumbnailUrl}
         />
@@ -237,6 +240,7 @@ export function CatalogBookList({
             <div className="min-w-0 flex-1">
               <CatalogBookRow
                 book={book}
+                priority={index === 0}
                 rank={mode === "ranking" ? index + 1 : undefined}
               />
             </div>

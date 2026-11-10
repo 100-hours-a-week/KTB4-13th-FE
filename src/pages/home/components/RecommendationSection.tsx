@@ -24,7 +24,9 @@ const priceFormatter = new Intl.NumberFormat("ko-KR");
 const SKELETON_COUNT = 3;
 const SWIPE_THRESHOLD = 40;
 const AUTO_HOLD_MS = 1500;
-const ANIMATION_MS = 900;
+const AUTO_ANIMATION_MS = 900;
+const CONTROL_ANIMATION_MS = 240;
+const VISIBLE_NEIGHBORS = 3;
 const REFERENCE_ANGLE_STEP = 20;
 
 function wrapAngle(angle: number) {
@@ -33,6 +35,13 @@ function wrapAngle(angle: number) {
 
 function wrapIndex(index: number, length: number) {
   return ((index % length) + length) % length;
+}
+
+function updateCoverPosition(card: HTMLDivElement, shade: HTMLSpanElement | null, distance: number, visualScale: number) {
+  const visualDistance = Math.abs(distance) * visualScale;
+  card.style.opacity = String(Math.max(0.15, 1 - visualDistance / 150));
+  card.style.transform = `rotateY(${-distance * (1 - visualScale)}deg) scale(${Math.max(0.65, 1.05 - visualDistance / 400)})`;
+  if (shade) shade.style.opacity = String(Math.min(0.45, visualDistance / 200));
 }
 
 export function CoverflowRecommendations({
@@ -50,12 +59,14 @@ export function CoverflowRecommendations({
   const touchStartX = useRef<number | null>(null);
   const [paused, setPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const isVisibleRef = useRef(true);
   const wheelRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const shadeRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const rotationRef = useRef(0);
   const activeSlotRef = useRef(0);
-  const animationRef = useRef<{ from: number; startedAt: number | null; to: number } | null>(null);
+  const animationRef = useRef<{ duration: number; from: number; startedAt: number | null; to: number } | null>(null);
   const slotCount = books.length;
   const angleStep = 360 / slotCount;
   const visualAngleScale = Math.min(1, REFERENCE_ANGLE_STEP / angleStep);
@@ -80,6 +91,16 @@ export function CoverflowRecommendations({
   }, []);
 
   useEffect(() => {
+    const carousel = carouselRef.current;
+    if (!carousel) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      isVisibleRef.current = entry?.isIntersecting ?? false;
+    });
+    observer.observe(carousel);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     let frame = 0;
     let lastRotation = rotationRef.current;
     let nextAdvanceAt: number | null = null;
@@ -91,15 +112,7 @@ export function CoverflowRecommendations({
       cardRefs.current.forEach((card, slot) => {
         if (!card) return;
         const signedDistance = wrapAngle(slot * angleStep - rotation);
-        const distance = Math.abs(signedDistance);
-        const visualDistance = distance * visualAngleScale;
-        const facingCorrection = -signedDistance * (1 - visualAngleScale);
-        card.style.opacity = String(Math.max(0.15, 1 - visualDistance / 150));
-        card.style.transform = `rotateY(${facingCorrection}deg) scale(${Math.max(0.65, 1.05 - visualDistance / 400)})`;
-        card.style.zIndex = String(200 - Math.round(distance));
-        card.style.pointerEvents = visualDistance <= 100 ? "auto" : "none";
-        const shade = shadeRefs.current[slot];
-        if (shade) shade.style.opacity = String(Math.min(0.45, visualDistance / 200));
+        updateCoverPosition(card, shadeRefs.current[slot], signedDistance, visualAngleScale);
       });
       const next = wrapIndex(Math.round(rotation / angleStep), slotCount);
       if (next !== activeSlotRef.current) {
@@ -112,19 +125,20 @@ export function CoverflowRecommendations({
       const animation = animationRef.current;
       if (animation) {
         if (animation.startedAt === null) animation.startedAt = time;
-        const progress = Math.min(1, (time - animation.startedAt) / ANIMATION_MS);
+        const progress = Math.min(1, (time - animation.startedAt) / animation.duration);
         const eased = 1 - Math.pow(1 - progress, 3);
         rotationRef.current = animation.from + (animation.to - animation.from) * eased;
         if (progress === 1) {
           animationRef.current = null;
           nextAdvanceAt = time + AUTO_HOLD_MS;
         }
-      } else if (!paused && !reducedMotion && !document.hidden && books.length > 1) {
+      } else if (!paused && !reducedMotion && isVisibleRef.current && !document.hidden && books.length > 1) {
         if (nextAdvanceAt === null) {
           nextAdvanceAt = time + AUTO_HOLD_MS;
         } else if (time >= nextAdvanceAt) {
           const nextStep = Math.round(rotationRef.current / angleStep) + 1;
           animationRef.current = {
+            duration: AUTO_ANIMATION_MS,
             from: rotationRef.current,
             startedAt: time,
             to: nextStep * angleStep,
@@ -147,24 +161,35 @@ export function CoverflowRecommendations({
   }, [angleStep, books.length, paused, reducedMotion, slotCount, visualAngleScale]);
   const activeBook = books[activeIndex] ?? books[0];
 
-  const move = (direction: number) => {
-    const nextStep = Math.round(rotationRef.current / angleStep) + direction;
-    const target = nextStep * angleStep;
+  const animateTo = (target: number) => {
     if (reducedMotion) {
       rotationRef.current = target;
       animationRef.current = null;
-      activeSlotRef.current = wrapIndex(nextStep, slotCount);
+      activeSlotRef.current = wrapIndex(Math.round(target / angleStep), slotCount);
       setActiveSlot(activeSlotRef.current);
       return;
     }
-    animationRef.current = { from: rotationRef.current, startedAt: null, to: target };
+    animationRef.current = {
+      duration: CONTROL_ANIMATION_MS,
+      from: rotationRef.current,
+      startedAt: null,
+      to: target,
+    };
+  };
+
+  const move = (direction: number) => {
+    // Add to the requested destination so fast taps are all retained.
+    const destination = animationRef.current?.to ?? rotationRef.current;
+    animateTo((Math.round(destination / angleStep) + direction) * angleStep);
   };
 
   const selectBook = (slot: number) => {
     const forward = wrapIndex(slot - activeSlot, slotCount);
     const backward = forward - slotCount;
     const shortest = Math.abs(forward) <= Math.abs(backward) ? forward : backward;
-    if (shortest !== 0) move(shortest);
+    if (shortest !== 0) {
+      animateTo((Math.round(rotationRef.current / angleStep) + shortest) * angleStep);
+    }
   };
 
   const finishSwipe = (endX: number) => {
@@ -204,6 +229,7 @@ export function CoverflowRecommendations({
       onTouchCancel={() => {
         touchStartX.current = null;
       }}
+      ref={carouselRef}
       role="region"
       style={{ ["--radius-scale" as string]: radiusScale }}
       tabIndex={0}
@@ -221,7 +247,9 @@ export function CoverflowRecommendations({
           {books.map((book, slot) => {
             const angle = slot * angleStep;
             const isActive = slot === activeSlot;
-            const distance = Math.abs(wrapAngle(angle - activeSlot * angleStep));
+            const slotDistance = Math.min(wrapIndex(slot - activeSlot, slotCount), wrapIndex(activeSlot - slot, slotCount));
+            if (slotDistance > VISIBLE_NEIGHBORS) return null;
+            const distance = slotDistance * angleStep;
             return (
               <div
                 className="absolute inset-0"
@@ -231,11 +259,21 @@ export function CoverflowRecommendations({
                   transformStyle: "preserve-3d",
                 }}
               >
-                <div className="relative size-full" ref={(node) => { cardRefs.current[slot] = node; }} style={{ transformStyle: "preserve-3d" }}>
+                <div
+                  className="relative size-full"
+                  ref={(node) => {
+                    cardRefs.current[slot] = node;
+                    if (node) {
+                      updateCoverPosition(node, shadeRefs.current[slot], wrapAngle(angle - rotationRef.current), visualAngleScale);
+                    }
+                  }}
+                  style={{ transformStyle: "preserve-3d", zIndex: 200 - Math.round(distance) }}
+                >
                   <button
                     aria-label={isActive ? `${book.title}, 현재 선택됨` : `${book.title} 선택`}
                     aria-pressed={isActive}
                     className="absolute inset-0 cursor-pointer rounded-control outline-offset-4 focus-visible:outline-2 focus-visible:outline-primary"
+                    data-press="none"
                     onClick={() => {
                       if (!isActive) {
                         selectBook(slot);
@@ -245,12 +283,10 @@ export function CoverflowRecommendations({
                       }
                     }}
                     style={{ backfaceVisibility: "hidden" }}
-                    tabIndex={distance <= angleStep * 3 ? 0 : -1}
                     type="button"
                   >
-                    <span aria-hidden="true" className="pointer-events-none absolute -bottom-4 left-[5%] h-8 w-[90%] rounded-full bg-black/20 blur-xl" />
                     <div className="relative size-full overflow-hidden rounded-control bg-muted shadow-[0_14px_30px_-12px_rgba(36,33,31,0.38)] [&>div]:!h-full [&>div]:!aspect-auto [&>div]:!rounded-control [&>div]:!border-transparent">
-                      <BookCover alt={book.title} fallbackTitle={book.title} radius="cover" thumbnailUrl={book.coverUrl} />
+                      <BookCover alt={book.title} fallbackTitle={book.title} priority={isActive} radius="cover" thumbnailUrl={book.coverUrl} />
                       <span
                         aria-hidden="true"
                         className="pointer-events-none absolute inset-0 bg-black"
