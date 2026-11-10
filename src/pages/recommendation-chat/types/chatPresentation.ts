@@ -67,9 +67,15 @@ export type ChatPresentationMessage =
       checkout?: ChatCheckout;
       content: string;
       executionStatus?: ProposalExecutionStatus;
+      // Question shown under the cards, without the answer option lines.
+      followup?: string;
       id: string;
+      // Arrived in this screen (not restored history), so its text and cards animate in.
+      isLive?: boolean;
       // Text streamed before the final reply; cards and buttons arrive only with the final reply.
       isPending?: boolean;
+      // Answer options from the followup lines; tapping one sends its text.
+      options?: string[];
       proposal?: CartProposalViewModel;
       recommendations?: RecommendationCardViewModel[];
       role: "assistant";
