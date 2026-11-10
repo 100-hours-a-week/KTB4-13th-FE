@@ -6,6 +6,7 @@ import { COVER_TRANSITION_NAME, type CoverPreview } from "@/common/lib/coverTran
 import type { ProductDetail } from "@/features/product/types/product";
 import { fetchProductReviewCount, fetchProductReviews } from "@/features/review/api/reviewApi";
 import { AuthorOtherBooks } from "@/pages/product/components/AuthorOtherBooks";
+import { type DetailSection, DetailSectionTabs } from "@/pages/product/components/DetailSectionTabs";
 
 const priceFormatter = new Intl.NumberFormat("ko-KR");
 
@@ -137,7 +138,7 @@ function BookDescription({ description }: { description: string | null }) {
   }
 
   return (
-    <section aria-labelledby="book-description-title" className="border-b border-hairline py-6">
+    <section aria-labelledby="book-description-title" className="scroll-mt-11 border-b border-hairline py-6" id="detail-description">
       <h2
         className="type-title text-text-primary"
         id="book-description-title"
@@ -168,6 +169,34 @@ function BookDescription({ description }: { description: string | null }) {
   );
 }
 
+const MIN_REVIEWS_FOR_BARS = 3;
+
+// Share of reviews per score, 5 to 1. Only drawn from fully loaded reviews; one or two make no shape.
+function ReviewRateBars({ rates }: { rates: number[] }) {
+  if (rates.length < MIN_REVIEWS_FOR_BARS) return null;
+
+  const counts = [5, 4, 3, 2, 1].map((score) => ({
+    count: rates.filter((rate) => Math.min(5, Math.max(1, Math.round(rate))) === score).length,
+    score,
+  }));
+
+  return (
+    <dl aria-label="점수별 리뷰 수" className="mt-3 space-y-1.5 px-1">
+      {counts.map(({ count, score }) => (
+        <div className="flex items-center gap-2" key={score}>
+          <dt className="w-7 shrink-0 type-caption tabular-nums text-text-secondary">{score}점</dt>
+          <dd className="flex min-w-0 flex-1 items-center gap-2">
+            <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+              <span className="block h-full rounded-full bg-[#f2b84b]" style={{ width: `${(count / rates.length) * 100}%` }} />
+            </span>
+            <span className="w-5 shrink-0 text-right type-caption tabular-nums text-text-tertiary">{count}</span>
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 interface ProductDetailContentProps {
   product: ProductDetail;
   recommendationReason: string | null;
@@ -183,6 +212,8 @@ export function ProductDetailContent({
     countLabel: string;
     // null when the count could not be confirmed, so "no reviews yet" is shown only when it is certain.
     count: number | null;
+    // Every review's rate, only when all of them are loaded (there is no per-score count API).
+    rates: number[] | null;
   } | null>(null);
 
   useEffect(() => {
@@ -200,6 +231,7 @@ export function ProductDetailContent({
             ? `${countResult.count.toLocaleString("ko-KR")}개의 리뷰`
             : "리뷰를 불러오지 못했어요",
           count: countResult.ok ? countResult.count : null,
+          rates: null,
         });
         return;
       }
@@ -215,7 +247,10 @@ export function ProductDetailContent({
       const count = countResult.ok && countResult.count >= reviews.length
         ? countResult.count
         : reviewsResult.data.hasNext ? null : reviews.length;
-      setReviewSummary({ productId: product.productId, rate, countLabel, count });
+      const rates = !reviewsResult.data.hasNext && count === reviews.length
+        ? reviews.map((review) => review.rate)
+        : null;
+      setReviewSummary({ productId: product.productId, rate, countLabel, count, rates });
     });
     return () => controller.abort();
   }, [product.productId, product.reviewRate]);
@@ -225,6 +260,13 @@ export function ProductDetailContent({
   const shownReviewCount = reviewSummary?.productId === product.productId
     ? reviewSummary.countLabel : "리뷰를 불러오는 중이에요";
   const hasNoReviews = reviewSummary?.productId === product.productId && reviewSummary.count === 0;
+  const loadedRates = reviewSummary?.productId === product.productId ? reviewSummary.rates : null;
+  const [hasAuthorBooks, setHasAuthorBooks] = useState(false);
+  const sections: DetailSection[] = [
+    ...(product.description?.trim() ? [{ id: "detail-description", label: "책 소개" }] : []),
+    { id: "detail-reviews", label: "리뷰" },
+    ...(hasAuthorBooks ? [{ id: "detail-author-books", label: "저자의 다른 책" }] : []),
+  ];
 
   return (
     <article className="page-content">
@@ -264,9 +306,11 @@ export function ProductDetailContent({
         </div>
       </section>
 
+      <DetailSectionTabs sections={sections} />
+
       <BookDescription description={product.description} />
 
-      <section className="border-b border-hairline py-7" aria-labelledby="product-review-title">
+      <section className="scroll-mt-11 border-b border-hairline py-7" aria-labelledby="product-review-title" id="detail-reviews">
         <div className="flex min-h-11 items-center justify-between gap-3">
           <h2 className="type-title" id="product-review-title">리뷰</h2>
           {hasNoReviews ? null : <Link className="inline-flex min-h-11 items-center type-body-small font-semibold text-text-secondary" to={`/products/${product.productId}/reviews`}>전체 보기 ›</Link>}
@@ -283,6 +327,7 @@ export function ProductDetailContent({
             <span aria-live="polite" className="type-body-small text-text-secondary">{shownReviewCount}</span>
           </Link>
         )}
+        {loadedRates ? <ReviewRateBars rates={loadedRates} /> : null}
       </section>
 
       {recommendationReason ? (
@@ -303,6 +348,7 @@ export function ProductDetailContent({
       ) : null}
 
       <AuthorOtherBooks
+        onAvailableChange={setHasAuthorBooks}
         author={product.author}
         productId={product.productId}
         publisher={product.publisher}

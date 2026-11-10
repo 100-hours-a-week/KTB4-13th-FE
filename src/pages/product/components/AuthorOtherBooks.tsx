@@ -11,11 +11,13 @@ const SEARCH_SIZE = 20;
 // Keeps the detail page from ending at the reviews: the same writer's other books, from the search API.
 export function AuthorOtherBooks({
   author,
+  onAvailableChange,
   productId,
   publisher,
   title,
 }: {
   author: string;
+  onAvailableChange?: (isAvailable: boolean) => void;
   productId: number;
   publisher: string;
   title: string;
@@ -53,10 +55,16 @@ export function AuthorOtherBooks({
 
   const books = result?.key === requestKey ? result.books : [];
   // One other book reads as a coincidence; show the row only when there is a small shelf.
-  if (!name || books.length < 2) return null;
+  const isAvailable = Boolean(name) && books.length >= 2;
+
+  useEffect(() => {
+    onAvailableChange?.(isAvailable);
+  }, [isAvailable, onAvailableChange]);
+
+  if (!isAvailable) return null;
 
   return (
-    <section aria-labelledby="author-other-books-title" className="border-b border-hairline py-7">
+    <section aria-labelledby="author-other-books-title" className="scroll-mt-11 border-b border-hairline py-7" id="detail-author-books">
       <h2 className="type-title text-text-primary" id="author-other-books-title">
         {name}의 다른 책
       </h2>
