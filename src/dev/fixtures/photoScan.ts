@@ -3,6 +3,7 @@ import type { PhotoScanResult } from "@/features/library/types/photoScan";
 // 개발용 미리보기 결과다. 책장 결과는 AI #615 시험 사진(CNU book-spine-dataset)을 돌린 결과에서 골랐다.
 export type PhotoScanPreviewCase =
   | "shelf"
+  | "emptyLibrary"
   | "cover"
   | "allMissed"
   | "noBooks"
@@ -24,9 +25,10 @@ const shelfResult: PhotoScanResult = {
 
 export const photoScanPreviewCases: Record<
   PhotoScanPreviewCase,
-  { label: string; result: PhotoScanResult | "timeout"; saveFails?: boolean }
+  { isLibraryEmpty?: boolean; label: string; result: PhotoScanResult | "timeout"; saveFails?: boolean }
 > = {
   shelf: { label: "책장", result: shelfResult },
+  emptyLibrary: { isLibraryEmpty: true, label: "빈 도서관", result: shelfResult },
   cover: {
     label: "표지 한 권",
     result: {
@@ -42,3 +44,13 @@ export const photoScanPreviewCases: Record<
   timeout: { label: "시간 초과", result: "timeout" },
   saveFailed: { label: "담기 실패", result: shelfResult, saveFails: true },
 };
+
+// 미리보기 도서관에 이미 담겨 있는 책
+export const libraryPreviewBooks = [
+  { author: "린다 리우카스, 이지선", coverUrl: null, title: "헬로 루비" },
+  { author: "손원평", coverUrl: null, title: "아몬드" },
+  { author: "김영하", coverUrl: null, title: "여행의 이유" },
+  { author: "칼 세이건", coverUrl: null, title: "코스모스" },
+  { author: "김호연", coverUrl: null, title: "불편한 편의점" },
+  { author: "이미예", coverUrl: null, title: "달러구트 꿈 백화점" },
+];

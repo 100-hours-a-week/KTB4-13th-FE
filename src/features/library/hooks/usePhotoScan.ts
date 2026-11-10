@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 
 import { preparePhoto } from "@/features/library/lib/preparePhoto";
 import type {
@@ -8,17 +8,12 @@ import type {
   ScanPhoto,
 } from "@/features/library/types/photoScan";
 
-export type PhotoScanStep =
-  | { kind: "pick"; notice: string | null }
-  | { kind: "ready" }
-  | { kind: "scanning"; phase: "preparing" | "uploading" | "recognizing" }
-  | { kind: "failed"; reason: "no_books" | "timeout" | "error" }
-  | { kind: "result"; result: PhotoScanResult };
+export type PhotoScanFailureReason = "unreadable" | "too_large" | "no_books" | "timeout" | "error";
 
-const PREPARE_NOTICES = {
-  too_large: "사진이 너무 커요. 다른 사진을 골라 주세요.",
-  unreadable: "이 사진은 열 수 없어요. JPG나 PNG 사진으로 다시 골라 주세요.",
-};
+export type PhotoScanStep =
+  | { kind: "scanning"; phase: "preparing" | "uploading" | "recognizing" }
+  | { kind: "failed"; reason: PhotoScanFailureReason }
+  | { kind: "result"; result: PhotoScanResult };
 
 export function foundBooks(result: PhotoScanResult): PhotoScanBook[] {
   const books = new Map<string, PhotoScanBook>();
@@ -30,83 +25,79 @@ export function foundBooks(result: PhotoScanResult): PhotoScanBook[] {
   return [...books.values()];
 }
 
+export interface PhotoScanSaved {
+  missedCount: number;
+  savedCount: number;
+}
+
 interface UsePhotoScanOptions {
-  onSaved: (count: number) => void;
+  initialPhoto: File;
+  onSaved: (saved: PhotoScanSaved) => void;
   saveBooks: SaveScannedBooks;
   scanPhoto: ScanPhoto;
 }
 
-export function usePhotoScan({ onSaved, saveBooks, scanPhoto }: UsePhotoScanOptions) {
-  const [step, setStep] = useState<PhotoScanStep>({ kind: "pick", notice: null });
-  const [photo, setPhoto] = useState<{ file: File; url: string } | null>(null);
+const SCANNING: PhotoScanStep = { kind: "scanning", phase: "preparing" };
+
+type ScanOutcome =
+  | { kind: "failed"; reason: PhotoScanFailureReason }
+  | { kind: "result"; result: PhotoScanResult };
+
+async function scanOnce(
+  file: File,
+  scan: ScanPhoto,
+  options: Parameters<ScanPhoto>[1],
+): Promise<ScanOutcome> {
+  const prepared = await preparePhoto(file);
+  if (!prepared.ok) return { kind: "failed", reason: prepared.reason };
+  const scanned = await scan(prepared.photo, options);
+  if (!scanned.ok) return { kind: "failed", reason: scanned.reason };
+  if (scanned.data.photoType === "none" || scanned.data.items.length === 0) {
+    return { kind: "failed", reason: "no_books" };
+  }
+  return { kind: "result", result: scanned.data };
+}
+
+export function usePhotoScan({ initialPhoto, onSaved, saveBooks, scanPhoto }: UsePhotoScanOptions) {
+  const [photo, setPhoto] = useState(initialPhoto);
+  // 같은 사진으로 다시 시도할 때 올린다
+  const [attempt, setAttempt] = useState(0);
+  const [step, setStep] = useState<PhotoScanStep>(SCANNING);
   const [selectedIsbns, setSelectedIsbns] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const scanController = useRef<AbortController | null>(null);
-  const photoUrlRef = useRef<string | null>(null);
+  // 부모가 렌더마다 새 함수를 넘겨도 인식을 다시 시작하지 않게 한다
+  const callScanPhoto = useEffectEvent((...args: Parameters<ScanPhoto>) => scanPhoto(...args));
 
-  // 화면을 떠나면 진행 중인 인식을 멈추고 미리보기 주소를 돌려준다
-  useEffect(
-    () => () => {
-      scanController.current?.abort();
-      if (photoUrlRef.current) URL.revokeObjectURL(photoUrlRef.current);
-    },
-    [],
-  );
-
-  const replacePhoto = (file: File | null) => {
-    if (photoUrlRef.current) URL.revokeObjectURL(photoUrlRef.current);
-    photoUrlRef.current = file ? URL.createObjectURL(file) : null;
-    setPhoto(file && photoUrlRef.current ? { file, url: photoUrlRef.current } : null);
-  };
-
-  const choosePhoto = (file: File) => {
-    replacePhoto(file);
-    setStep({ kind: "ready" });
-  };
-
-  const reset = () => {
-    scanController.current?.abort();
-    scanController.current = null;
-    replacePhoto(null);
-    setSelectedIsbns([]);
-    setSaveError(null);
-    setStep({ kind: "pick", notice: null });
-  };
-
-  const startScan = async () => {
-    if (!photo || step.kind === "scanning") return;
+  // 사진이 바뀌거나 다시 시도하면 처음부터 인식한다. 화면을 떠나면 진행 중인 요청을 멈춘다
+  useEffect(() => {
     const controller = new AbortController();
-    scanController.current = controller;
-    setStep({ kind: "scanning", phase: "preparing" });
-
-    const prepared = await preparePhoto(photo.file);
-    if (controller.signal.aborted) return;
-    if (!prepared.ok) {
-      replacePhoto(null);
-      setStep({ kind: "pick", notice: PREPARE_NOTICES[prepared.reason] });
-      return;
-    }
-
-    const scanned = await scanPhoto(prepared.photo, {
+    const { signal } = controller;
+    void scanOnce(photo, callScanPhoto, {
       onPhase: (phase) => {
-        if (!controller.signal.aborted) setStep({ kind: "scanning", phase });
+        if (!signal.aborted) setStep({ kind: "scanning", phase });
       },
-      signal: controller.signal,
+      signal,
+    }).then((outcome) => {
+      if (signal.aborted) return;
+      if (outcome.kind === "result") {
+        setSelectedIsbns(foundBooks(outcome.result).map((book) => book.isbn));
+      }
+      setStep(outcome);
     });
-    if (controller.signal.aborted) return;
-    scanController.current = null;
+    return () => controller.abort();
+  }, [photo, attempt]);
 
-    if (!scanned.ok) {
-      setStep({ kind: "failed", reason: scanned.reason });
-      return;
-    }
-    if (scanned.data.photoType === "none" || scanned.data.items.length === 0) {
-      setStep({ kind: "failed", reason: "no_books" });
-      return;
-    }
-    setSelectedIsbns(foundBooks(scanned.data).map((book) => book.isbn));
-    setStep({ kind: "result", result: scanned.data });
+  const retake = (file: File) => {
+    setSaveError(null);
+    setSelectedIsbns([]);
+    setStep(SCANNING);
+    setPhoto(file);
+  };
+
+  const retry = () => {
+    setStep(SCANNING);
+    setAttempt((value) => value + 1);
   };
 
   const toggleBook = (isbn: string) => {
@@ -116,7 +107,7 @@ export function usePhotoScan({ onSaved, saveBooks, scanPhoto }: UsePhotoScanOpti
   };
 
   const saveSelected = async () => {
-    if (isSaving || selectedIsbns.length === 0) return;
+    if (isSaving || selectedIsbns.length === 0 || step.kind !== "result") return;
     setIsSaving(true);
     setSaveError(null);
     const saved = await saveBooks(selectedIsbns);
@@ -125,18 +116,20 @@ export function usePhotoScan({ onSaved, saveBooks, scanPhoto }: UsePhotoScanOpti
       setSaveError("책을 담지 못했어요. 다시 시도해 주세요.");
       return;
     }
-    onSaved(selectedIsbns.length);
+    onSaved({
+      missedCount: step.result.items.filter((item) => item.state === "NOT_FOUND").length,
+      savedCount: selectedIsbns.length,
+    });
   };
 
   return {
-    choosePhoto,
     isSaving,
-    photoUrl: photo?.url ?? null,
-    reset,
+    photo,
+    retake,
+    retry,
     saveError,
     saveSelected,
     selectedIsbns,
-    startScan,
     step,
     toggleBook,
   };
