@@ -24,7 +24,7 @@ import type {
   CartProposalViewModel,
   ProposalExecutionStatus,
 } from "@/pages/recommendation-chat/types/chatPresentation";
-import { MAX_CHAT_MESSAGE_LENGTH } from "@/pages/recommendation-chat/lib/chatMessage";
+import { MAX_CHAT_MESSAGE_LENGTH } from "@/features/recommendation/lib/chatMessage";
 import { splitFollowup } from "@/pages/recommendation-chat/lib/followupOptions";
 
 const DECLINED_PROPOSALS_STORAGE_KEY = "bookjeok-chat-declined-proposals";

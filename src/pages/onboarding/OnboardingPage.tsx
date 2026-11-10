@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 
 import { Button } from "@/common/components/Button";
 import { Toast } from "@/common/components/Toast";
@@ -15,6 +15,7 @@ import { SubcategoryStep } from "@/features/onboarding/components/SubcategorySte
 import { useOnboardingFlow } from "@/features/onboarding/hooks/useOnboardingFlow";
 import type { OnboardingFlowMode } from "@/features/onboarding/hooks/useOnboardingFlow";
 import { usePersonalizationConsent } from "@/features/onboarding/hooks/usePersonalizationConsent";
+import { getChatAskReturnTo } from "@/features/recommendation/lib/chatEntry";
 
 const PREFERENCES_PATH = "/my/preferences";
 
@@ -25,6 +26,10 @@ interface OnboardingPageProps {
 export function OnboardingPage({ mode = "initial" }: OnboardingPageProps) {
   const isEditMode = mode === "edit";
   const navigate = useNavigate();
+  const { state } = useLocation();
+  const chatReturnTo = !isEditMode && state && typeof state === "object"
+    ? getChatAskReturnTo(Reflect.get(state, "returnTo"))
+    : null;
   const consentActionRef = useRef(false);
   const [isSubmittingConsent, setIsSubmittingConsent] = useState(false);
   const {
@@ -111,11 +116,11 @@ export function OnboardingPage({ mode = "initial" }: OnboardingPageProps) {
       return;
     }
 
-    navigate("/");
+    navigate(chatReturnTo ?? "/", { replace: chatReturnTo !== null });
   };
 
   if (progressStatus === "completed") {
-    return <Navigate replace to="/" />;
+    return <Navigate replace to={chatReturnTo ?? "/"} />;
   }
 
   if (progressStatus === "incomplete") {

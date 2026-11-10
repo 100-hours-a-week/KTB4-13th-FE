@@ -19,11 +19,18 @@ const tabClassName =
 const activeTabClassName = `${tabClassName} font-semibold text-text-primary`;
 const inactiveTabClassName = `${tabClassName} font-medium text-text-tertiary hover:text-text-secondary`;
 
-function ActiveIndicator() {
+const TAB_COUNT = 4;
+
+// One bar for all tabs that slides to the active one, instead of each tab drawing its own.
+function SlidingIndicator({ index }: { index: number }) {
   return (
     <span
       aria-hidden="true"
-      className="absolute inset-x-6 top-0 h-0.5 rounded-full bg-primary"
+      className="absolute top-0 h-0.5 rounded-full bg-primary transition-[left] duration-(--duration-base) ease-emphasized motion-reduce:transition-none"
+      style={{
+        left: `calc(${(index * 100) / TAB_COUNT}% + 1.5rem)`,
+        width: `calc(${100 / TAB_COUNT}% - 3rem)`,
+      }}
     />
   );
 }
@@ -46,13 +53,15 @@ export function BottomNavigation() {
     !isAiRecommendationActive && !isMyActive && !isNotificationActive;
 
   const isGuest = status === "unauthenticated";
+  const activeIndex = isAiRecommendationActive ? 1 : isNotificationActive ? 2 : isMyActive ? 3 : 0;
 
   return (
     <>
       <nav
         aria-label="주요 메뉴"
-        className="w-full min-w-0 shrink-0 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]"
+        className="relative w-full min-w-0 shrink-0 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]"
       >
+        <SlidingIndicator index={activeIndex} />
         <ul className="grid grid-cols-4">
           <li>
             <Link
@@ -60,7 +69,6 @@ export function BottomNavigation() {
               className={isHomeActive ? activeTabClassName : inactiveTabClassName}
               to="/"
             >
-              {isHomeActive ? <ActiveIndicator /> : null}
               <HomeIcon className="size-6" />홈
             </Link>
           </li>
@@ -91,7 +99,6 @@ export function BottomNavigation() {
                 }
                 to={AI_RECOMMENDATION_PATH}
               >
-                {isAiRecommendationActive ? <ActiveIndicator /> : null}
                 <SparkleIcon className="size-6" />
                 AI 추천
               </Link>
@@ -118,7 +125,6 @@ export function BottomNavigation() {
                 className={isNotificationActive ? activeTabClassName : inactiveTabClassName}
                 to={NOTIFICATION_PATH}
               >
-                {isNotificationActive ? <ActiveIndicator /> : null}
                 <BellIcon className="size-6" />알림
               </Link>
             )}
@@ -145,7 +151,6 @@ export function BottomNavigation() {
                 className={isMyActive ? activeTabClassName : inactiveTabClassName}
                 to={MY_PATH}
               >
-                {isMyActive ? <ActiveIndicator /> : null}
                 <UserIcon className="size-6" />
                 마이
               </Link>
