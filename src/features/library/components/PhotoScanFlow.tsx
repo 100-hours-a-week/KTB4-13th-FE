@@ -9,10 +9,9 @@ import {
   foundBooks,
   usePhotoScan,
   type PhotoScanFailureReason,
-  type PhotoScanSaved,
   type PhotoScanStep,
 } from "@/features/library/hooks/usePhotoScan";
-import type { PhotoScanBook, SaveScannedBooks, ScanPhoto } from "@/features/library/types/photoScan";
+import type { PhotoScanBook, PhotoScanSaved, SaveScannedBooks, ScanPhoto } from "@/features/library/types/photoScan";
 import { AppPageHeader } from "@/features/navigation/components/AppPageHeader";
 
 interface PhotoScanFlowProps {
