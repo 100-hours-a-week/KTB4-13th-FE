@@ -1,6 +1,6 @@
 import type { MouseEvent } from "react";
 
-import { ArrowLeftIcon } from "@/common/components/AppIcons";
+import { ArrowLeftIcon, HistoryIcon } from "@/common/components/AppIcons";
 import { CartButton } from "@/features/cart/components/CartButton";
 import { ASSISTANT_NAME, AssistantAvatar } from "@/pages/recommendation-chat/components/AssistantAvatar";
 
@@ -37,9 +37,7 @@ export function ChatHeader({ onBack, onCartClick, onSessionListClick }: ChatHead
         onClick={onSessionListClick}
         type="button"
       >
-        <svg aria-hidden="true" className="size-6" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" viewBox="0 0 24 24">
-          <path d="M5 7h14M5 12h14M5 17h9" />
-        </svg>
+        <HistoryIcon className="size-6" />
       </button>
       <CartButton
         className={`${iconButtonClassName} -mr-2`}

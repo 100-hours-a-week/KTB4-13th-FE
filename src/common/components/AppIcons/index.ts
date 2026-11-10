@@ -3,6 +3,7 @@ export {
   BellIcon,
   CameraIcon,
   CartIcon,
+  HistoryIcon,
   HomeIcon,
   SearchIcon,
   SparkleIcon,
