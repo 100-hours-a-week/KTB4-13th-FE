@@ -34,6 +34,21 @@ function isCartItemIds(value: unknown): value is number[] {
   );
 }
 
+function readAgentCheckout(value: unknown): OrderNavigationState["agentCheckout"] {
+  if (!isRecord(value)) return undefined;
+  const { couponId, point } = value;
+  if (
+    (couponId !== null &&
+      (typeof couponId !== "number" || !Number.isSafeInteger(couponId) || couponId <= 0)) ||
+    typeof point !== "number" ||
+    !Number.isSafeInteger(point) ||
+    point < 0
+  ) {
+    return undefined;
+  }
+  return { couponId, point };
+}
+
 export function readOrderNavigationState(
   value: unknown,
 ): OrderNavigationState | null {
@@ -47,6 +62,7 @@ export function readOrderNavigationState(
   }
 
   return {
+    agentCheckout: readAgentCheckout(value.agentCheckout),
     cartItemIds: isCartItemIds(value.cartItemIds) ? value.cartItemIds : [],
     items: value.items,
   };

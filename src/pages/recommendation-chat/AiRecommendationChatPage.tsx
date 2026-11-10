@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { RetryButton } from "@/common/components/RetryButton";
@@ -8,6 +8,8 @@ import { ChatHeader } from "@/pages/recommendation-chat/components/ChatHeader";
 import { ChatMessageList } from "@/pages/recommendation-chat/components/ChatMessageList";
 import { ChatSessionList } from "@/pages/recommendation-chat/components/ChatSessionList";
 import { useRecommendationChat } from "@/pages/recommendation-chat/hooks/useRecommendationChat";
+import { loadAgentCheckout } from "@/pages/recommendation-chat/lib/agentCheckout";
+import type { ChatCheckout } from "@/pages/recommendation-chat/types/chatPresentation";
 
 export function AiRecommendationChatPage() {
   const navigate = useNavigate();
@@ -17,9 +19,57 @@ export function AiRecommendationChatPage() {
   const [isSessionListOpen, setIsSessionListOpen] = useState(false);
   const sessionListTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [attachmentNotice, setAttachmentNotice] = useState(false);
-  const chat = useRecommendationChat(initialSessionId, (sessionId) => {
-    navigate(sessionId ? `/recommendations/chat?sessionId=${sessionId}` : "/recommendations/chat", { replace: true });
-  });
+  const [checkoutStatus, setCheckoutStatus] = useState<"idle" | "loading" | "error">("idle");
+  const checkoutRequestRef = useRef<AbortController | null | undefined>(undefined);
+
+  useEffect(() => {
+    checkoutRequestRef.current = null;
+    return () => {
+      checkoutRequestRef.current?.abort();
+      checkoutRequestRef.current = undefined;
+    };
+  }, []);
+
+  const handleOpenCheckout = async (checkout: ChatCheckout) => {
+    if (checkoutRequestRef.current !== null) return;
+    const controller = new AbortController();
+    checkoutRequestRef.current = controller;
+    setCheckoutStatus("loading");
+    const result = await loadAgentCheckout(checkout, controller.signal);
+    if (controller.signal.aborted) return;
+
+    checkoutRequestRef.current = null;
+    if (result.kind === "ready") {
+      setCheckoutStatus("idle");
+      navigate("/order", { state: result.state });
+    } else if (result.kind === "empty") {
+      setCheckoutStatus("idle");
+      navigate("/cart");
+    } else {
+      setCheckoutStatus("error");
+    }
+  };
+
+  const resetCheckout = () => {
+    checkoutRequestRef.current?.abort();
+    checkoutRequestRef.current = null;
+    setCheckoutStatus("idle");
+  };
+
+  const chat = useRecommendationChat(
+    initialSessionId,
+    (sessionId) => {
+      if (checkoutRequestRef.current === undefined) return;
+      resetCheckout();
+      navigate(sessionId ? `/recommendations/chat?sessionId=${sessionId}` : "/recommendations/chat", { replace: true });
+    },
+    handleOpenCheckout,
+  );
+
+  const handleSend = (message: string) => {
+    resetCheckout();
+    chat.sendMessage(message);
+  };
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -61,17 +111,33 @@ export function AiRecommendationChatPage() {
           </div>
         ) : (
           <ChatMessageList
+            isCheckoutLoading={checkoutStatus === "loading"}
             messages={chat.messages}
             onConfirmProposal={chat.confirmProposal}
             onDeclineProposal={chat.declineProposal}
-            onQuickMessage={chat.sendMessage}
-            onRetry={chat.retry}
+            onOpenCheckout={handleOpenCheckout}
+            onQuickMessage={handleSend}
+            onRetry={(messageId) => {
+              resetCheckout();
+              chat.retry(messageId);
+            }}
             onRetryProposal={chat.retryProposal}
             status={chat.status}
           />
         )}
       </main>
 
+      {checkoutStatus !== "idle" ? (
+        <div className="page-content shrink-0 bg-background pb-2">
+          {checkoutStatus === "loading" ? (
+            <p className="type-body-small text-text-secondary" role="status">
+              주문할 책을 확인하고 있어요
+            </p>
+          ) : (
+            <Toast variant="error">주문 정보를 불러오지 못했어요. 주문 화면 버튼을 다시 눌러 주세요.</Toast>
+          )}
+        </div>
+      ) : null}
       {attachmentNotice ? (
         <div className="page-content shrink-0 bg-background pb-2">
           <Toast>사진으로 책 찾기는 아직 지원하지 않아요. 제목이나 작가를 입력해 주세요.</Toast>
@@ -79,7 +145,7 @@ export function AiRecommendationChatPage() {
       ) : null}
       <ChatComposer
         onAttachClick={() => setAttachmentNotice(true)}
-        onSend={chat.sendMessage}
+        onSend={handleSend}
         status={chat.status}
       />
       <ChatSessionList activeSessionId={chat.sessionId} hasError={chat.sessionsError} isOpen={isSessionListOpen} onClose={() => setIsSessionListOpen(false)} onNewSession={chat.startNewSession} onRetry={() => { void chat.loadSessions(); }} onSelect={chat.selectSession} returnFocusRef={sessionListTriggerRef} sessions={chat.sessions} />

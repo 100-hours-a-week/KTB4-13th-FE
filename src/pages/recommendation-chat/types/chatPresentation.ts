@@ -1,3 +1,11 @@
+import type { AgentButton, AgentCheckout } from "@/features/recommendation/types/recommendationChat";
+
+export interface ChatCheckout {
+  benefits: AgentCheckout | null;
+  executionId: number;
+  label: string;
+}
+
 export type ChatPresentationStatus = "idle" | "sending" | "error";
 
 export type ChatErrorReason = "invalid-request" | "busy" | "timeout" | "error";
@@ -49,12 +57,8 @@ export type ChatPresentationMessage =
       role: "user";
     }
   | {
-      agentButtons?: Array<{
-        action: string;
-        label: string;
-        proposalId: number | null;
-        target: string | null;
-      }>;
+      agentButtons?: AgentButton[];
+      checkout?: ChatCheckout;
       content: string;
       executionStatus?: ProposalExecutionStatus;
       id: string;

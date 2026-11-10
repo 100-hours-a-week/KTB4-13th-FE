@@ -54,7 +54,7 @@ export type AgentCartProposalStatus =
   | "invalidated"
   | "pending";
 
-export interface AgentCartProposalItem {
+export interface AgentCartChangeItem {
   expectedQuantity: number;
   expectedUnitPrice: number | null;
   operation: "remove" | "set";
@@ -65,14 +65,20 @@ export interface AgentCartProposalItem {
 export interface AgentCartProposal {
   executionId: number | null;
   expiresAt: string;
-  items: AgentCartProposalItem[];
+  items: AgentCartChangeItem[];
   proposalId: number;
   status: AgentCartProposalStatus;
+}
+
+export interface AgentCheckout {
+  useOwnedCouponId: number | null;
+  usePoint: number;
 }
 
 export interface SessionChatReply {
   buttons: AgentButton[];
   cards: RecommendationChatCard[];
+  checkout: AgentCheckout | null;
   execution: AgentExecution | null;
   followup: string | null;
   reply: string;

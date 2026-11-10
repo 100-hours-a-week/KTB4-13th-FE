@@ -1,10 +1,10 @@
 import type { OrderTotals } from "@/pages/order/lib/orderTotals";
-import { formatWon } from "@/pages/order/lib/orderTotals";
-import type { OwnedCoupon } from "@/features/benefit/types/benefit";
+import { formatWon, isUsableCoupon } from "@/pages/order/lib/orderTotals";
 import type { OrderBenefitsState } from "@/pages/order/hooks/useOrderBenefits";
 
 interface BenefitSectionProps {
   pointAmount: number;
+  pointLimit: number;
   selectedCouponId: number | null;
   state: OrderBenefitsState;
   subtotal: number;
@@ -13,13 +13,7 @@ interface BenefitSectionProps {
   onSelectCoupon: (value: number | null) => void;
 }
 
-function isUsableCoupon(coupon: OwnedCoupon, subtotal: number) {
-  return coupon.state === "ISSUED" &&
-    new Date(coupon.expiredAt).getTime() > Date.now() &&
-    subtotal >= coupon.minOrderAmount;
-}
-
-export function BenefitSection({ pointAmount, selectedCouponId, state, subtotal, onPointChange, onRetry, onSelectCoupon }: BenefitSectionProps) {
+export function BenefitSection({ pointAmount, pointLimit, selectedCouponId, state, subtotal, onPointChange, onRetry, onSelectCoupon }: BenefitSectionProps) {
   if (state.kind === "loading") {
     return <section aria-busy="true"><h2 className="type-title">쿠폰·포인트</h2><p className="mt-3 type-body-small text-text-tertiary" role="status">사용 가능한 혜택을 확인하고 있어요</p></section>;
   }
@@ -36,11 +30,11 @@ export function BenefitSection({ pointAmount, selectedCouponId, state, subtotal,
         <option value="">사용 안 함</option>
         {availableCoupons.map((coupon) => <option key={coupon.id} value={coupon.id}>{coupon.name}</option>)}
       </select>
-      {state.coupons.length > 0 && availableCoupons.length === 0 ? <p className="mt-2 type-caption text-text-tertiary">현재 주문에 최소 금액과 사용 기간을 충족하는 쿠폰이 없어요.</p> : null}
+      {state.coupons.length > 0 && availableCoupons.length === 0 ? <p className="mt-2 type-caption text-text-tertiary">현재 주문에 사용할 수 있는 쿠폰이 없어요.</p> : null}
       <label className="mt-5 block type-body-small font-medium" htmlFor="order-point">포인트</label>
       <div className="mt-2 flex items-center gap-2">
-        <input className="min-h-12 min-w-0 flex-1 rounded-control border border-border px-3 text-right type-body-small tabular-nums focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" id="order-point" inputMode="numeric" max={Math.min(state.balance, subtotal)} min={0} onChange={(event) => onPointChange(Math.min(Math.max(0, Number(event.target.value) || 0), state.balance, subtotal))} type="number" value={pointAmount} />
-        <button className="min-h-12 shrink-0 rounded-control border border-border px-3 type-body-small font-semibold" onClick={() => onPointChange(Math.min(state.balance, subtotal))} type="button">전액 사용</button>
+        <input className="min-h-12 min-w-0 flex-1 rounded-control border border-border px-3 text-right type-body-small tabular-nums focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" id="order-point" inputMode="numeric" max={pointLimit} min={0} onChange={(event) => onPointChange(Math.min(Math.max(0, Number(event.target.value) || 0), pointLimit))} type="number" value={pointAmount} />
+        <button className="min-h-12 shrink-0 rounded-control border border-border px-3 type-body-small font-semibold" onClick={() => onPointChange(pointLimit)} type="button">전액 사용</button>
       </div>
       <p className="mt-2 text-right type-caption text-text-tertiary">보유 {formatWon(state.balance)}</p>
     </section>
