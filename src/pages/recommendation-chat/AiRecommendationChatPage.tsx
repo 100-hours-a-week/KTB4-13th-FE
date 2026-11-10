@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
-import { CHAT_ASK_PARAM, readChatAsk } from "@/features/recommendation/lib/chatEntry";
+import { CHAT_ASK_PARAM, consumeChatAsk, readChatAsk } from "@/features/recommendation/lib/chatEntry";
 import { ChatComposer } from "@/pages/recommendation-chat/components/ChatComposer";
 import { ChatHeader } from "@/pages/recommendation-chat/components/ChatHeader";
 import { ChatMessageList } from "@/pages/recommendation-chat/components/ChatMessageList";
@@ -72,8 +72,8 @@ export function AiRecommendationChatPage() {
   };
 
   const askedMessage = initialSessionId === null ? readChatAsk(location.search) : null;
-  const sentAskKeyRef = useRef<string | null>(null);
   const sendEntryQuestion = useEffectEvent((question: string) => {
+    // The selection is single-use. Clear it from the URL as the chat begins.
     const params = new URLSearchParams(location.search);
     params.delete(CHAT_ASK_PARAM);
     navigate({ pathname: location.pathname, search: params.toString(), hash: location.hash }, { replace: true });
@@ -81,10 +81,11 @@ export function AiRecommendationChatPage() {
   });
 
   useEffect(() => {
-    if (!askedMessage || chat.isHistoryLoading || sentAskKeyRef.current === location.key) return;
-    // Replacing the URL prevents reload/back from sending again. The key also covers effect replay.
-    sentAskKeyRef.current = location.key;
-    sendEntryQuestion(askedMessage);
+    if (!askedMessage || chat.isHistoryLoading) return;
+    const timer = window.setTimeout(() => {
+      if (consumeChatAsk(askedMessage)) sendEntryQuestion(askedMessage);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [askedMessage, chat.isHistoryLoading, location.key]);
 
   const handleBack = () => {
@@ -154,7 +155,12 @@ export function AiRecommendationChatPage() {
           )}
         </div>
       ) : null}
-      <ChatComposer onSend={handleSend} status={chat.status} />
+      <ChatComposer
+        initialDraft={askedMessage ?? ""}
+        key={askedMessage ? `ask:${askedMessage}` : "chat"}
+        onSend={handleSend}
+        status={chat.status}
+      />
       <ChatSessionList activeSessionId={chat.sessionId} hasError={chat.sessionsError} isOpen={isSessionListOpen} onClose={() => setIsSessionListOpen(false)} onNewSession={chat.startNewSession} onRetry={() => { void chat.loadSessions(); }} onSelect={chat.selectSession} returnFocusRef={sessionListTriggerRef} sessions={chat.sessions} />
     </div>
   );

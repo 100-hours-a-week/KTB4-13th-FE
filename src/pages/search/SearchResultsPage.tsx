@@ -65,7 +65,7 @@ export function SearchResultsPage() {
       <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
         {showAskCard ? (
           <div className="page-content pt-4">
-            <AskBookjeogiCard hasNoResults={searchResults.state.kind === "empty"} query={request.query} />
+            <AskBookjeogiCard query={request.query} />
           </div>
         ) : null}
         <SearchResultToolbar

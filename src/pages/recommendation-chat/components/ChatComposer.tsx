@@ -10,12 +10,13 @@ import { MAX_CHAT_MESSAGE_LENGTH } from "@/features/recommendation/lib/chatMessa
 import type { ChatPresentationStatus } from "@/pages/recommendation-chat/types/chatPresentation";
 
 interface ChatComposerProps {
+  initialDraft?: string;
   onSend: (message: string) => void;
   status: ChatPresentationStatus;
 }
 
-export function ChatComposer({ onSend, status }: ChatComposerProps) {
-  const [draft, setDraft] = useState("");
+export function ChatComposer({ initialDraft = "", onSend, status }: ChatComposerProps) {
+  const [draft, setDraft] = useState(initialDraft);
   const isComposingRef = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isSending = status === "sending";

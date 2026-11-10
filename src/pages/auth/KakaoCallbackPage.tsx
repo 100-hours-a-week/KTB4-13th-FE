@@ -14,6 +14,7 @@ import {
 } from "@/features/auth/storage/loginReturnTo";
 import { OnboardingEntryError } from "@/features/onboarding/components/OnboardingEntryError";
 import { useOnboardingEntryPath } from "@/features/onboarding/hooks/useOnboardingEntryPath";
+import { getChatAskReturnTo } from "@/features/recommendation/lib/chatEntry";
 
 type CallbackStatus = "loading" | "success" | "error";
 
@@ -25,12 +26,12 @@ const callbackMessages = {
   success: "로그인이 완료되었어요",
 } as const;
 
-function LoginRedirect({ to }: { to: string }) {
+function LoginRedirect({ returnTo, to }: { returnTo?: string | null; to: string }) {
   useEffect(() => {
     clearLoginReturnTo();
   }, []);
 
-  return <Navigate replace to={to} />;
+  return <Navigate replace state={returnTo ? { returnTo } : undefined} to={to} />;
 }
 
 export function KakaoCallbackPage() {
@@ -118,7 +119,10 @@ export function KakaoCallbackPage() {
 
   if (status === "success" && entry.kind === "ready") {
     return (
-      <LoginRedirect to={entry.path === "/" ? (returnTo ?? "/") : entry.path} />
+      <LoginRedirect
+        returnTo={entry.path === "/onboarding" ? getChatAskReturnTo(returnTo) : null}
+        to={entry.path === "/" ? (returnTo ?? "/") : entry.path}
+      />
     );
   }
 
