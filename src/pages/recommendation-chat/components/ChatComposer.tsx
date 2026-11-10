@@ -10,20 +10,16 @@ import { MAX_CHAT_MESSAGE_LENGTH } from "@/pages/recommendation-chat/lib/chatMes
 import type { ChatPresentationStatus } from "@/pages/recommendation-chat/types/chatPresentation";
 
 interface ChatComposerProps {
-  onAttachClick: () => void;
   onSend: (message: string) => void;
   status: ChatPresentationStatus;
 }
 
-export function ChatComposer({
-  onAttachClick,
-  onSend,
-  status,
-}: ChatComposerProps) {
+export function ChatComposer({ onSend, status }: ChatComposerProps) {
   const [draft, setDraft] = useState("");
   const isComposingRef = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isSending = status === "sending";
+  // The field stays writable while a reply is coming, so the next message can be typed; only sending waits.
   const canSend = draft.trim().length > 0 && !isSending;
 
   // Grow with the draft up to the CSS max height, then scroll inside the field.
@@ -64,21 +60,12 @@ export function ChatComposer({
       className="page-content flex shrink-0 items-end gap-2 border-t border-hairline bg-surface py-2.5"
       onSubmit={handleSubmit}
     >
-      <button
-        aria-label="이미지 첨부"
-        className="mb-0.5 inline-flex size-10 shrink-0 items-center justify-center rounded-full type-heading font-normal text-text-secondary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-        onClick={onAttachClick}
-        type="button"
-      >
-        <span aria-hidden="true">+</span>
-      </button>
       <div className="flex min-w-0 flex-1 items-end gap-1 rounded-3xl border border-transparent bg-muted py-1 pl-4 pr-1 transition-colors focus-within:border-primary focus-within:bg-surface">
         <label className="min-w-0 flex-1">
           <span className="sr-only">북적이에게 보낼 메시지</span>
           <textarea
             autoComplete="off"
-            className="block max-h-30 w-full resize-none bg-transparent py-1.5 text-base leading-6 text-text-primary outline-none placeholder:text-text-tertiary disabled:cursor-not-allowed disabled:text-text-disabled"
-            disabled={isSending}
+            className="block max-h-30 w-full resize-none bg-transparent py-1.5 text-base leading-6 text-text-primary outline-none placeholder:text-text-tertiary"
             enterKeyHint="send"
             maxLength={MAX_CHAT_MESSAGE_LENGTH}
             onChange={(event) => setDraft(event.target.value)}

@@ -18,7 +18,6 @@ export function AiRecommendationChatPage() {
   const initialSessionId = Number.isSafeInteger(parsedSessionId) && parsedSessionId > 0 ? parsedSessionId : null;
   const [isSessionListOpen, setIsSessionListOpen] = useState(false);
   const sessionListTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const [attachmentNotice, setAttachmentNotice] = useState(false);
   const [checkoutStatus, setCheckoutStatus] = useState<"idle" | "loading" | "error">("idle");
   const checkoutRequestRef = useRef<AbortController | null | undefined>(undefined);
 
@@ -138,16 +137,7 @@ export function AiRecommendationChatPage() {
           )}
         </div>
       ) : null}
-      {attachmentNotice ? (
-        <div className="page-content shrink-0 bg-background pb-2">
-          <Toast>사진으로 책 찾기는 아직 지원하지 않아요. 제목이나 작가를 입력해 주세요.</Toast>
-        </div>
-      ) : null}
-      <ChatComposer
-        onAttachClick={() => setAttachmentNotice(true)}
-        onSend={handleSend}
-        status={chat.status}
-      />
+      <ChatComposer onSend={handleSend} status={chat.status} />
       <ChatSessionList activeSessionId={chat.sessionId} hasError={chat.sessionsError} isOpen={isSessionListOpen} onClose={() => setIsSessionListOpen(false)} onNewSession={chat.startNewSession} onRetry={() => { void chat.loadSessions(); }} onSelect={chat.selectSession} returnFocusRef={sessionListTriggerRef} sessions={chat.sessions} />
     </div>
   );
