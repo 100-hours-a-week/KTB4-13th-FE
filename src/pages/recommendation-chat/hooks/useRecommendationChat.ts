@@ -17,6 +17,7 @@ import type {
   SessionChatReply,
 } from "@/features/recommendation/types/recommendationChat";
 import type {
+  ChatCheckout,
   ChatPresentationMessage,
   ChatPresentationStatus,
   CartProposalViewModel,
@@ -33,10 +34,25 @@ function replyContent(reply: SessionChatReply) {
 function toAssistantMessage(
   id: string,
   reply: SessionChatReply,
-): ChatPresentationMessage {
+): Extract<ChatPresentationMessage, { role: "assistant" }> {
   const executionStatus = reply.execution?.status;
+  const executionId = reply.execution?.executionId;
+  const checkoutButton = reply.buttons.find(
+    (button) => button.action === "navigate" && button.target === "ORDER-001",
+  );
+  const hasCheckout =
+    reply.route === "shop" &&
+    executionStatus === "applied" &&
+    typeof executionId === "number" &&
+    Number.isSafeInteger(executionId) &&
+    executionId > 0 &&
+    checkoutButton !== undefined;
+
   return {
     agentButtons: reply.buttons,
+    checkout: hasCheckout
+      ? { benefits: reply.checkout, executionId, label: checkoutButton.label }
+      : undefined,
     content: replyContent(reply),
     executionStatus:
       executionStatus === "rejected"
@@ -175,6 +191,7 @@ async function restoreProposalStatuses(
 export function useRecommendationChat(
   initialSessionId: number | null,
   onSessionChange: (sessionId: number | null) => void,
+  onCheckout: (checkout: ChatCheckout) => void,
 ) {
   const [messages, setMessages] = useState<ChatPresentationMessage[]>([]);
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
@@ -345,6 +362,7 @@ export function useRecommendationChat(
     setMessages((current) => [...current, restoredAssistantMessage]);
     setStatus("idle");
     void loadSessions();
+    if (assistantMessage.checkout) onCheckout(assistantMessage.checkout);
   };
 
   const sendMessage = (content: string) => {

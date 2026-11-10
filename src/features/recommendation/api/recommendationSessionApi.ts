@@ -1,15 +1,18 @@
 import { parseApiResponse } from "@/common/api/apiResponse";
 import { fetchWithAuth } from "@/features/auth/lib/httpClient";
 import type {
-  AgentCartProposal,
-  AgentCartProposalItem,
   AgentButton,
+  AgentCartChangeItem,
+  AgentCartProposal,
+  AgentCheckout,
   AgentExecution,
   ChatHistoryMessage,
   ChatSessionSummary,
   RecommendationChatCard,
   SessionChatReply,
 } from "@/features/recommendation/types/recommendationChat";
+
+const HISTORY_PAGE_SIZE = 100;
 
 type ApiFailure = { ok: false; reason: "invalid-request" | "busy" | "timeout" | "error" };
 
@@ -51,7 +54,7 @@ function parseExecution(value: unknown): AgentExecution | null | undefined {
   return { executionId: value.executionId ?? null, proposalId: value.proposalId ?? null, rejectionCode: value.rejectionCode ?? null, status: value.status };
 }
 
-function parseProposalItem(value: unknown): AgentCartProposalItem | null {
+function parseCartChangeItem(value: unknown): AgentCartChangeItem | null {
   if (
     !isRecord(value) ||
     typeof value.productId !== "number" ||
@@ -87,8 +90,8 @@ function parseProposal(value: unknown): AgentCartProposal | null {
     return null;
   }
 
-  const items = value.items.map(parseProposalItem);
-  if (!items.every((item): item is AgentCartProposalItem => item !== null)) {
+  const items = value.items.map(parseCartChangeItem);
+  if (!items.every((item): item is AgentCartChangeItem => item !== null)) {
     return null;
   }
 
@@ -99,6 +102,21 @@ function parseProposal(value: unknown): AgentCartProposal | null {
     proposalId: value.proposalId,
     status: value.status,
   };
+}
+
+function parseCheckout(value: unknown): AgentCheckout | null {
+  if (!isRecord(value)) return null;
+  const { useOwnedCouponId, usePoint } = value;
+  if (
+    (useOwnedCouponId !== null &&
+      (typeof useOwnedCouponId !== "number" || !Number.isSafeInteger(useOwnedCouponId) || useOwnedCouponId <= 0)) ||
+    typeof usePoint !== "number" ||
+    !Number.isSafeInteger(usePoint) ||
+    usePoint < 0
+  ) {
+    return null;
+  }
+  return { useOwnedCouponId, usePoint };
 }
 
 function parseReply(value: unknown): SessionChatReply | null {
@@ -115,7 +133,15 @@ function parseReply(value: unknown): SessionChatReply | null {
   const execution = parseExecution(value.execution);
   if (!cards.every((card): card is RecommendationChatCard => card !== null) || execution === undefined) return null;
   const route = value.route === "recommend" || value.route === "shop" ? value.route : null;
-  return { buttons, cards, execution, followup: value.followup ?? null, reply: value.reply, route };
+  return {
+    buttons,
+    cards,
+    checkout: route === "shop" ? parseCheckout(value.checkout) : null,
+    execution,
+    followup: value.followup ?? null,
+    reply: value.reply,
+    route,
+  };
 }
 
 function failure(status: number): ApiFailure {
@@ -144,19 +170,60 @@ export async function fetchChatSessions(signal?: AbortSignal): Promise<{ data: C
   } catch { return { ok: false, reason: "error" }; }
 }
 
-export async function fetchChatHistory(sessionId: number, signal?: AbortSignal): Promise<{ data: ChatHistoryMessage[]; ok: true } | ApiFailure> {
+export async function fetchChatHistory(
+  sessionId: number,
+  signal?: AbortSignal,
+): Promise<{ data: ChatHistoryMessage[]; ok: true } | ApiFailure> {
+  const messages: ChatHistoryMessage[] = [];
+  let afterSequence = 0;
+
   try {
-    const result = await parseApiResponse(await fetchWithAuth(`/api/v1/recommend/chat/sessions/${sessionId}/messages?afterSequence=0&limit=100`, { signal }));
-    if (!result.ok) return failure(result.status);
-    if (!isRecord(result.data) || !Array.isArray(result.data.messages)) return { ok: false, reason: "error" };
-    const messages = result.data.messages.map((value): ChatHistoryMessage | null => {
-      if (!isRecord(value) || typeof value.id !== "number" || typeof value.sequence !== "number" || (value.role !== "user" && value.role !== "assistant") || typeof value.text !== "string" || typeof value.createdAt !== "string") return null;
-      const response = value.response === null || value.response === undefined ? null : parseReply(value.response);
-      if (value.response !== null && value.response !== undefined && response === null) return null;
-      return { createdAt: value.createdAt, id: value.id, response, role: value.role, sequence: value.sequence, text: value.text };
-    });
-    return messages.every((message): message is ChatHistoryMessage => message !== null) ? { data: messages, ok: true } : { ok: false, reason: "error" };
-  } catch { return { ok: false, reason: "error" }; }
+    while (!signal?.aborted) {
+      const result = await parseApiResponse(
+        await fetchWithAuth(
+          `/api/v1/recommend/chat/sessions/${sessionId}/messages?afterSequence=${afterSequence}&limit=${HISTORY_PAGE_SIZE}`,
+          { signal },
+        ),
+      );
+      if (!result.ok) return failure(result.status);
+      if (!isRecord(result.data) || !Array.isArray(result.data.messages)) {
+        return { ok: false, reason: "error" };
+      }
+
+      for (const value of result.data.messages) {
+        if (
+          !isRecord(value) ||
+          typeof value.id !== "number" ||
+          typeof value.sequence !== "number" ||
+          !Number.isSafeInteger(value.sequence) ||
+          value.sequence <= afterSequence ||
+          (value.role !== "user" && value.role !== "assistant") ||
+          typeof value.text !== "string" ||
+          typeof value.createdAt !== "string"
+        ) {
+          return { ok: false, reason: "error" };
+        }
+        const response = value.response == null ? null : parseReply(value.response);
+        if (value.response != null && response === null) return { ok: false, reason: "error" };
+        messages.push({
+          createdAt: value.createdAt,
+          id: value.id,
+          response,
+          role: value.role,
+          sequence: value.sequence,
+          text: value.text,
+        });
+        afterSequence = value.sequence;
+      }
+
+      if (result.data.messages.length < HISTORY_PAGE_SIZE) {
+        return { data: messages, ok: true };
+      }
+    }
+  } catch {
+    return { ok: false, reason: "error" };
+  }
+  return { ok: false, reason: "error" };
 }
 
 export async function sendSessionMessage(sessionId: number, message: string, excludeBookIds: number[]): Promise<{ data: SessionChatReply; ok: true } | ApiFailure> {
@@ -183,6 +250,31 @@ export async function confirmCartProposal(proposalId: number, idempotencyKey: st
     if (!isRecord(result.data) || typeof result.data.executionId !== "number" || typeof result.data.proposalId !== "number" || typeof result.data.appliedAt !== "string") return { ok: false, reason: "error" };
     return { data: { executionId: result.data.executionId, proposalId: result.data.proposalId, rejectionCode: null, status: "executed" }, ok: true };
   } catch { return { ok: false, reason: "error" }; }
+}
+
+export async function fetchAgentCartExecution(
+  executionId: number,
+  signal?: AbortSignal,
+): Promise<{ data: AgentCartChangeItem[]; ok: true } | ApiFailure> {
+  try {
+    const result = await parseApiResponse(
+      await fetchWithAuth(`/api/v1/agent/cart/executions/${executionId}`, { signal }),
+    );
+    if (!result.ok) return failure(result.status);
+    if (
+      !isRecord(result.data) ||
+      result.data.executionId !== executionId ||
+      !Array.isArray(result.data.items)
+    ) {
+      return { ok: false, reason: "error" };
+    }
+    const items = result.data.items.map(parseCartChangeItem);
+    return items.every((item): item is AgentCartChangeItem => item !== null)
+      ? { data: items, ok: true }
+      : { ok: false, reason: "error" };
+  } catch {
+    return { ok: false, reason: "error" };
+  }
 }
 
 export async function fetchCartProposal(

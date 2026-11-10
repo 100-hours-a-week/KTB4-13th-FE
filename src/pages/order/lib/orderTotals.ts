@@ -1,3 +1,4 @@
+import type { OwnedCoupon } from "@/features/benefit/types/benefit";
 import type { OrderItemViewModel } from "@/features/order/types/order";
 
 export interface OrderTotals {
@@ -6,6 +7,19 @@ export interface OrderTotals {
   shippingFee: number;
   subtotal: number;
   total: number;
+}
+
+export function getCouponDiscount(coupon: OwnedCoupon | null, subtotal: number) {
+  if (coupon?.type === "FIXED_AMOUNT") return coupon.discount;
+  if (coupon?.type === "PERCENT_RATE") return subtotal * coupon.discount;
+  return 0;
+}
+
+export function isUsableCoupon(coupon: OwnedCoupon, subtotal: number) {
+  return coupon.state === "ISSUED" &&
+    new Date(coupon.expiredAt).getTime() > Date.now() &&
+    subtotal >= coupon.minOrderAmount &&
+    getCouponDiscount(coupon, subtotal) <= subtotal;
 }
 
 export function calculateOrderTotals(

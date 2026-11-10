@@ -11,7 +11,6 @@ import {
   readOrderNavigationState,
   toCreateOrderItems,
 } from "@/features/order/lib/orderNavigation";
-import type { OwnedCoupon } from "@/features/benefit/types/benefit";
 import { AddressSection } from "@/pages/order/components/AddressSection";
 import { OrderItemsSection } from "@/pages/order/components/OrderItemsSection";
 import {
@@ -34,6 +33,8 @@ import type {
 import {
   calculateOrderTotals,
   formatWon,
+  getCouponDiscount,
+  isUsableCoupon,
 } from "@/pages/order/lib/orderTotals";
 
 const ORDER_ADDRESS_REQUIRED_NOTICE =
@@ -51,15 +52,22 @@ export function OrderPage() {
   const navigationState = readOrderNavigationState(location.state);
   const items = navigationState?.items ?? [];
   const cartItemIds = navigationState?.cartItemIds ?? [];
+  const agentCheckout = navigationState?.agentCheckout;
   const benefits = useOrderBenefits(items.map((item) => item.productId).join(","));
-  const [selectedCouponId, setSelectedCouponId] = useState<number | null>(null);
-  const [pointAmount, setPointAmount] = useState(0);
-  const selectedCoupon = benefits.state.kind === "ready"
-    ? benefits.state.coupons.find((coupon) => coupon.id === selectedCouponId) ?? null
-    : null;
+  const [requestedCouponId, setRequestedCouponId] = useState<number | null>(agentCheckout?.couponId ?? null);
+  const [pointAmount, setPointAmount] = useState(agentCheckout?.point ?? 0);
   const subtotal = calculateOrderTotals(items).subtotal;
+  const selectedCoupon = benefits.state.kind === "ready"
+    ? benefits.state.coupons.find(
+        (coupon) => coupon.id === requestedCouponId && isUsableCoupon(coupon, subtotal),
+      ) ?? null
+    : null;
+  const selectedCouponId = selectedCoupon?.id ?? null;
   const couponDiscount = getCouponDiscount(selectedCoupon, subtotal);
-  const appliedPoint = Math.min(pointAmount, Math.max(0, subtotal - couponDiscount));
+  const pointLimit = benefits.state.kind === "ready"
+    ? Math.min(benefits.state.balance, Math.max(0, subtotal - couponDiscount))
+    : 0;
+  const appliedPoint = Math.min(pointAmount, pointLimit);
   const totals = calculateOrderTotals(items, couponDiscount, appliedPoint);
   const defaultAddress =
     addressesState.kind === "ready"
@@ -75,8 +83,10 @@ export function OrderPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const currentErrors = validateDeliveryForm(mode, formValues);
   const isAddressReady = addressesState.kind === "ready";
+  const isCheckingAgentBenefits = agentCheckout !== undefined && benefits.state.kind === "loading";
   const canSubmit =
     isAddressReady &&
+    !isCheckingAgentBenefits &&
     !isSubmitting &&
     items.length > 0 &&
     Object.keys(currentErrors).length === 0;
@@ -198,6 +208,19 @@ export function OrderPage() {
 
       <main className="min-h-0 flex-1 overflow-y-auto">
         <div className="page-content flex flex-col divide-y divide-hairline pb-6 [&>*]:py-8 [&>*:first-child]:pt-4">
+          {agentCheckout ? (
+            <div role="status">
+              <p className="rounded-control bg-muted px-3 py-2.5 type-body-small text-text-primary">
+                챗봇이 담은 책 {items.reduce((sum, item) => sum + item.quantity, 0)}권
+                {" · "}
+                {isCheckingAgentBenefits
+                  ? "쿠폰·포인트 확인 중"
+                  : benefits.state.kind === "error"
+                    ? "쿠폰·포인트를 확인하지 못했어요"
+                    : `쿠폰·포인트 ${formatWon(couponDiscount + appliedPoint)} 적용`}
+              </p>
+            </div>
+          ) : null}
           <AddressSection
             defaultAddress={defaultAddress}
             errors={formErrors}
@@ -214,8 +237,9 @@ export function OrderPage() {
           <BenefitSection
             onPointChange={setPointAmount}
             onRetry={benefits.retry}
-            onSelectCoupon={setSelectedCouponId}
+            onSelectCoupon={setRequestedCouponId}
             pointAmount={appliedPoint}
+            pointLimit={pointLimit}
             selectedCouponId={selectedCouponId}
             state={benefits.state}
             subtotal={subtotal}
@@ -244,11 +268,4 @@ export function OrderPage() {
       </div>
     </div>
   );
-}
-
-function getCouponDiscount(coupon: OwnedCoupon | null, subtotal: number) {
-  if (!coupon || coupon.state !== "ISSUED" || subtotal < coupon.minOrderAmount) return 0;
-  if (coupon.type === "FIXED_AMOUNT") return coupon.discount;
-  if (coupon.type === "PERCENT_RATE") return subtotal * coupon.discount;
-  return 0;
 }

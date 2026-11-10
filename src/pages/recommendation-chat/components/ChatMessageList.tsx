@@ -10,6 +10,7 @@ import { notifyCartChanged } from "@/features/cart/lib/cartEvents";
 import { ASSISTANT_NAME, AssistantAvatar } from "@/pages/recommendation-chat/components/AssistantAvatar";
 import type {
   CartProposalItemViewModel,
+  ChatCheckout,
   ChatErrorReason,
   ChatPresentationMessage,
   ChatPresentationStatus,
@@ -442,10 +443,12 @@ function CartProposalPanel({
 }
 
 interface ChatBubbleProps {
+  isCheckoutLoading: boolean;
   isGroupStart: boolean;
   message: ChatPresentationMessage;
   onConfirmProposal: (messageId: string, proposalId: number) => void;
   onDeclineProposal: (messageId: string, proposalId: number) => void;
+  onOpenCheckout: (checkout: ChatCheckout) => void;
   onQuickMessage: (message: string) => void;
   onRetryProposal: (messageId: string, proposalId: number) => void;
   status: ChatPresentationStatus;
@@ -473,10 +476,12 @@ function AssistantRow({
 }
 
 function ChatBubble({
+  isCheckoutLoading,
   isGroupStart,
   message,
   onConfirmProposal,
   onDeclineProposal,
+  onOpenCheckout,
   onQuickMessage,
   onRetryProposal,
   status,
@@ -502,6 +507,7 @@ function ChatBubble({
     if (!target || (target === "/cart" && message.executionStatus === "executed")) return [];
     return [{ label: button.label, target }];
   });
+  const checkout = message.checkout;
   const hasProposalPanel = proposalId !== null || message.proposal !== undefined || (message.executionStatus !== undefined && message.executionStatus !== "pending");
 
   return (
@@ -539,8 +545,18 @@ function ChatBubble({
           onRetryProposal={proposalId !== null ? () => onRetryProposal(message.id, proposalId) : null}
         />
       ) : null}
-      {navigateButtons.length ? (
+      {navigateButtons.length || checkout ? (
         <div className="mt-3 flex flex-wrap gap-2">
+          {checkout ? (
+            <button
+              className="min-h-11 rounded-control bg-primary px-4 type-body-small font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
+              disabled={isCheckoutLoading || status === "sending"}
+              onClick={() => onOpenCheckout(checkout)}
+              type="button"
+            >
+              {checkout.label}
+            </button>
+          ) : null}
           {navigateButtons.map((button) => (
             <Link
               className="inline-flex min-h-11 items-center rounded-control border border-border px-4 type-body-small font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
@@ -621,9 +637,11 @@ function TypingIndicator({ isGroupStart }: { isGroupStart: boolean }) {
 }
 
 interface ChatMessageListProps {
+  isCheckoutLoading: boolean;
   messages: ChatPresentationMessage[];
   onConfirmProposal: (messageId: string, proposalId: number) => void;
   onDeclineProposal: (messageId: string, proposalId: number) => void;
+  onOpenCheckout: (checkout: ChatCheckout) => void;
   onQuickMessage: (message: string) => void;
   onRetry: (messageId: string) => void;
   onRetryProposal: (messageId: string, proposalId: number) => void;
@@ -631,9 +649,11 @@ interface ChatMessageListProps {
 }
 
 export function ChatMessageList({
+  isCheckoutLoading,
   messages,
   onConfirmProposal,
   onDeclineProposal,
+  onOpenCheckout,
   onQuickMessage,
   onRetry,
   onRetryProposal,
@@ -668,10 +688,12 @@ export function ChatMessageList({
               key={message.id}
             >
               <ChatBubble
+                isCheckoutLoading={isCheckoutLoading}
                 isGroupStart={isGroupStart}
                 message={message}
                 onConfirmProposal={onConfirmProposal}
                 onDeclineProposal={onDeclineProposal}
+                onOpenCheckout={onOpenCheckout}
                 onQuickMessage={onQuickMessage}
                 onRetryProposal={onRetryProposal}
                 status={status}

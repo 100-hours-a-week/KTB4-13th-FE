@@ -7,6 +7,7 @@ export interface OrderItemViewModel {
 }
 
 export interface OrderNavigationState {
+  agentCheckout?: { couponId: number | null; point: number };
   cartItemIds?: number[];
   items: OrderItemViewModel[];
 }
