@@ -7,7 +7,7 @@ import { LoginRequiredDialog } from "@/features/auth/components/LoginRequiredDia
 import { useAuth } from "@/features/auth/context/useAuth";
 import { addCartItem, fetchCart } from "@/features/cart/api/cartApi";
 import { notifyCartChanged } from "@/features/cart/lib/cartEvents";
-import { ASSISTANT_NAME, AssistantAvatar } from "@/pages/recommendation-chat/components/AssistantAvatar";
+import { ASSISTANT_NAME, AssistantAvatar, WelcomeAvatar } from "@/pages/recommendation-chat/components/AssistantAvatar";
 import type { BookjeogiMood } from "@/pages/recommendation-chat/components/BookjeogiCharacter";
 import { useRevealedText } from "@/pages/recommendation-chat/hooks/useRevealedText";
 import { similarBooksMessage } from "@/pages/recommendation-chat/lib/followupOptions";
@@ -754,7 +754,7 @@ function WelcomeMessage({
   return (
     <section aria-label="북적이 첫 인사" className="chat-message-enter">
       <div className="flex flex-col items-center pb-8 text-center">
-        <AssistantAvatar className="size-16 p-1" mood="idle" />
+        <WelcomeAvatar />
         <p className="mt-2 type-title text-text-primary">{ASSISTANT_NAME}</p>
         <p className="mt-0.5 type-caption text-text-tertiary">취향에 맞는 책을 함께 찾아드려요</p>
       </div>
