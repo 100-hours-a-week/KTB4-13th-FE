@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { BookjeogiCharacter, type BookjeogiMood } from "@/pages/recommendation-chat/components/BookjeogiCharacter";
+import { BookjeogiCharacter, type BookjeogiMood } from "@/common/components/BookjeogiCharacter";
 
 export const ASSISTANT_NAME = "북적이";
 

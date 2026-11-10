@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
+import { readChatAsk } from "@/features/recommendation/lib/chatEntry";
 import { ChatComposer } from "@/pages/recommendation-chat/components/ChatComposer";
 import { ChatHeader } from "@/pages/recommendation-chat/components/ChatHeader";
 import { ChatMessageList } from "@/pages/recommendation-chat/components/ChatMessageList";
@@ -69,6 +70,19 @@ export function AiRecommendationChatPage() {
     resetCheckout();
     chat.sendMessage(message);
   };
+
+  // Another screen (search, book detail) opened the chat with a sentence: send it once as the first
+  // message of a new conversation, and drop it from the URL so a reload or back does not send it again.
+  const askedMessage = initialSessionId === null ? readChatAsk(location.search) : null;
+  const sentAskKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!askedMessage || chat.isHistoryLoading || sentAskKeyRef.current === location.key) return;
+    sentAskKeyRef.current = location.key;
+    navigate("/recommendations/chat", { replace: true });
+    handleSend(askedMessage);
+    // handleSend is recreated every render; the key guard keeps this to one send per arrival.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [askedMessage, chat.isHistoryLoading, location.key, navigate]);
 
   const handleBack = () => {
     if (window.history.length > 1) {
