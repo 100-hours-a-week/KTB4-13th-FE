@@ -1,5 +1,6 @@
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
+import { AskBookjeogiCard } from "@/pages/search/components/AskBookjeogiCard";
 import { SearchFilters } from "@/pages/search/components/SearchFilters";
 import { SearchHeader } from "@/pages/search/components/SearchHeader";
 import { SearchResultToolbar } from "@/pages/search/components/SearchResultToolbar";
@@ -9,6 +10,7 @@ import {
   readSearchRequest,
   updateSearchParams,
 } from "@/pages/search/lib/searchParams";
+import { looksLikeSentence } from "@/pages/search/lib/searchSentence";
 import type { BookSearchSort } from "@/features/search/types/bookSearch";
 import type { SearchFilters as SearchFilterValues } from "@/pages/search/types/search";
 
@@ -24,6 +26,10 @@ export function SearchResultsPage() {
     pubYearFrom: request.pubYearFrom,
     pubYearTo: request.pubYearTo,
   };
+
+  const showAskCard =
+    request.query.length > 0 &&
+    (searchResults.state.kind === "empty" || looksLikeSentence(request.query));
 
   const handleBack = () => {
     if (location.key === "default") {
@@ -57,6 +63,11 @@ export function SearchResultsPage() {
       <SearchFilters filters={filters} onChange={handleFiltersChange} />
 
       <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+        {showAskCard ? (
+          <div className="page-content pt-4">
+            <AskBookjeogiCard hasNoResults={searchResults.state.kind === "empty"} query={request.query} />
+          </div>
+        ) : null}
         <SearchResultToolbar
           onSortChange={handleSortChange}
           sort={request.sort}

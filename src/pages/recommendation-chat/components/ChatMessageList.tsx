@@ -8,7 +8,7 @@ import { useAuth } from "@/features/auth/context/useAuth";
 import { addCartItem, fetchCart } from "@/features/cart/api/cartApi";
 import { notifyCartChanged } from "@/features/cart/lib/cartEvents";
 import { ASSISTANT_NAME, AssistantAvatar, WelcomeAvatar } from "@/pages/recommendation-chat/components/AssistantAvatar";
-import type { BookjeogiMood } from "@/pages/recommendation-chat/components/BookjeogiCharacter";
+import type { BookjeogiMood } from "@/common/components/BookjeogiCharacter";
 import { useRevealedText } from "@/pages/recommendation-chat/hooks/useRevealedText";
 import { similarBooksMessage } from "@/pages/recommendation-chat/lib/followupOptions";
 import type {

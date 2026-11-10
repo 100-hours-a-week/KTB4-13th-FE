@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
+import { CHAT_ASK_PARAM, readChatAsk } from "@/features/recommendation/lib/chatEntry";
 import { ChatComposer } from "@/pages/recommendation-chat/components/ChatComposer";
 import { ChatHeader } from "@/pages/recommendation-chat/components/ChatHeader";
 import { ChatMessageList } from "@/pages/recommendation-chat/components/ChatMessageList";
@@ -69,6 +70,22 @@ export function AiRecommendationChatPage() {
     resetCheckout();
     chat.sendMessage(message);
   };
+
+  const askedMessage = initialSessionId === null ? readChatAsk(location.search) : null;
+  const sentAskKeyRef = useRef<string | null>(null);
+  const sendEntryQuestion = useEffectEvent((question: string) => {
+    const params = new URLSearchParams(location.search);
+    params.delete(CHAT_ASK_PARAM);
+    navigate({ pathname: location.pathname, search: params.toString(), hash: location.hash }, { replace: true });
+    handleSend(question);
+  });
+
+  useEffect(() => {
+    if (!askedMessage || chat.isHistoryLoading || sentAskKeyRef.current === location.key) return;
+    // Replacing the URL prevents reload/back from sending again. The key also covers effect replay.
+    sentAskKeyRef.current = location.key;
+    sendEntryQuestion(askedMessage);
+  }, [askedMessage, chat.isHistoryLoading, location.key]);
 
   const handleBack = () => {
     if (window.history.length > 1) {

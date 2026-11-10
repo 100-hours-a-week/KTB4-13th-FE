@@ -6,7 +6,7 @@ import {
   type KeyboardEvent,
 } from "react";
 
-import { MAX_CHAT_MESSAGE_LENGTH } from "@/pages/recommendation-chat/lib/chatMessage";
+import { MAX_CHAT_MESSAGE_LENGTH } from "@/features/recommendation/lib/chatMessage";
 import type { ChatPresentationStatus } from "@/pages/recommendation-chat/types/chatPresentation";
 
 interface ChatComposerProps {
