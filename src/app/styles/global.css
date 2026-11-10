@@ -313,3 +313,24 @@
     animation: none;
   }
 }
+
+@keyframes photo-scan-line {
+  from {
+    top: 6%;
+  }
+
+  to {
+    top: 94%;
+  }
+}
+
+.photo-scan-line {
+  top: 50%;
+  animation: photo-scan-line 2.6s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photo-scan-line {
+    animation: none;
+  }
+}
