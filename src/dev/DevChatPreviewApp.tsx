@@ -89,7 +89,7 @@ function ChatPreview() {
           status={status}
         />
       </main>
-      <ChatComposer onAttachClick={() => {}} onSend={(message) => { void send(message); }} status={status} />
+      <ChatComposer onSend={(message) => { void send(message); }} status={status} />
     </div>
   );
 }
