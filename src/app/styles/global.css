@@ -952,3 +952,25 @@
     opacity: 0.72;
   }
 }
+
+@keyframes cart-added-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cart-added-enter {
+  animation: cart-added-enter var(--duration-enter) var(--ease-emphasized) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cart-added-enter {
+    animation: none;
+  }
+}

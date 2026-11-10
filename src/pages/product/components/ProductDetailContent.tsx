@@ -7,6 +7,32 @@ import { fetchProductReviewCount, fetchProductReviews } from "@/features/review/
 
 const priceFormatter = new Intl.NumberFormat("ko-KR");
 
+// The cover itself, blurred, behind the cover: a backdrop in the book's own colours without a colour API.
+function CoverBackdrop({ thumbnailUrl }: { thumbnailUrl: string | null }) {
+  const imageUrl = thumbnailUrl?.trim() ?? "";
+  const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+
+  if (!imageUrl || imageUrl === failedUrl) {
+    return null;
+  }
+
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+      <img
+        alt=""
+        className={`size-full scale-125 object-cover blur-[20px] saturate-[1.1] transition-opacity duration-(--duration-enter) ease-standard motion-reduce:transition-none ${
+          imageUrl === loadedUrl ? "opacity-55" : "opacity-0"
+        }`}
+        onError={() => setFailedUrl(imageUrl)}
+        onLoad={() => setLoadedUrl(imageUrl)}
+        src={imageUrl}
+      />
+      <div className="absolute inset-x-0 bottom-0 h-2/5 bg-linear-to-b from-transparent to-surface" />
+    </div>
+  );
+}
+
 function ProductPrice({ product }: { product: ProductDetail }) {
   const isSoldOut = product.stockQuantity <= 0;
   const hasDiscount =
@@ -129,6 +155,8 @@ export function ProductDetailContent({
     productId: number;
     rate: number;
     countLabel: string;
+    // null when the count could not be confirmed, so "no reviews yet" is shown only when it is certain.
+    count: number | null;
   } | null>(null);
 
   useEffect(() => {
@@ -145,6 +173,7 @@ export function ProductDetailContent({
           countLabel: countResult.ok
             ? `${countResult.count.toLocaleString("ko-KR")}개의 리뷰`
             : "리뷰를 불러오지 못했어요",
+          count: countResult.ok ? countResult.count : null,
         });
         return;
       }
@@ -157,7 +186,10 @@ export function ProductDetailContent({
         : reviewsResult.data.hasNext
           ? `${reviews.length.toLocaleString("ko-KR")}개 이상의 리뷰`
           : `${reviews.length.toLocaleString("ko-KR")}개의 리뷰`;
-      setReviewSummary({ productId: product.productId, rate, countLabel });
+      const count = countResult.ok && countResult.count >= reviews.length
+        ? countResult.count
+        : reviewsResult.data.hasNext ? null : reviews.length;
+      setReviewSummary({ productId: product.productId, rate, countLabel, count });
     });
     return () => controller.abort();
   }, [product.productId, product.reviewRate]);
@@ -166,12 +198,14 @@ export function ProductDetailContent({
     ? reviewSummary.rate : product.reviewRate;
   const shownReviewCount = reviewSummary?.productId === product.productId
     ? reviewSummary.countLabel : "리뷰를 불러오는 중이에요";
+  const hasNoReviews = reviewSummary?.productId === product.productId && reviewSummary.count === 0;
 
   return (
     <article className="page-content">
       <section className="border-b border-hairline pb-7">
-        <div className="-mx-5 flex justify-center bg-muted px-5 py-8">
-          <div className="w-[44%] max-w-44">
+        <div className="relative -mx-5 flex justify-center overflow-hidden bg-muted px-5 pb-9 pt-10">
+          <CoverBackdrop thumbnailUrl={product.thumbnailUrl} />
+          <div className="relative w-[48%] max-w-52 rounded-cover shadow-[0_0_4px_rgba(0,0,0,0.12),2px_6px_12px_rgba(0,0,0,0.12)]">
             <BookCover
               alt={`${product.itemName} 표지`}
               fallbackTitle={product.itemName}
@@ -213,14 +247,22 @@ export function ProductDetailContent({
       <BookDescription description={product.description} />
 
       <section className="border-b border-hairline py-7" aria-labelledby="product-review-title">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex min-h-11 items-center justify-between gap-3">
           <h2 className="type-title" id="product-review-title">리뷰</h2>
-          <Link className="inline-flex min-h-11 items-center type-body-small font-semibold text-text-secondary" to={`/products/${product.productId}/reviews`}>전체 보기 ›</Link>
+          {hasNoReviews ? null : <Link className="inline-flex min-h-11 items-center type-body-small font-semibold text-text-secondary" to={`/products/${product.productId}/reviews`}>전체 보기 ›</Link>}
         </div>
-        <Link className="mt-2 flex min-h-16 items-center justify-between rounded-panel bg-muted px-4 focus-visible:outline-2 focus-visible:outline-primary" to={`/products/${product.productId}/reviews`}>
-          <span className="flex items-center gap-2"><span aria-hidden="true" className="text-[#f2b84b]">★</span><strong className="type-heading tabular-nums">{shownReviewRate.toFixed(1)}</strong></span>
-          <span aria-live="polite" className="type-body-small text-text-secondary">{shownReviewCount}</span>
-        </Link>
+        {hasNoReviews ? (
+          // A "★ 0.0" here reads as a book rated zero; say there are none yet and who can write one.
+          <div className="mt-2 rounded-panel bg-muted px-4 py-4" role="status">
+            <p className="type-body-small font-semibold text-text-primary">아직 리뷰가 없어요</p>
+            <p className="mt-1 type-caption text-text-secondary">이 책을 구매하면 첫 리뷰를 남길 수 있어요.</p>
+          </div>
+        ) : (
+          <Link className="mt-2 flex min-h-16 items-center justify-between rounded-panel bg-muted px-4 focus-visible:outline-2 focus-visible:outline-primary" to={`/products/${product.productId}/reviews`}>
+            <span className="flex items-center gap-2"><span aria-hidden="true" className="text-[#f2b84b]">★</span><strong className="type-heading tabular-nums">{shownReviewRate.toFixed(1)}</strong></span>
+            <span aria-live="polite" className="type-body-small text-text-secondary">{shownReviewCount}</span>
+          </Link>
+        )}
       </section>
 
       {recommendationReason ? (

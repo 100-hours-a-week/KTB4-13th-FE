@@ -287,14 +287,16 @@ export function CartPage() {
               장바구니가 비어 있어요
             </h2>
             <p className="type-body-small text-text-secondary">
-              마음에 드는 책을 찾아 장바구니에 담아보세요
+              고민을 말하면 북적이가 이유와 함께 골라 드려요
             </p>
-            <Button
-              className="mt-4"
-              onClick={() => navigate("/recommendations/chat")}
-            >
-              책 추천받기
-            </Button>
+            <div className="mt-4 flex flex-col items-center gap-2">
+              <Button onClick={() => navigate("/recommendations/chat")}>
+                북적이에게 추천받기
+              </Button>
+              <Button onClick={() => navigate("/catalog/ranking")} variant="secondary">
+                많이 팔린 책 보기
+              </Button>
+            </div>
           </section>
         ) : null}
 

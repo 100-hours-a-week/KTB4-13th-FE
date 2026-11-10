@@ -10,6 +10,7 @@ import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
 import { useTransientNotice } from "@/common/hooks/useTransientNotice";
 import { addCartItem } from "@/features/cart/api/cartApi";
+import { CartAddedNotice, type CartAddedItem } from "@/features/cart/components/CartAddedNotice";
 import { notifyCartChanged } from "@/features/cart/lib/cartEvents";
 import { LoginRequiredDialog } from "@/features/auth/components/LoginRequiredDialog";
 import { useAuth } from "@/features/auth/context/useAuth";
@@ -42,6 +43,8 @@ export function ProductDetailPage() {
   const navigate = useNavigate();
   const { status: authStatus } = useAuth();
   const { notice, showNotice } = useTransientNotice();
+  // Longer than a plain notice: it carries a "장바구니 보기" link someone may want to reach.
+  const { notice: addedItem, showNotice: showAddedItem } = useTransientNotice<CartAddedItem>(3_500);
   const { retry, state } = useProductDetail(productId);
   const recommendationReason = useRecommendationCardReason(
     recommendationCardId,
@@ -98,7 +101,8 @@ export function ProductDetailPage() {
 
     if (await addProductToCart(product.productId, "cart")) {
       notifyCartChanged({ animate: true });
-      showNotice("장바구니에 담았어요.");
+      showNotice(null);
+      showAddedItem({ thumbnailUrl: product.thumbnailUrl, title: product.itemName });
     }
   };
 
@@ -193,6 +197,10 @@ export function ProductDetailPage() {
           }`}
         >
           <Toast>{notice}</Toast>
+        </div>
+      ) : addedItem ? (
+        <div className="page-content pointer-events-none absolute inset-x-0 bottom-24 z-10">
+          <CartAddedNotice item={addedItem} />
         </div>
       ) : null}
 
