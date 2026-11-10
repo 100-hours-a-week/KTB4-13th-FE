@@ -8,7 +8,13 @@ export interface ChatCheckout {
 
 export type ChatPresentationStatus = "idle" | "sending" | "error";
 
-export type ChatErrorReason = "invalid-request" | "busy" | "timeout" | "error";
+export type ChatErrorReason =
+  | "busy"
+  | "error"
+  | "in-progress"
+  | "interrupted"
+  | "invalid-request"
+  | "timeout";
 
 export interface RecommendationCardViewModel {
   author: string | null;
@@ -62,6 +68,8 @@ export type ChatPresentationMessage =
       content: string;
       executionStatus?: ProposalExecutionStatus;
       id: string;
+      // Text streamed before the final reply; cards and buttons arrive only with the final reply.
+      isPending?: boolean;
       proposal?: CartProposalViewModel;
       recommendations?: RecommendationCardViewModel[];
       role: "assistant";

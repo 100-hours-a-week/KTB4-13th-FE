@@ -1,4 +1,5 @@
 import { parseApiResponse } from "@/common/api/apiResponse";
+import { isEventStreamResponse, readServerSentEvents } from "@/common/api/eventStream";
 import { fetchWithAuth } from "@/features/auth/lib/httpClient";
 import type {
   AgentButton,
@@ -15,6 +16,15 @@ import type {
 const HISTORY_PAGE_SIZE = 100;
 
 type ApiFailure = { ok: false; reason: "invalid-request" | "busy" | "timeout" | "error" };
+
+// "in-progress" and "interrupted" mean the server may still finish this request, so retry with the same key.
+type SendFailure = { ok: false; reason: ApiFailure["reason"] | "in-progress" | "interrupted" };
+
+export interface SendSessionMessageInput {
+  excludeBookIds: number[];
+  idempotencyKey: string;
+  message: string;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -226,17 +236,85 @@ export async function fetchChatHistory(
   return { ok: false, reason: "error" };
 }
 
-export async function sendSessionMessage(sessionId: number, message: string, excludeBookIds: number[]): Promise<{ data: SessionChatReply; ok: true } | ApiFailure> {
+function sendFailure(status: number, code: string | undefined): SendFailure {
+  if (code === "CHAT_IN_PROGRESS") return { ok: false, reason: "in-progress" };
+  return failure(status);
+}
+
+// SSE error events carry only the error body, so the HTTP status is read from its code.
+function streamErrorFailure(data: unknown): SendFailure {
+  const code = isRecord(data) && typeof data.code === "string" ? data.code : undefined;
+  if (code === "CHAT_IN_PROGRESS") return { ok: false, reason: "in-progress" };
+  if (code === "E400") return { ok: false, reason: "invalid-request" };
+  if (code === "E429" || code === "E503") return { ok: false, reason: "busy" };
+  if (code === "E504") return { ok: false, reason: "timeout" };
+  return { ok: false, reason: "error" };
+}
+
+function parseEventData(data: string): unknown {
   try {
-    const result = await parseApiResponse(await fetchWithAuth(`/api/v1/recommend/chat/sessions/${sessionId}/messages`, {
-      body: JSON.stringify({ consented: false, excludeBookIds, idempotencyKey: crypto.randomUUID(), message }),
-      headers: { "Content-Type": "application/json" },
+    return JSON.parse(data);
+  } catch {
+    return undefined;
+  }
+}
+
+async function readReplyStream(
+  body: ReadableStream<Uint8Array>,
+  onDelta: (text: string) => void,
+): Promise<{ data: SessionChatReply; ok: true } | SendFailure> {
+  for await (const event of readServerSentEvents(body)) {
+    const data = parseEventData(event.data);
+    if (event.event === "delta") {
+      if (isRecord(data) && typeof data.text === "string") onDelta(data.text);
+      continue;
+    }
+    if (event.event === "done") {
+      // done carries the same ApiResponse envelope as the JSON reply.
+      const reply = isRecord(data) && data.success === true ? parseReply(data.data) : null;
+      return reply ? { data: reply, ok: true } : { ok: false, reason: "error" };
+    }
+    if (event.event === "error") return streamErrorFailure(data);
+  }
+  return { ok: false, reason: "interrupted" };
+}
+
+// Sends one attempt; the caller reuses the same input and key to recover an interrupted attempt.
+export async function sendSessionMessage(
+  sessionId: number,
+  { excludeBookIds, idempotencyKey, message }: SendSessionMessageInput,
+  onDelta: (text: string) => void,
+): Promise<{ data: SessionChatReply; ok: true } | SendFailure> {
+  let response: Response;
+  try {
+    response = await fetchWithAuth(`/api/v1/recommend/chat/sessions/${sessionId}/messages`, {
+      body: JSON.stringify({ consented: false, excludeBookIds, idempotencyKey, message }),
+      // JSON stays acceptable so a backend without SSE, and errors raised before the stream starts, still answer.
+      headers: { Accept: "text/event-stream, application/json", "Content-Type": "application/json" },
       method: "POST",
-    }));
-    if (!result.ok) return failure(result.status);
+    });
+  } catch {
+    return { ok: false, reason: "interrupted" };
+  }
+
+  if (response.ok && isEventStreamResponse(response) && response.body) {
+    try {
+      return await readReplyStream(response.body, onDelta);
+    } catch {
+      return { ok: false, reason: "interrupted" };
+    }
+  }
+
+  try {
+    const result = await parseApiResponse(response);
+    // A 2xx reply whose body could not be read may still have been saved.
+    if (!result.ok && response.ok) return { ok: false, reason: "interrupted" };
+    if (!result.ok) return sendFailure(result.status, result.error?.code);
     const data = parseReply(result.data);
     return data ? { data, ok: true } : { ok: false, reason: "error" };
-  } catch { return { ok: false, reason: "error" }; }
+  } catch {
+    return { ok: false, reason: "interrupted" };
+  }
 }
 
 export async function confirmCartProposal(proposalId: number, idempotencyKey: string): Promise<{ data: AgentExecution; ok: true } | ApiFailure> {
