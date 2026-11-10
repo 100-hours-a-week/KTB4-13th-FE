@@ -1,25 +1,39 @@
 import { useEffect, useRef } from "react";
 
-// still: never moves (header, older replies). idle: breathes and blinks. thinking: waiting for a reply.
-// talking: the reply text is being revealed. presenting: one hop as the cards appear, then idle.
-export type BookjeogiMood = "still" | "idle" | "thinking" | "talking" | "presenting";
+// still: never moves (header, older replies). idle: floats, looks around and blinks. welcome: idle plus one wave
+// hello (first screen). thinking: waiting for a reply. talking: the reply text is being revealed.
+// presenting: one hop as the cards appear, then idle.
+export type BookjeogiMood = "still" | "idle" | "welcome" | "thinking" | "talking" | "presenting";
 
 const BLINK_MS = 130;
 const BLINK_MIN_GAP_MS = 2600;
 const BLINK_GAP_SPREAD_MS = 2600;
-
-function prefersReducedMotion() {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
+const POKE_MS = 600;
 
 // The owl drawn from public/assets/(nobg)bookjeok-character.png, split into parts so each part can move.
-// Motion lives in global.css (.bookjeogi-*); amplitudes are tuned for the 36–64px sizes used in chat.
-export function BookjeogiCharacter({ mood }: { mood: BookjeogiMood }) {
+// Motion lives in global.css (.bookjeogi-*); amplitudes are tuned for the 32–56px sizes used in chat.
+// Blinking is not motion across the screen, so it keeps running when reduced motion is on; CSS gates the rest.
+export function BookjeogiCharacter({ mood, pokeKey = 0 }: { mood: BookjeogiMood; pokeKey?: number }) {
   const svgRef = useRef<SVGSVGElement>(null);
+
+  // Each new pokeKey replays one hop. Reading the layout between removing and setting the attribute makes a quick
+  // second tap restart the hop instead of being merged into the running one.
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg || pokeKey === 0) return undefined;
+    svg.removeAttribute("data-poke");
+    svg.getBoundingClientRect();
+    svg.setAttribute("data-poke", "");
+    const timer = window.setTimeout(() => svg.removeAttribute("data-poke"), POKE_MS);
+    return () => {
+      window.clearTimeout(timer);
+      svg.removeAttribute("data-poke");
+    };
+  }, [pokeKey]);
 
   useEffect(() => {
     const svg = svgRef.current;
-    if (!svg || mood === "still" || prefersReducedMotion()) return undefined;
+    if (!svg || mood === "still") return undefined;
     let timer = 0;
     const schedule = () => {
       timer = window.setTimeout(() => {
