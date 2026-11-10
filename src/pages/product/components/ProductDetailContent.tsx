@@ -5,6 +5,7 @@ import { BookCover } from "@/common/components/BookCover";
 import { COVER_TRANSITION_NAME, type CoverPreview } from "@/common/lib/coverTransition";
 import type { ProductDetail } from "@/features/product/types/product";
 import { fetchProductReviewCount, fetchProductReviews } from "@/features/review/api/reviewApi";
+import { AuthorOtherBooks } from "@/pages/product/components/AuthorOtherBooks";
 
 const priceFormatter = new Intl.NumberFormat("ko-KR");
 
@@ -300,6 +301,13 @@ export function ProductDetailContent({
           </p>
         </section>
       ) : null}
+
+      <AuthorOtherBooks
+        author={product.author}
+        productId={product.productId}
+        publisher={product.publisher}
+        title={product.itemName}
+      />
     </article>
   );
 }
