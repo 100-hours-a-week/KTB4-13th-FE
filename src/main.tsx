@@ -53,6 +53,14 @@ if (import.meta.env.DEV && window.location.pathname === "/dev/recommendation-pre
       </StrictMode>,
     );
   });
+} else if (import.meta.env.DEV && window.location.pathname === "/dev/library-photo-preview") {
+  void import("@/dev/DevLibraryPhotoPreviewApp").then(({ default: DevLibraryPhotoPreviewApp }) => {
+    root.render(
+      <StrictMode>
+        <DevLibraryPhotoPreviewApp />
+      </StrictMode>,
+    );
+  });
 } else if (import.meta.env.DEV && window.location.pathname === "/dev/preview") {
   void import("@/dev/DevPreviewApp").then(({ default: DevPreviewApp }) => {
     root.render(
