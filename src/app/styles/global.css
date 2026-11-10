@@ -994,3 +994,16 @@
 ::view-transition-new(root) {
   animation-duration: var(--duration-fast);
 }
+
+@keyframes bookjeogi-peek-in {
+  from {
+    opacity: 0;
+    translate: 0 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bookjeogi-peek {
+    animation: bookjeogi-peek-in var(--duration-enter) var(--ease-emphasized) both;
+  }
+}
