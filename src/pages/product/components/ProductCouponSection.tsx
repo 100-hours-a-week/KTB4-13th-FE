@@ -49,7 +49,7 @@ export function ProductCouponSection({
       setState(coupons.ok && owned.ok
         ? {
             coupons: coupons.data.filter((coupon) => new Date(coupon.expiredAt).getTime() > Date.now()),
-            issuedIds: new Set(owned.data.map((coupon) => coupon.id)),
+            issuedIds: new Set(owned.data.flatMap((coupon) => coupon.couponId ?? [])),
             kind: "ready",
           }
         : { kind: "error" });
