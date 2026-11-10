@@ -4,6 +4,7 @@ import { AuthInitializingState } from "@/features/auth/components/AuthInitializi
 import { useAuth } from "@/features/auth/context/useAuth";
 import { OnboardingEntryError } from "@/features/onboarding/components/OnboardingEntryError";
 import { useOnboardingEntryPath } from "@/features/onboarding/hooks/useOnboardingEntryPath";
+import { getChatAskReturnTo } from "@/features/recommendation/lib/chatEntry";
 
 export function OnboardingEntryGuard() {
   const { status } = useAuth();
@@ -20,7 +21,10 @@ export function OnboardingEntryGuard() {
 
   if (status === "authenticated" && entry.kind === "ready") {
     if (entry.path === "/onboarding" || location.pathname === "/login") {
-      return <Navigate replace to={entry.path} />;
+      const returnTo = entry.path === "/onboarding"
+        ? getChatAskReturnTo(`${location.pathname}${location.search}${location.hash}`)
+        : null;
+      return <Navigate replace state={returnTo ? { returnTo } : undefined} to={entry.path} />;
     }
 
     return <Outlet />;

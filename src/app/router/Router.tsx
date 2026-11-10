@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { BottomNavigationLayout } from "@/app/layouts/BottomNavigationLayout";
 import { OnboardingEntryGuard } from "@/app/router/OnboardingEntryGuard";
 import { RequireAuth } from "@/app/router/RequireAuth";
+import { QuickCartProvider } from "@/features/cart/components/QuickCartProvider";
 import { KakaoCallbackPage } from "@/pages/auth/KakaoCallbackPage";
 import { CartPage } from "@/pages/cart/CartPage";
 import { CatalogPage } from "@/pages/catalog/CatalogPage";
@@ -32,20 +33,21 @@ import { WithdrawPage } from "@/pages/withdraw/WithdrawPage";
 
 export function Router() {
   return (
-    <BrowserRouter>
+    // Synchronous route updates so a cover view transition can flush the next page inside its callback.
+    <BrowserRouter useTransitions={false}>
       <Routes>
         <Route path="/auth/kakao/callback" element={<KakaoCallbackPage />} />
         <Route element={<OnboardingEntryGuard />}>
           <Route path="/login" element={<LoginPage />} />
           <Route element={<BottomNavigationLayout />}>
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<QuickCartProvider key="home"><HomePage /></QuickCartProvider>} />
             <Route path="/products/:productId" element={<ProductDetailPage />} />
             <Route path="/products/:productId/reviews" element={<ReviewListPage />} />
             <Route
               path="/catalog/ranking"
-              element={<CatalogPage mode="ranking" />}
+              element={<QuickCartProvider key="ranking"><CatalogPage mode="ranking" /></QuickCartProvider>}
             />
-            <Route path="/search" element={<SearchResultsPage />} />
+            <Route path="/search" element={<QuickCartProvider key="search"><SearchResultsPage /></QuickCartProvider>} />
             <Route element={<RequireAuth />}>
               <Route path="/cart" element={<CartPage />} />
               <Route path="/my" element={<MyPage />} />

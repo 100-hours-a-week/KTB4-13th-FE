@@ -11,6 +11,7 @@ import {
   deleteProductReview,
   fetchProductReviews,
 } from "@/features/review/api/reviewApi";
+import { ReviewRatingDistribution } from "@/features/review/components/ReviewRatingDistribution";
 import type { ProductReview } from "@/features/review/types/review";
 import { useProductDetail } from "@/pages/product/hooks/useProductDetail";
 import { StarRating } from "@/pages/reviews/components/StarRating";
@@ -118,13 +119,10 @@ export function ReviewListPage() {
               <strong className="type-numeral text-text-primary">{average.toFixed(1)}</strong>
               <div className="mt-2 flex justify-center"><StarRating rating={average} /></div>
             </div>
-            <div className="flex-1 space-y-1.5">
-              {[5, 4, 3, 2, 1].map((rating) => {
-                const count = reviews.filter((review) => Math.round(review.rate) === rating).length;
-                const width = reviews.length ? (count / reviews.length) * 100 : 0;
-                return <div className="flex items-center gap-2 type-caption text-text-tertiary" key={rating}><span>{rating}</span><span className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted"><span className="block h-full rounded-full bg-[#f2b84b]" style={{ width: `${width}%` }} /></span><span className="w-4 text-right tabular-nums">{count}</span></div>;
-              })}
-            </div>
+            {listStatus === "ready" && !hasNext && reviews.length > 0 &&
+              (productData === null || productData.reviewCount === reviews.length) ? (
+                <ReviewRatingDistribution reviews={reviews} />
+              ) : null}
           </div>
         </section>
         {listStatus === "loading" ? <div aria-busy="true" className="page-content space-y-4 py-5"><p className="sr-only" role="status">리뷰를 불러오는 중이에요</p>{Array.from({ length: 3 }, (_, index) => <div aria-hidden="true" className="h-32 animate-pulse rounded-panel bg-muted" key={index} />)}</div> : null}

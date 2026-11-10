@@ -1,7 +1,9 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 
+import { QuickAddToCartButton } from "@/features/cart/components/QuickAddToCartButton";
 import { BookCover } from "@/common/components/BookCover";
+import { useCoverLinkClick } from "@/common/lib/coverTransition";
 import { ProductAvailabilityBadge } from "@/common/components/ProductAvailabilityBadge";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
@@ -12,6 +14,7 @@ const priceFormatter = new Intl.NumberFormat("ko-KR");
 const SKELETON_COUNT = 12;
 
 function SearchResultCard({ item }: { item: BookSearchItem }) {
+  const onCoverLinkClick = useCoverLinkClick();
   const card = (
     <article className="flex min-w-0 flex-col gap-1">
       <BookCover
@@ -43,6 +46,9 @@ function SearchResultCard({ item }: { item: BookSearchItem }) {
     <Link
       aria-label={`${item.title} 상세 보기`}
       className="block rounded-cover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      onClick={(event) =>
+        onCoverLinkClick(event, `/products/${item.productId}`, { thumbnailUrl: item.coverUrl, title: item.title })
+      }
       to={`/products/${item.productId}`}
     >
       {card}
@@ -151,6 +157,11 @@ export function SearchResultsContent({
         {state.items.map((item) => (
           <li className="min-w-0" key={item.bookId}>
             <SearchResultCard item={item} />
+            {item.productId !== null && item.inStock ? (
+              <div className="mt-2">
+                <QuickAddToCartButton productId={item.productId} thumbnailUrl={item.coverUrl} title={item.title} />
+              </div>
+            ) : null}
           </li>
         ))}
       </ul>

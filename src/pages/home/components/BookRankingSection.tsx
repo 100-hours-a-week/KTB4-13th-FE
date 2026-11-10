@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 
+import { QuickAddToCartButton } from "@/features/cart/components/QuickAddToCartButton";
 import { BookCover } from "@/common/components/BookCover";
+import { useCoverLinkClick } from "@/common/lib/coverTransition";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
 import type { ProductListItem } from "@/features/product/types/product";
@@ -52,6 +54,7 @@ function RankingTiers({
   items: ProductListItem[];
   onProductClick: () => void;
 }) {
+  const onCoverLinkClick = useCoverLinkClick();
   const [first, ...rest] = items;
   const medium = rest.slice(0, MEDIUM_COUNT);
   const listed = rest.slice(MEDIUM_COUNT, MEDIUM_COUNT + LIST_COUNT);
@@ -62,7 +65,10 @@ function RankingTiers({
         <Link
           aria-label={`1위, ${first.itemName} 상세 보기`}
           className="flex gap-4 rounded-panel bg-primary p-3 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          onClick={onProductClick}
+          onClick={(event) => {
+            onProductClick();
+            onCoverLinkClick(event, `/products/${first.itemId}`, { thumbnailUrl: first.thumbnailUrl, title: first.itemName });
+          }}
           to={`/products/${first.itemId}`}
         >
           <div className="w-24 shrink-0 rounded-cover shadow-[0_10px_20px_-12px_rgba(0,0,0,0.8)]">
@@ -75,17 +81,23 @@ function RankingTiers({
             <ReviewLine item={first} tone="inverse" />
           </div>
         </Link>
+        <div className="mt-2 flex justify-end">
+          <QuickAddToCartButton productId={first.itemId} thumbnailUrl={first.thumbnailUrl} title={first.itemName} />
+        </div>
       </li>
 
       {medium.length > 0 ? (
         <li className="mt-3">
           <ol className="grid grid-cols-2 gap-3" start={2}>
             {medium.map((item, index) => (
-              <li key={item.itemId}>
+              <li className="flex min-w-0 flex-col" key={item.itemId}>
                 <Link
                   aria-label={`${index + 2}위, ${item.itemName} 상세 보기`}
                   className="flex h-full gap-2.5 rounded-panel bg-white/80 p-2.5 ring-1 ring-[#f3e7e1] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                  onClick={onProductClick}
+                  onClick={(event) => {
+                    onProductClick();
+                    onCoverLinkClick(event, `/products/${item.itemId}`, { thumbnailUrl: item.thumbnailUrl, title: item.itemName });
+                  }}
                   to={`/products/${item.itemId}`}
                 >
                   <div className="w-12 shrink-0">
@@ -101,6 +113,9 @@ function RankingTiers({
                     <p className="truncate type-caption text-text-tertiary">{item.author}</p>
                   </div>
                 </Link>
+                <div className="mt-2 flex justify-end">
+                  <QuickAddToCartButton productId={item.itemId} thumbnailUrl={item.thumbnailUrl} title={item.itemName} />
+                </div>
               </li>
             ))}
           </ol>
@@ -111,10 +126,10 @@ function RankingTiers({
         <li className="mt-3">
           <ol className="divide-y divide-[#f3e7e1] rounded-panel bg-white/60 px-3" start={MEDIUM_COUNT + 2}>
             {listed.map((item, index) => (
-              <li key={item.itemId}>
+              <li className="flex items-center gap-2" key={item.itemId}>
                 <Link
                   aria-label={`${index + MEDIUM_COUNT + 2}위, ${item.itemName} 상세 보기`}
-                  className="flex min-h-11 items-center gap-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  className="flex min-h-11 min-w-0 flex-1 items-center gap-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   onClick={onProductClick}
                   to={`/products/${item.itemId}`}
                 >
@@ -124,6 +139,7 @@ function RankingTiers({
                   <span className="min-w-0 flex-1 truncate type-body-small text-text-primary">{item.itemName}</span>
                   <span className="max-w-[35%] shrink-0 truncate type-caption text-text-tertiary">{item.author}</span>
                 </Link>
+                <QuickAddToCartButton productId={item.itemId} thumbnailUrl={item.thumbnailUrl} title={item.itemName} />
               </li>
             ))}
           </ol>
