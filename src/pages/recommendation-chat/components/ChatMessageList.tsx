@@ -159,10 +159,15 @@ function RecommendationCard({
           <ProductAvailabilityBadge />
         </div>
       ) : null}
-      <p className="mt-1.5 line-clamp-2 type-caption text-text-secondary">
-        <span className="font-semibold tabular-nums text-text-primary">취향 매칭 {recommendation.matchScore}%</span>
-        {recommendation.reasonShort ? ` · ${recommendation.reasonShort}` : null}
+      <p className="mt-1.5 type-caption font-semibold tabular-nums text-text-primary">
+        취향 매칭 {recommendation.matchScore}%
       </p>
+      {/* The card fits about 10 Korean characters per line, so the reason gets its own lines (FE #155). */}
+      {recommendation.reasonShort ? (
+        <p className="mt-0.5 line-clamp-3 type-caption text-text-secondary">
+          {recommendation.reasonShort}
+        </p>
+      ) : null}
       <button
         aria-label={`${recommendation.title} 비슷한 책 더 보기`}
         className="mt-auto -ml-1 flex min-h-11 w-fit items-end rounded-control px-1 pb-1 type-caption font-semibold text-text-secondary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:text-text-disabled"
