@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 
 import { RetryButton } from "@/common/components/RetryButton";
+import { readCoverPreview } from "@/common/lib/coverTransition";
 import { Toast } from "@/common/components/Toast";
 import { useTransientNotice } from "@/common/hooks/useTransientNotice";
 import { addCartItem } from "@/features/cart/api/cartApi";
@@ -149,7 +150,9 @@ export function ProductDetailPage() {
       />
 
       <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
-        {state.kind === "loading" ? <ProductDetailSkeleton /> : null}
+        {state.kind === "loading" ? (
+          <ProductDetailSkeleton coverPreview={readCoverPreview(location.state)} />
+        ) : null}
 
         {state.kind === "not-found" ? (
           <section className="page-content flex min-h-64 flex-col items-center justify-center gap-2 py-12 text-center">

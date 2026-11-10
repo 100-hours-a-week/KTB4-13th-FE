@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
+import { useCoverLinkClick } from "@/common/lib/coverTransition";
 import { ProductAvailabilityBadge } from "@/common/components/ProductAvailabilityBadge";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
@@ -47,6 +48,7 @@ function CatalogBookRow({
   book: CatalogBookItem;
   rank?: number;
 }) {
+  const onCoverLinkClick = useCoverLinkClick();
   const isFeatured = rank === 1;
   const row = isFeatured ? (
     // The first place gets its own dark card so the order reads at a glance.
@@ -126,6 +128,9 @@ function CatalogBookRow({
       className={`block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
         isFeatured ? "rounded-panel" : "hover:bg-muted/60"
       }`}
+      onClick={(event) =>
+        onCoverLinkClick(event, `/products/${book.productId}`, { thumbnailUrl: book.thumbnailUrl, title: book.title })
+      }
       to={`/products/${book.productId}`}
     >
       {row}

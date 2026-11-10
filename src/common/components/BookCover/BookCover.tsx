@@ -47,6 +47,7 @@ export function BookCover({
     return (
       <div
         className={`aspect-[3/4] w-full overflow-hidden border border-border bg-muted ${radiusClassName}`}
+        data-book-cover=""
       >
         <img
           alt={alt}
@@ -73,6 +74,7 @@ export function BookCover({
       aria-hidden={alt ? undefined : true}
       aria-label={alt || undefined}
       className={`@container relative aspect-[3/4] w-full overflow-hidden border border-border ${radiusClassName} ${fallbackTone.cover}`}
+      data-book-cover=""
       role={alt ? "img" : undefined}
     >
       <span

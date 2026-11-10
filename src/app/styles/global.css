@@ -958,3 +958,39 @@
     animation: none;
   }
 }
+
+/* Request progress bar: creeps towards 85% while waiting, then fills and fades when done. */
+@keyframes request-progress-creep {
+  from {
+    width: 8%;
+  }
+
+  to {
+    width: 85%;
+  }
+}
+
+.request-progress {
+  width: 85%;
+  animation: request-progress-creep 6s var(--ease-emphasized) both;
+}
+
+.request-progress-done {
+  width: 100%;
+  opacity: 0;
+  animation: none;
+  transition:
+    width var(--duration-fast) var(--ease-standard),
+    opacity var(--duration-exit) var(--ease-standard) 80ms;
+}
+
+/* Cover view transition: the tapped cover grows into the detail cover, the rest cross-fades quickly. */
+::view-transition-group(book-cover) {
+  animation-duration: var(--duration-enter);
+  animation-timing-function: var(--ease-emphasized);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--duration-fast);
+}

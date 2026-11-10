@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
+import { COVER_TRANSITION_NAME, type CoverPreview } from "@/common/lib/coverTransition";
 import type { ProductDetail } from "@/features/product/types/product";
 import { fetchProductReviewCount, fetchProductReviews } from "@/features/review/api/reviewApi";
 
@@ -29,6 +30,30 @@ function CoverBackdrop({ thumbnailUrl }: { thumbnailUrl: string | null }) {
         src={imageUrl}
       />
       <div className="absolute inset-x-0 bottom-0 h-2/5 bg-linear-to-b from-transparent to-surface" />
+    </div>
+  );
+}
+
+// Shared by the page and its loading state, so a cover that grew in from a list stays in place when data arrives.
+function DetailCoverHero({
+  alt,
+  thumbnailUrl,
+  title,
+}: {
+  alt: string;
+  thumbnailUrl: string | null;
+  title: string;
+}) {
+  return (
+    <div className="relative -mx-5 flex justify-center overflow-hidden bg-muted px-5 pb-9 pt-10">
+      <CoverBackdrop thumbnailUrl={thumbnailUrl} />
+      <div
+        className="relative w-[48%] max-w-52 rounded-cover shadow-[0_0_4px_rgba(0,0,0,0.12),2px_6px_12px_rgba(0,0,0,0.12)]"
+        data-cover-target=""
+        style={{ viewTransitionName: COVER_TRANSITION_NAME }}
+      >
+        <BookCover alt={alt} fallbackTitle={title} radius="cover" thumbnailUrl={thumbnailUrl} />
+      </div>
     </div>
   );
 }
@@ -203,17 +228,11 @@ export function ProductDetailContent({
   return (
     <article className="page-content">
       <section className="border-b border-hairline pb-7">
-        <div className="relative -mx-5 flex justify-center overflow-hidden bg-muted px-5 pb-9 pt-10">
-          <CoverBackdrop thumbnailUrl={product.thumbnailUrl} />
-          <div className="relative w-[48%] max-w-52 rounded-cover shadow-[0_0_4px_rgba(0,0,0,0.12),2px_6px_12px_rgba(0,0,0,0.12)]">
-            <BookCover
-              alt={`${product.itemName} 표지`}
-              fallbackTitle={product.itemName}
-              radius="cover"
-              thumbnailUrl={product.thumbnailUrl}
-            />
-          </div>
-        </div>
+        <DetailCoverHero
+          alt={`${product.itemName} 표지`}
+          thumbnailUrl={product.thumbnailUrl}
+          title={product.itemName}
+        />
         <div className="min-w-0 pt-6">
           <p className="break-words type-caption text-text-tertiary">
             <span className="sr-only">분류 </span>
@@ -285,7 +304,25 @@ export function ProductDetailContent({
   );
 }
 
-export function ProductDetailSkeleton() {
+export function ProductDetailSkeleton({ coverPreview }: { coverPreview?: CoverPreview | null }) {
+  if (coverPreview) {
+    // Came from a list: draw the cover we already have where the page will put it.
+    return (
+      <div aria-busy="true" className="page-content">
+        <p className="sr-only" role="status">
+          도서 정보를 불러오는 중이에요
+        </p>
+        <DetailCoverHero alt="" thumbnailUrl={coverPreview.thumbnailUrl} title={coverPreview.title} />
+        <div aria-hidden="true" className="space-y-3 pt-6">
+          <div className="h-4 w-16 rounded bg-muted" />
+          <div className="h-7 w-3/4 rounded bg-muted" />
+          <div className="h-4 w-1/2 rounded bg-muted" />
+          <div className="mt-5 h-6 w-1/4 rounded bg-muted" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div aria-busy="true" className="page-content py-6">
       <p className="sr-only" role="status">

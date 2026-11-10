@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
+import { useCoverLinkClick } from "@/common/lib/coverTransition";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
 import type { ProductListItem } from "@/features/product/types/product";
@@ -52,6 +53,7 @@ function RankingTiers({
   items: ProductListItem[];
   onProductClick: () => void;
 }) {
+  const onCoverLinkClick = useCoverLinkClick();
   const [first, ...rest] = items;
   const medium = rest.slice(0, MEDIUM_COUNT);
   const listed = rest.slice(MEDIUM_COUNT, MEDIUM_COUNT + LIST_COUNT);
@@ -62,7 +64,10 @@ function RankingTiers({
         <Link
           aria-label={`1위, ${first.itemName} 상세 보기`}
           className="flex gap-4 rounded-panel bg-primary p-3 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          onClick={onProductClick}
+          onClick={(event) => {
+            onProductClick();
+            onCoverLinkClick(event, `/products/${first.itemId}`, { thumbnailUrl: first.thumbnailUrl, title: first.itemName });
+          }}
           to={`/products/${first.itemId}`}
         >
           <div className="w-24 shrink-0 rounded-cover shadow-[0_10px_20px_-12px_rgba(0,0,0,0.8)]">
@@ -85,7 +90,10 @@ function RankingTiers({
                 <Link
                   aria-label={`${index + 2}위, ${item.itemName} 상세 보기`}
                   className="flex h-full gap-2.5 rounded-panel bg-white/80 p-2.5 ring-1 ring-[#f3e7e1] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                  onClick={onProductClick}
+                  onClick={(event) => {
+                    onProductClick();
+                    onCoverLinkClick(event, `/products/${item.itemId}`, { thumbnailUrl: item.thumbnailUrl, title: item.itemName });
+                  }}
                   to={`/products/${item.itemId}`}
                 >
                   <div className="w-12 shrink-0">

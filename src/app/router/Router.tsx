@@ -32,7 +32,8 @@ import { WithdrawPage } from "@/pages/withdraw/WithdrawPage";
 
 export function Router() {
   return (
-    <BrowserRouter>
+    // Synchronous route updates so a cover view transition can flush the next page inside its callback.
+    <BrowserRouter useTransitions={false}>
       <Routes>
         <Route path="/auth/kakao/callback" element={<KakaoCallbackPage />} />
         <Route element={<OnboardingEntryGuard />}>

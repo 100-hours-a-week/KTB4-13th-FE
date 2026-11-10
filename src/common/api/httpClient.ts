@@ -1,4 +1,5 @@
 import { createApiUrl } from "@/common/api/apiUrl";
+import { trackRequest } from "@/common/api/requestActivity";
 
 export interface AuthHandlers {
   clearAccessToken: () => void;
@@ -27,11 +28,14 @@ export function createHttpClient(authHandlers: AuthHandlers): HttpClient {
       headers.set("Authorization", `Bearer ${accessToken}`);
     }
 
-    return fetch(createApiUrl(path), {
-      ...init,
-      credentials: "include",
-      headers,
-    });
+    return trackRequest(
+      path,
+      fetch(createApiUrl(path), {
+        ...init,
+        credentials: "include",
+        headers,
+      }),
+    );
   }
 
   async function performReissue(): Promise<string | null> {
@@ -101,5 +105,5 @@ export function createHttpClient(authHandlers: AuthHandlers): HttpClient {
 
 // For APIs the backend serves without login: no Authorization header and no reissue on 401.
 export function fetchPublic(path: string, init: RequestInit = {}): Promise<Response> {
-  return fetch(createApiUrl(path), init);
+  return trackRequest(path, fetch(createApiUrl(path), init));
 }
