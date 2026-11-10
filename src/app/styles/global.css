@@ -387,113 +387,90 @@
   }
 }
 
-/* Idle: looks left, back, right, back, then down toward the input. The head is layered, and the nearer a layer is,
-   the further it moves (tufts against, face 6, eyes 13, beak 15), so the head reads as turning, not sliding. */
+/* Idle: now and then a slow glance left, then right, holding the front in between. The head is layered and the nearer
+   a layer is, the further it moves (tufts against, face 5, eyes 7, beak 8), so the head turns instead of sliding.
+   The eyes barely move on their own: big eye-only moves read as eerie. */
 @keyframes bookjeogi-look-back {
   0%,
-  12%,
-  38%,
-  48%,
-  74%,
-  82%,
+  20%,
+  42%,
+  58%,
+  80%,
   100% {
     transform: translate(0, 0);
   }
 
-  18%,
-  32% {
-    transform: translate(4px, 0px);
+  26%,
+  36% {
+    transform: translate(3px, 0px);
   }
 
-  54%,
-  68% {
-    transform: translate(-4px, 0px);
-  }
-
-  86%,
-  94% {
-    transform: translate(0, -2px);
+  64%,
+  74% {
+    transform: translate(-3px, 0px);
   }
 }
 
 @keyframes bookjeogi-look-face {
   0%,
-  12%,
-  38%,
-  48%,
-  74%,
-  82%,
+  20%,
+  42%,
+  58%,
+  80%,
   100% {
     transform: translate(0, 0);
   }
 
-  18%,
-  32% {
-    transform: translate(-6px, -1px);
+  26%,
+  36% {
+    transform: translate(-5px, 0px);
   }
 
-  54%,
-  68% {
-    transform: translate(6px, -1px);
-  }
-
-  86%,
-  94% {
-    transform: translate(0, 4px);
+  64%,
+  74% {
+    transform: translate(5px, 0px);
   }
 }
 
 @keyframes bookjeogi-look-gaze {
   0%,
-  12%,
-  38%,
-  48%,
-  74%,
-  82%,
+  20%,
+  42%,
+  58%,
+  80%,
   100% {
     transform: translate(0, 0);
   }
 
-  18%,
-  32% {
-    transform: translate(-7px, -1px);
+  26%,
+  36% {
+    transform: translate(-2px, 0px);
   }
 
-  54%,
-  68% {
-    transform: translate(7px, -1px);
-  }
-
-  86%,
-  94% {
-    transform: translate(0, 4px);
+  64%,
+  74% {
+    transform: translate(2px, 0px);
   }
 }
 
 @keyframes bookjeogi-look-nose {
   0%,
-  12%,
-  38%,
-  48%,
-  74%,
-  82%,
+  20%,
+  42%,
+  58%,
+  80%,
   100% {
     transform: translate(0, 0);
   }
 
-  18%,
-  32% {
-    transform: translate(-9px, 0px);
+  26%,
+  36% {
+    transform: translate(-3px, 0px);
   }
 
-  54%,
-  68% {
-    transform: translate(9px, 0px);
-  }
-
-  86%,
-  94% {
-    transform: translate(0, 2px);
+  64%,
+  74% {
+    transform: translate(3px, 0px);
   }
 }
 
@@ -565,52 +542,56 @@
   }
 }
 
-/* Thinking: the head turns along a shelf (left, right, back) with the same layering as looking around. */
+/* Thinking: the head turns slowly from one end of a shelf to the other and holds, with the same layering. */
 @keyframes bookjeogi-scan-back {
   0%,
+  30%,
   100% {
-    transform: translate(4px, 0px);
+    transform: translate(3px, 0px);
   }
 
-  40%,
-  55% {
-    transform: translate(-4px, 0px);
+  50%,
+  80% {
+    transform: translate(-3px, 0px);
   }
 }
 
 @keyframes bookjeogi-scan-face {
   0%,
+  30%,
   100% {
-    transform: translate(-6px, 0px);
+    transform: translate(-5px, 0px);
   }
 
-  40%,
-  55% {
-    transform: translate(6px, 0px);
+  50%,
+  80% {
+    transform: translate(5px, 0px);
   }
 }
 
 @keyframes bookjeogi-scan-gaze {
   0%,
+  30%,
   100% {
-    transform: translate(-8px, -4px);
+    transform: translate(-2px, -2px);
   }
 
-  40%,
-  55% {
-    transform: translate(8px, -4px);
+  50%,
+  80% {
+    transform: translate(2px, -2px);
   }
 }
 
 @keyframes bookjeogi-scan-nose {
   0%,
+  30%,
   100% {
-    transform: translate(-9px, 0px);
+    transform: translate(-3px, 0px);
   }
 
-  40%,
-  55% {
-    transform: translate(9px, 0px);
+  50%,
+  80% {
+    transform: translate(3px, 0px);
   }
 }
 
@@ -790,19 +771,19 @@
   }
 
   .bookjeogi:is([data-mood="idle"], [data-mood="welcome"]) .bookjeogi-back {
-    animation: bookjeogi-look-back 7s ease-in-out infinite;
+    animation: bookjeogi-look-back 11s ease-in-out infinite;
   }
 
   .bookjeogi:is([data-mood="idle"], [data-mood="welcome"]) .bookjeogi-face {
-    animation: bookjeogi-look-face 7s ease-in-out infinite;
+    animation: bookjeogi-look-face 11s ease-in-out infinite;
   }
 
   .bookjeogi:is([data-mood="idle"], [data-mood="welcome"]) .bookjeogi-gaze {
-    animation: bookjeogi-look-gaze 7s ease-in-out infinite;
+    animation: bookjeogi-look-gaze 11s ease-in-out infinite;
   }
 
   .bookjeogi:is([data-mood="idle"], [data-mood="welcome"]) .bookjeogi-nose {
-    animation: bookjeogi-look-nose 7s ease-in-out infinite;
+    animation: bookjeogi-look-nose 11s ease-in-out infinite;
   }
 
   .bookjeogi:is([data-mood="idle"], [data-mood="welcome"]) .bookjeogi-tuft-left {
@@ -826,19 +807,19 @@
   }
 
   .bookjeogi[data-mood="thinking"] .bookjeogi-back {
-    animation: bookjeogi-scan-back 2.2s ease-in-out infinite;
+    animation: bookjeogi-scan-back 3.6s ease-in-out infinite;
   }
 
   .bookjeogi[data-mood="thinking"] .bookjeogi-face {
-    animation: bookjeogi-scan-face 2.2s ease-in-out infinite;
+    animation: bookjeogi-scan-face 3.6s ease-in-out infinite;
   }
 
   .bookjeogi[data-mood="thinking"] .bookjeogi-gaze {
-    animation: bookjeogi-scan-gaze 2.2s ease-in-out infinite;
+    animation: bookjeogi-scan-gaze 3.6s ease-in-out infinite;
   }
 
   .bookjeogi[data-mood="thinking"] .bookjeogi-nose {
-    animation: bookjeogi-scan-nose 2.2s ease-in-out infinite;
+    animation: bookjeogi-scan-nose 3.6s ease-in-out infinite;
   }
 
   .bookjeogi[data-mood="thinking"] .bookjeogi-tuft-left {
