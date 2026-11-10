@@ -8,6 +8,8 @@ import { useAuth } from "@/features/auth/context/useAuth";
 import { addCartItem, fetchCart } from "@/features/cart/api/cartApi";
 import { notifyCartChanged } from "@/features/cart/lib/cartEvents";
 import { ASSISTANT_NAME, AssistantAvatar } from "@/pages/recommendation-chat/components/AssistantAvatar";
+import { useRevealedText } from "@/pages/recommendation-chat/hooks/useRevealedText";
+import { similarBooksMessage } from "@/pages/recommendation-chat/lib/followupOptions";
 import type {
   CartProposalItemViewModel,
   ChatCheckout,
@@ -21,6 +23,11 @@ import type {
 const priceFormatter = new Intl.NumberFormat("ko-KR");
 const MAX_RECOMMENDATIONS = 3;
 const MAX_CART_ITEMS = 30;
+// Cards enter one after another once the reply text has finished, then the question and options follow.
+const CARD_ENTER_STAGGER_MS = 80;
+const AFTER_CARDS_DELAY_MS = 120;
+// How close to the bottom the reader must be for a growing reply to keep the view pinned to the end.
+const FOLLOW_THRESHOLD_PX = 120;
 
 const ASSISTANT_BUBBLE_CLASS_NAME =
   "w-fit max-w-[88%] whitespace-pre-wrap break-words rounded-panel border border-hairline bg-surface px-3.5 py-2.5 type-body leading-relaxed text-text-primary";
@@ -64,11 +71,13 @@ function CheckIcon() {
 function RecommendationCard({
   isSending,
   isSelected,
+  onQuickMessage,
   onToggle,
   recommendation,
 }: {
   isSending: boolean;
   isSelected: boolean;
+  onQuickMessage: (message: string) => void;
   onToggle: () => void;
   recommendation: RecommendationCardViewModel;
 }) {
@@ -154,6 +163,15 @@ function RecommendationCard({
         <span className="font-semibold tabular-nums text-accent">매칭 {recommendation.matchScore}%</span>
         {recommendation.reasonShort ? ` · ${recommendation.reasonShort}` : null}
       </p>
+      <button
+        aria-label={`${recommendation.title} 비슷한 책 더 보기`}
+        className="mt-auto -ml-1 flex min-h-11 w-fit items-end rounded-control px-1 pb-1 type-caption font-semibold text-text-secondary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:text-text-disabled"
+        disabled={isSending}
+        onClick={() => onQuickMessage(similarBooksMessage(recommendation.title))}
+        type="button"
+      >
+        비슷한 책 더
+      </button>
     </article>
   );
 }
@@ -177,10 +195,14 @@ function PendingRecommendationCards() {
 }
 
 function RecommendationCardList({
+  isEntering,
   isSending,
+  onQuickMessage,
   recommendations,
 }: {
+  isEntering: boolean;
   isSending: boolean;
+  onQuickMessage: (message: string) => void;
   recommendations: RecommendationCardViewModel[];
 }) {
   const location = useLocation();
@@ -276,11 +298,16 @@ function RecommendationCardList({
         tabIndex={0}
       >
         <ul className="flex items-stretch gap-2">
-          {visibleRecommendations.map((recommendation) => (
-            <li className="w-36 shrink-0 sm:w-40" key={recommendation.id}>
+          {visibleRecommendations.map((recommendation, index) => (
+            <li
+              className={`w-36 shrink-0 sm:w-40 ${isEntering ? "chat-message-enter" : ""}`}
+              key={recommendation.id}
+              style={isEntering ? { animationDelay: `${index * CARD_ENTER_STAGGER_MS}ms` } : undefined}
+            >
               <RecommendationCard
                 isSending={isSending || isAdding}
                 isSelected={selectedIds.has(recommendation.id)}
+                onQuickMessage={onQuickMessage}
                 onToggle={() => handleToggle(recommendation.id)}
                 recommendation={recommendation}
               />
@@ -465,6 +492,7 @@ function CartProposalPanel({
 interface ChatBubbleProps {
   isCheckoutLoading: boolean;
   isGroupStart: boolean;
+  isLast: boolean;
   message: ChatPresentationMessage;
   onConfirmProposal: (messageId: string, proposalId: number) => void;
   onDeclineProposal: (messageId: string, proposalId: number) => void;
@@ -498,6 +526,7 @@ function AssistantRow({
 function ChatBubble({
   isCheckoutLoading,
   isGroupStart,
+  isLast,
   message,
   onConfirmProposal,
   onDeclineProposal,
@@ -515,6 +544,91 @@ function ChatBubble({
       </div>
     );
   }
+
+  return (
+    <AssistantMessage
+      isCheckoutLoading={isCheckoutLoading}
+      isGroupStart={isGroupStart}
+      isLast={isLast}
+      message={message}
+      onConfirmProposal={onConfirmProposal}
+      onDeclineProposal={onDeclineProposal}
+      onOpenCheckout={onOpenCheckout}
+      onQuickMessage={onQuickMessage}
+      onRetryProposal={onRetryProposal}
+      status={status}
+    />
+  );
+}
+
+// The newest characters of a revealing reply stay lighter for a moment, so the text grows softly.
+const REVEAL_TAIL_LENGTH = 6;
+
+function AssistantText({ isDone, shownText, text }: { isDone: boolean; shownText: string; text: string }) {
+  if (isDone) return text;
+  const head = shownText.slice(0, -REVEAL_TAIL_LENGTH);
+  const tail = shownText.slice(-REVEAL_TAIL_LENGTH);
+  return (
+    <>
+      <span aria-hidden="true">
+        {head}
+        <span className="text-text-tertiary">{tail}</span>
+      </span>
+      <span className="sr-only">{text}</span>
+    </>
+  );
+}
+
+function AnswerOptions({
+  onQuickMessage,
+  options,
+}: {
+  onQuickMessage: (message: string) => void;
+  options: string[];
+}) {
+  return (
+    <ul aria-label="답 보기" className="flex flex-wrap gap-2">
+      {options.map((option) => (
+        <li key={option}>
+          <button
+            className="min-h-10 rounded-full border border-border bg-surface px-3.5 text-left type-body-small text-text-primary transition-colors hover:border-border-strong hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            onClick={() => onQuickMessage(option)}
+            type="button"
+          >
+            {option}
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function AssistantMessage({
+  isCheckoutLoading,
+  isGroupStart,
+  isLast,
+  message,
+  onConfirmProposal,
+  onDeclineProposal,
+  onOpenCheckout,
+  onQuickMessage,
+  onRetryProposal,
+  status,
+}: ChatBubbleProps & { message: Extract<ChatPresentationMessage, { role: "assistant" }> }) {
+  const isLive = message.isLive === true;
+  const { isDone, shownText } = useRevealedText(message.content, isLive);
+  const recommendations = message.recommendations ?? [];
+  // Cards, the question and its options wait until the reply text has been shown.
+  const isSettled = isDone && !message.isPending;
+  const cardCount = Math.min(recommendations.length, MAX_RECOMMENDATIONS);
+  const afterCards = isLive
+    ? {
+        className: "chat-message-enter",
+        style: { animationDelay: `${cardCount * CARD_ENTER_STAGGER_MS + AFTER_CARDS_DELAY_MS}ms` },
+      }
+    : { className: "", style: undefined };
+  // Options belong to the current turn; older turns keep only their question text.
+  const options = isLast && status !== "sending" ? message.options ?? [] : [];
 
   // Approve/decline only render for a proposalId the server actually returned.
   const proposalButton = message.agentButtons?.find(
@@ -534,29 +648,42 @@ function ChatBubble({
     <AssistantRow isGroupStart={isGroupStart}>
       {message.content ? (
         <p className={`${ASSISTANT_BUBBLE_CLASS_NAME} ${isGroupStart ? "rounded-tl-sm" : ""}`}>
-          {message.content}
+          <AssistantText isDone={isDone} shownText={shownText} text={message.content} />
         </p>
       ) : null}
-      {message.isPending ? <PendingRecommendationCards /> : null}
-      {message.recommendations?.length ? (
+      {message.isPending || (recommendations.length > 0 && !isSettled) ? <PendingRecommendationCards /> : null}
+      {recommendations.length > 0 && isSettled ? (
         <>
           <RecommendationCardList
+            isEntering={isLive}
             isSending={status === "sending"}
-            recommendations={message.recommendations}
+            onQuickMessage={onQuickMessage}
+            recommendations={recommendations}
           />
           <button
-            className="min-h-11 w-fit rounded-control px-2 -ml-2 type-body-small font-semibold text-text-secondary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:text-text-disabled"
+            className={`min-h-11 w-fit rounded-control px-2 -ml-2 type-body-small font-semibold text-text-secondary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:text-text-disabled ${afterCards.className}`}
             disabled={status === "sending"}
             onClick={() =>
               onQuickMessage("방금 추천과 겹치지 않는 다른 책을 추천해줘")
             }
+            style={afterCards.style}
             type="button"
           >
             다른 책 추천받기
           </button>
         </>
       ) : null}
-      {hasProposalPanel ? (
+      {message.followup && isSettled ? (
+        <p className={`mt-1.5 ${ASSISTANT_BUBBLE_CLASS_NAME} ${afterCards.className}`} style={afterCards.style}>
+          {message.followup}
+        </p>
+      ) : null}
+      {options.length > 0 && isSettled ? (
+        <div className={`mt-2.5 ${afterCards.className}`} style={afterCards.style}>
+          <AnswerOptions onQuickMessage={onQuickMessage} options={options} />
+        </div>
+      ) : null}
+      {hasProposalPanel && isSettled ? (
         <CartProposalPanel
           confirmLabel={proposalButton?.label ?? null}
           message={message}
@@ -566,7 +693,7 @@ function ChatBubble({
           onRetryProposal={proposalId !== null ? () => onRetryProposal(message.id, proposalId) : null}
         />
       ) : null}
-      {navigateButtons.length || checkout ? (
+      {(navigateButtons.length || checkout) && isSettled ? (
         <div className="mt-3 flex flex-wrap gap-2">
           {checkout ? (
             <button
@@ -614,9 +741,9 @@ function WelcomeMessage({
       </div>
       <AssistantRow isGroupStart>
         <div className="flex flex-col gap-1.5">
-          <p className={`${ASSISTANT_BUBBLE_CLASS_NAME} rounded-tl-sm`}>안녕! 나는 북적이야 📚</p>
+          <p className={`${ASSISTANT_BUBBLE_CLASS_NAME} rounded-tl-sm`}>안녕하세요! 저는 북적이예요 📚</p>
           <p className={ASSISTANT_BUBBLE_CLASS_NAME}>
-            {"오늘은 어떤 책을 찾고 있어?\n요즘 기분이나 취향, 책을 읽을 상황을 알려주면 어울리는 책을 골라줄게."}
+            {"오늘은 어떤 책을 찾고 계세요?\n요즘 기분이나 취향, 책을 읽을 상황을 알려 주시면 어울리는 책을 골라 드릴게요."}
           </p>
         </div>
         <ul aria-label="추천 질문" className="mt-3 flex flex-wrap gap-2">
@@ -681,6 +808,7 @@ export function ChatMessageList({
   status,
 }: ChatMessageListProps) {
   const endRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const hasScrolledRef = useRef(false);
   const lastMessage = messages.at(-1);
   const isLastMessagePending =
@@ -696,8 +824,28 @@ export function ChatMessageList({
     hasScrolledRef.current = true;
   }, [isLastMessagePending, messages.length, status]);
 
+  useEffect(() => {
+    // A reply keeps growing after it arrives (revealed text, then cards and options). Follow it while the reader
+    // is at the bottom, and leave the position alone once they scroll up to read something else.
+    const list = listRef.current;
+    const scroller = list?.closest("main");
+    if (!list || !scroller) return undefined;
+    let previousHeight = list.offsetHeight;
+    const observer = new ResizeObserver(() => {
+      const growth = list.offsetHeight - previousHeight;
+      previousHeight = list.offsetHeight;
+      if (growth <= 0) return;
+      const distanceBefore = scroller.scrollHeight - growth - scroller.scrollTop - scroller.clientHeight;
+      if (distanceBefore <= FOLLOW_THRESHOLD_PX) {
+        scroller.scrollTop = scroller.scrollHeight;
+      }
+    });
+    observer.observe(list);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div className="page-content flex min-h-full flex-col justify-end py-5">
+    <div className="page-content flex min-h-full flex-col justify-end py-5" ref={listRef}>
       {messages.length === 0 && status !== "sending" ? (
         <WelcomeMessage onQuickMessage={onQuickMessage} />
       ) : null}
@@ -713,6 +861,7 @@ export function ChatMessageList({
               <ChatBubble
                 isCheckoutLoading={isCheckoutLoading}
                 isGroupStart={isGroupStart}
+                isLast={index === messages.length - 1}
                 message={message}
                 onConfirmProposal={onConfirmProposal}
                 onDeclineProposal={onDeclineProposal}

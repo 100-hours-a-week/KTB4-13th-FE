@@ -25,6 +25,7 @@ import type {
   ProposalExecutionStatus,
 } from "@/pages/recommendation-chat/types/chatPresentation";
 import { MAX_CHAT_MESSAGE_LENGTH } from "@/pages/recommendation-chat/lib/chatMessage";
+import { splitFollowup } from "@/pages/recommendation-chat/lib/followupOptions";
 
 const DECLINED_PROPOSALS_STORAGE_KEY = "bookjeok-chat-declined-proposals";
 // Waits before re-asking with the same key while the server may still be answering (about 26 seconds in total).
@@ -38,10 +39,6 @@ function wait(milliseconds: number) {
 
 function isRecoverable(reason: string) {
   return reason === "in-progress" || reason === "interrupted";
-}
-
-function replyContent(reply: SessionChatReply) {
-  return reply.followup ? `${reply.reply}\n\n${reply.followup}` : reply.reply;
 }
 
 function toAssistantMessage(
@@ -61,12 +58,14 @@ function toAssistantMessage(
     executionId > 0 &&
     checkoutButton !== undefined;
 
+  const followup = splitFollowup(reply.followup);
+
   return {
     agentButtons: reply.buttons,
     checkout: hasCheckout
       ? { benefits: reply.checkout, executionId, label: checkoutButton.label }
       : undefined,
-    content: replyContent(reply),
+    content: reply.reply,
     executionStatus:
       executionStatus === "rejected"
         ? "rejected"
@@ -75,7 +74,9 @@ function toAssistantMessage(
           : reply.buttons.some((button) => button.action === "confirm_selection")
             ? "pending"
             : undefined,
+    followup: followup.text ?? undefined,
     id,
+    options: followup.options,
     recommendations: reply.cards.map((card) => ({
       author: card.author,
       coverImageUrl: card.coverImageUrl,
@@ -167,13 +168,17 @@ function toHistoryMessages(
         role: "user" as const,
       };
     }
-    return message.response
-      ? toAssistantMessage(`history-${message.id}`, message.response)
-      : {
-          content: message.text,
-          id: `history-${message.id}`,
-          role: "assistant" as const,
-        };
+    if (message.response) {
+      return toAssistantMessage(`history-${message.id}`, message.response);
+    }
+    // The stored line is reply + followup; option lines become options instead of plain text.
+    const stored = splitFollowup(message.text);
+    return {
+      content: stored.text ?? "",
+      id: `history-${message.id}`,
+      options: stored.options,
+      role: "assistant" as const,
+    };
   });
 }
 
@@ -358,7 +363,7 @@ export function useRecommendationChat(
             )
           : [
               ...current,
-              { content, id: assistantMessageId, isPending: true, role: "assistant" },
+              { content, id: assistantMessageId, isLive: true, isPending: true, role: "assistant" },
             ],
       );
     };
@@ -404,10 +409,10 @@ export function useRecommendationChat(
     if (result.data.execution?.status === "applied") {
       notifyCartChanged({ animate: true });
     }
-    const assistantMessage = toAssistantMessage(
-      assistantMessageId,
-      result.data,
-    );
+    const assistantMessage = {
+      ...toAssistantMessage(assistantMessageId, result.data),
+      isLive: true,
+    };
     const [restoredAssistantMessage] = await restoreProposalStatuses([
       assistantMessage,
     ]);

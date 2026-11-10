@@ -61,6 +61,14 @@ if (import.meta.env.DEV && window.location.pathname === "/dev/recommendation-pre
       </StrictMode>,
     );
   });
+} else if (import.meta.env.DEV && window.location.pathname === "/dev/chat-preview") {
+  void import("@/dev/DevChatPreviewApp").then(({ default: DevChatPreviewApp }) => {
+    root.render(
+      <StrictMode>
+        <DevChatPreviewApp />
+      </StrictMode>,
+    );
+  });
 } else if (import.meta.env.DEV && window.location.pathname === "/dev/preview") {
   void import("@/dev/DevPreviewApp").then(({ default: DevPreviewApp }) => {
     root.render(
