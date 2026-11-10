@@ -50,10 +50,16 @@ export function BookCover({
       >
         <img
           alt={alt}
-          className={`size-full object-cover ${imageUrl === loadedUrl ? "" : "opacity-0"}`}
+          className={`size-full object-cover transition-opacity duration-(--duration-enter) ease-standard motion-reduce:transition-none ${imageUrl === loadedUrl ? "" : "opacity-0"}`}
           loading="lazy"
           onError={() => setFailedUrl(imageUrl)}
           onLoad={() => setLoadedUrl(imageUrl)}
+          // A cover already in the browser cache shows at once instead of fading in again on every visit.
+          ref={(image) => {
+            if (image?.complete && image.naturalWidth > 0 && loadedUrl !== imageUrl) {
+              setLoadedUrl(imageUrl);
+            }
+          }}
           src={imageUrl}
         />
       </div>

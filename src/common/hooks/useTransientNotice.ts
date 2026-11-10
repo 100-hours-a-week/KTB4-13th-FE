@@ -2,21 +2,19 @@ import { useEffect, useState } from "react";
 
 const NOTICE_DURATION_MS = 2_000;
 
-export function useTransientNotice() {
-  const [notice, setNotice] = useState<string | null>(null);
+// Shows a value for a short while, then clears it. A notice with an action can ask for longer.
+export function useTransientNotice<T = string>(durationMs = NOTICE_DURATION_MS) {
+  const [notice, setNotice] = useState<T | null>(null);
 
   useEffect(() => {
-    if (!notice) {
+    if (notice === null) {
       return undefined;
     }
 
-    const timeoutId = window.setTimeout(
-      () => setNotice(null),
-      NOTICE_DURATION_MS,
-    );
+    const timeoutId = window.setTimeout(() => setNotice(null), durationMs);
 
     return () => window.clearTimeout(timeoutId);
-  }, [notice]);
+  }, [durationMs, notice]);
 
   return { notice, showNotice: setNotice };
 }

@@ -33,6 +33,9 @@ if (clarityProjectId) {
   clarity.init(clarityProjectId);
 }
 
+// iOS Safari applies :active (the press feedback in global.css) only when a touch listener exists.
+document.addEventListener("touchstart", () => {}, { passive: true });
+
 if (isValidSentryDsn(sentryDsn)) {
   void import("@sentry/react").then((Sentry) => {
     Sentry.init({
