@@ -994,3 +994,26 @@
 ::view-transition-new(root) {
   animation-duration: var(--duration-fast);
 }
+
+/* 북적이 peeking up from the lower corner (BookjeogiCameo). */
+@keyframes bookjeogi-cameo-enter {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bookjeogi-cameo {
+  animation: bookjeogi-cameo-enter var(--duration-enter) var(--ease-overshoot) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bookjeogi-cameo {
+    animation: none;
+  }
+}

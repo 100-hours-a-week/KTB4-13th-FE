@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 
 import { BottomNavigation } from "@/common/components/BottomNavigation";
+import { BookjeogiCameo } from "@/features/bookjeogi/BookjeogiCameo";
 import { CartQuickAddProvider } from "@/features/cart/components/CartQuickAddProvider";
 
 // Service pages render inside the remaining height so the shared tab bar never covers their content.
@@ -11,6 +12,7 @@ export function BottomNavigationLayout() {
         <CartQuickAddProvider>
           <Outlet />
         </CartQuickAddProvider>
+        <BookjeogiCameo />
       </div>
       <BottomNavigation />
     </div>
