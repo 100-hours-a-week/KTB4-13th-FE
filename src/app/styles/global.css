@@ -314,6 +314,266 @@
   }
 }
 
+/* 북적이 (BookjeogiCharacter). Moves are in SVG units (viewBox 200), sized to read at 36–64px. */
+.bookjeogi {
+  overflow: visible;
+}
+
+.bookjeogi-body,
+.bookjeogi-tuft-left,
+.bookjeogi-tuft-right,
+.bookjeogi-wing-left,
+.bookjeogi-wing-right,
+.bookjeogi-gaze,
+.bookjeogi-eye,
+.bookjeogi-beak {
+  transform-box: fill-box;
+}
+
+.bookjeogi-body {
+  transform-origin: 50% 100%;
+}
+
+.bookjeogi-tuft-left {
+  transform-origin: 95% 90%;
+}
+
+.bookjeogi-tuft-right {
+  transform-origin: 5% 90%;
+}
+
+.bookjeogi-wing-left {
+  transform-origin: 85% 5%;
+}
+
+.bookjeogi-wing-right {
+  transform-origin: 15% 5%;
+}
+
+.bookjeogi-eye {
+  transform-origin: 50% 50%;
+}
+
+.bookjeogi-beak {
+  transform-origin: 50% 0%;
+}
+
+@keyframes bookjeogi-breathe {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+
+  50% {
+    transform: scale(1.012, 1.03);
+  }
+}
+
+@keyframes bookjeogi-sway-left {
+  0%,
+  80%,
+  100% {
+    transform: rotate(0);
+  }
+
+  86% {
+    transform: rotate(10deg);
+  }
+
+  92% {
+    transform: rotate(-3deg);
+  }
+}
+
+@keyframes bookjeogi-sway-right {
+  0%,
+  80%,
+  100% {
+    transform: rotate(0);
+  }
+
+  88% {
+    transform: rotate(-10deg);
+  }
+
+  94% {
+    transform: rotate(3deg);
+  }
+}
+
+/* Eyes run along a shelf: left, right, back. */
+@keyframes bookjeogi-scan {
+  0%,
+  100% {
+    transform: translate(-7px, -3px);
+  }
+
+  40%,
+  55% {
+    transform: translate(7px, -3px);
+  }
+}
+
+@keyframes bookjeogi-wave-left {
+  0%,
+  100% {
+    transform: rotate(-6deg);
+  }
+
+  50% {
+    transform: rotate(14deg);
+  }
+}
+
+@keyframes bookjeogi-wave-right {
+  0%,
+  100% {
+    transform: rotate(-14deg);
+  }
+
+  50% {
+    transform: rotate(6deg);
+  }
+}
+
+@keyframes bookjeogi-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+@keyframes bookjeogi-talk {
+  0%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+
+  50% {
+    transform: translateY(-7px) scale(1.015, 0.985);
+  }
+}
+
+@keyframes bookjeogi-beak {
+  from {
+    transform: scaleY(1);
+  }
+
+  to {
+    transform: scaleY(0.7);
+  }
+}
+
+/* A quick take-off (about 0.2s to the top), then a soft landing. */
+@keyframes bookjeogi-hop {
+  0% {
+    transform: translateY(0) scale(1, 1);
+  }
+
+  12% {
+    transform: translateY(2px) scale(1.06, 0.93);
+  }
+
+  34% {
+    transform: translateY(-26px) scale(0.97, 1.04);
+  }
+
+  70% {
+    transform: translateY(2px) scale(1.03, 0.97);
+  }
+
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+}
+
+@keyframes bookjeogi-lift-left {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+
+  35% {
+    transform: rotate(28deg);
+  }
+}
+
+@keyframes bookjeogi-lift-right {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+
+  35% {
+    transform: rotate(-28deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bookjeogi-eye {
+    transition: transform 70ms ease;
+  }
+
+  .bookjeogi[data-blink] .bookjeogi-eye {
+    transform: scaleY(0.1);
+  }
+
+  .bookjeogi[data-mood="idle"] .bookjeogi-body {
+    animation: bookjeogi-breathe 3.6s ease-in-out infinite;
+  }
+
+  .bookjeogi[data-mood="idle"] .bookjeogi-tuft-left {
+    animation: bookjeogi-sway-left 7s ease-in-out infinite;
+  }
+
+  .bookjeogi[data-mood="idle"] .bookjeogi-tuft-right {
+    animation: bookjeogi-sway-right 7s ease-in-out infinite;
+  }
+
+  .bookjeogi[data-mood="thinking"] .bookjeogi-body {
+    animation: bookjeogi-bob 1.8s ease-in-out infinite;
+  }
+
+  .bookjeogi[data-mood="thinking"] .bookjeogi-gaze {
+    animation: bookjeogi-scan 2.2s ease-in-out infinite;
+  }
+
+  .bookjeogi[data-mood="thinking"] .bookjeogi-tuft-left {
+    animation: bookjeogi-wave-left 0.9s ease-in-out infinite;
+  }
+
+  .bookjeogi[data-mood="thinking"] .bookjeogi-tuft-right {
+    animation: bookjeogi-wave-right 0.9s ease-in-out infinite;
+  }
+
+  .bookjeogi[data-mood="talking"] .bookjeogi-body {
+    animation: bookjeogi-talk 0.36s ease-in-out infinite;
+  }
+
+  .bookjeogi[data-mood="talking"] .bookjeogi-beak {
+    animation: bookjeogi-beak 0.18s ease-in-out infinite alternate;
+  }
+
+  /* After the hop the breathing of idle takes over. */
+  .bookjeogi[data-mood="presenting"] .bookjeogi-body {
+    animation:
+      bookjeogi-hop 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) both,
+      bookjeogi-breathe 3.6s ease-in-out 0.6s infinite;
+  }
+
+  .bookjeogi[data-mood="presenting"] .bookjeogi-wing-left {
+    animation: bookjeogi-lift-left 0.6s ease-out both;
+  }
+
+  .bookjeogi[data-mood="presenting"] .bookjeogi-wing-right {
+    animation: bookjeogi-lift-right 0.6s ease-out both;
+  }
+}
+
 @keyframes photo-scan-line {
   from {
     top: 6%;

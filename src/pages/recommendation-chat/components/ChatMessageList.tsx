@@ -8,6 +8,7 @@ import { useAuth } from "@/features/auth/context/useAuth";
 import { addCartItem, fetchCart } from "@/features/cart/api/cartApi";
 import { notifyCartChanged } from "@/features/cart/lib/cartEvents";
 import { ASSISTANT_NAME, AssistantAvatar } from "@/pages/recommendation-chat/components/AssistantAvatar";
+import type { BookjeogiMood } from "@/pages/recommendation-chat/components/BookjeogiCharacter";
 import { useRevealedText } from "@/pages/recommendation-chat/hooks/useRevealedText";
 import { similarBooksMessage } from "@/pages/recommendation-chat/lib/followupOptions";
 import type {
@@ -506,13 +507,15 @@ interface ChatBubbleProps {
 function AssistantRow({
   children,
   isGroupStart,
+  mood = "still",
 }: {
   children: ReactNode;
   isGroupStart: boolean;
+  mood?: BookjeogiMood;
 }) {
   return (
     <div className="flex min-w-0 gap-2">
-      {isGroupStart ? <AssistantAvatar /> : <span aria-hidden="true" className="w-9 shrink-0" />}
+      {isGroupStart ? <AssistantAvatar mood={mood} /> : <span aria-hidden="true" className="w-9 shrink-0" />}
       <div className="flex min-w-0 flex-1 flex-col">
         {isGroupStart ? (
           <p className="mb-1 type-caption font-semibold text-text-secondary">{ASSISTANT_NAME}</p>
@@ -629,6 +632,17 @@ function AssistantMessage({
     : { className: "", style: undefined };
   // Options belong to the current turn; older turns keep only their question text.
   const options = isLast && status !== "sending" ? message.options ?? [] : [];
+  // Only the newest reply's 북적이 moves: it talks while the text is revealed, keeps thinking while the cards
+  // are still on their way, and hops once as they appear.
+  const mood: BookjeogiMood = !isLast
+    ? "still"
+    : !isDone
+      ? "talking"
+      : message.isPending
+        ? "thinking"
+        : isLive && cardCount > 0
+          ? "presenting"
+          : "idle";
 
   // Approve/decline only render for a proposalId the server actually returned.
   const proposalButton = message.agentButtons?.find(
@@ -645,7 +659,7 @@ function AssistantMessage({
   const hasProposalPanel = proposalId !== null || message.proposal !== undefined || (message.executionStatus !== undefined && message.executionStatus !== "pending");
 
   return (
-    <AssistantRow isGroupStart={isGroupStart}>
+    <AssistantRow isGroupStart={isGroupStart} mood={mood}>
       {message.content ? (
         <p className={`${ASSISTANT_BUBBLE_CLASS_NAME} ${isGroupStart ? "rounded-tl-sm" : ""}`}>
           <AssistantText isDone={isDone} shownText={shownText} text={message.content} />
@@ -735,7 +749,7 @@ function WelcomeMessage({
   return (
     <section aria-label="북적이 첫 인사" className="chat-message-enter">
       <div className="flex flex-col items-center pb-8 text-center">
-        <AssistantAvatar className="size-16 p-1" />
+        <AssistantAvatar className="size-16 p-1" mood="idle" />
         <p className="mt-2 type-title text-text-primary">{ASSISTANT_NAME}</p>
         <p className="mt-0.5 type-caption text-text-tertiary">취향에 맞는 책을 함께 찾아드려요</p>
       </div>
@@ -764,21 +778,23 @@ function WelcomeMessage({
   );
 }
 
+// 북적이 itself is the waiting sign: it thinks beside a short line until the first reply text arrives.
 function TypingIndicator({ isGroupStart }: { isGroupStart: boolean }) {
   return (
     <div className={`chat-message-enter ${isGroupStart ? "mt-5" : "mt-1.5"}`} role="status">
-      <AssistantRow isGroupStart={isGroupStart}>
-        <div className={`flex h-10 w-fit items-center gap-1 rounded-panel border border-hairline bg-surface px-4 ${isGroupStart ? "rounded-tl-sm" : ""}`}>
-          {[0, 160, 320].map((delay) => (
-            <span
-              aria-hidden="true"
-              className="chat-typing-dot size-1.5 rounded-full bg-text-tertiary"
-              key={delay}
-              style={{ animationDelay: `${delay}ms` }}
-            />
-          ))}
-          <span className="sr-only">북적이가 추천을 준비하고 있어요</span>
-        </div>
+      <AssistantRow isGroupStart={isGroupStart} mood="thinking">
+        <p className="flex min-h-6 items-center gap-1.5 type-caption text-text-tertiary">
+          답을 준비하고 있어요
+          <span aria-hidden="true" className="flex gap-1">
+            {[0, 160, 320].map((delay) => (
+              <span
+                className="chat-typing-dot size-1 rounded-full bg-text-tertiary"
+                key={delay}
+                style={{ animationDelay: `${delay}ms` }}
+              />
+            ))}
+          </span>
+        </p>
       </AssistantRow>
     </div>
   );
