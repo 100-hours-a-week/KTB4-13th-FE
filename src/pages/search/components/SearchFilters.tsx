@@ -1,11 +1,11 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import type { SearchFilters as SearchFilterValues } from "@/pages/search/types/search";
 
 type RangeKind = "price" | "year";
 
 const controlClassName =
-  "min-h-11 shrink-0 rounded-control border bg-surface px-3 type-caption aria-expanded:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:text-text-tertiary";
+  "min-h-11 shrink-0 rounded-control border bg-transparent px-3 type-caption focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:text-text-tertiary";
 const pendingFilterClassName =
   "inline-flex min-h-11 shrink-0 items-center rounded-control bg-muted px-3 type-caption text-text-tertiary";
 const priceFormatter = new Intl.NumberFormat("ko-KR");
@@ -172,52 +172,74 @@ interface SearchFiltersProps {
 
 export function SearchFilters({ filters, onChange }: SearchFiltersProps) {
   const [openRange, setOpenRange] = useState<RangeKind | null>(null);
+  const filterRowRef = useRef<HTMLDivElement>(null);
+  const [indicator, setIndicator] = useState({ left: 0, width: 0 });
+
+  useEffect(() => {
+    const row = filterRowRef.current;
+    const chip = row?.querySelector<HTMLButtonElement>('button[aria-expanded="true"]');
+    if (!row || !chip) return;
+
+    const observer = new ResizeObserver(() => {
+      setIndicator({ left: chip.offsetLeft, width: chip.offsetWidth });
+    });
+    observer.observe(row);
+    observer.observe(chip);
+    return () => observer.disconnect();
+  }, [openRange]);
 
   return (
     <section
       aria-label="검색 결과 필터"
       className="shrink-0 border-b border-hairline bg-surface px-5 pb-3"
     >
-      <div className="flex max-w-full gap-2 overflow-x-auto pb-1">
-        {/* Search accepts onboarding category labels, not /api/v1/categories values, so it stays unfiltered. */}
-        <span
-          aria-label="카테고리 필터: 전체, 현재 전체 조건만 선택할 수 있습니다"
-          className={pendingFilterClassName}
-        >
-          카테고리 전체
-        </span>
+      <div className="overflow-x-auto pb-1">
+        <div className="relative isolate flex w-max gap-2" ref={filterRowRef}>
+          <span
+            aria-hidden="true"
+            className={`pointer-events-none absolute inset-y-0 left-0 -z-10 rounded-control bg-muted transition-[transform,width,opacity] duration-(--duration-base) ease-standard motion-reduce:transition-none ${openRange ? "opacity-100" : "opacity-0"}`}
+            style={{ transform: `translateX(${indicator.left}px)`, width: indicator.width }}
+          />
+          {/* Search accepts onboarding category labels, not /api/v1/categories values, so it stays unfiltered. */}
+          <span
+            aria-label="카테고리 필터: 전체, 현재 전체 조건만 선택할 수 있습니다"
+            className={pendingFilterClassName}
+          >
+            카테고리 전체
+          </span>
 
-        <button
-          aria-controls="search-price-filter"
-          aria-expanded={openRange === "price"}
-          className={`${controlClassName} ${
-            filters.priceMin !== null || filters.priceMax !== null
-              ? "border-text-primary font-semibold text-text-primary"
-              : "border-border text-text-secondary"
-          }`}
-          onClick={() =>
-            setOpenRange((current) => (current === "price" ? null : "price"))
-          }
-          type="button"
-        >
-          {formatPriceRange(filters.priceMin, filters.priceMax)}
-        </button>
+          <button
+            aria-controls="search-price-filter"
+            aria-expanded={openRange === "price"}
+            className={`${controlClassName} ${
+              filters.priceMin !== null || filters.priceMax !== null
+                ? "border-text-primary font-semibold text-text-primary"
+                : "border-border text-text-secondary"
+            }`}
+            onClick={() =>
+              setOpenRange((current) => (current === "price" ? null : "price"))
+            }
+            type="button"
+          >
+            {formatPriceRange(filters.priceMin, filters.priceMax)}
+          </button>
 
-        <button
-          aria-controls="search-year-filter"
-          aria-expanded={openRange === "year"}
-          className={`${controlClassName} ${
-            filters.pubYearFrom !== null || filters.pubYearTo !== null
-              ? "border-text-primary font-semibold text-text-primary"
-              : "border-border text-text-secondary"
-          }`}
-          onClick={() =>
-            setOpenRange((current) => (current === "year" ? null : "year"))
-          }
-          type="button"
-        >
-          {formatYearRange(filters.pubYearFrom, filters.pubYearTo)}
-        </button>
+          <button
+            aria-controls="search-year-filter"
+            aria-expanded={openRange === "year"}
+            className={`${controlClassName} ${
+              filters.pubYearFrom !== null || filters.pubYearTo !== null
+                ? "border-text-primary font-semibold text-text-primary"
+                : "border-border text-text-secondary"
+            }`}
+            onClick={() =>
+              setOpenRange((current) => (current === "year" ? null : "year"))
+            }
+            type="button"
+          >
+            {formatYearRange(filters.pubYearFrom, filters.pubYearTo)}
+          </button>
+        </div>
       </div>
 
       {openRange === "price" ? (
