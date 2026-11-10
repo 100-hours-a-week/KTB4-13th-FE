@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 
+import { QuickAddToCartButton } from "@/features/cart/components/QuickAddToCartButton";
 import { BookCover } from "@/common/components/BookCover";
 import { useCoverLinkClick } from "@/common/lib/coverTransition";
 import { ProductAvailabilityBadge } from "@/common/components/ProductAvailabilityBadge";
@@ -156,6 +157,11 @@ export function SearchResultsContent({
         {state.items.map((item) => (
           <li className="min-w-0" key={item.bookId}>
             <SearchResultCard item={item} />
+            {item.productId !== null && item.inStock ? (
+              <div className="mt-2">
+                <QuickAddToCartButton productId={item.productId} thumbnailUrl={item.coverUrl} title={item.title} />
+              </div>
+            ) : null}
           </li>
         ))}
       </ul>

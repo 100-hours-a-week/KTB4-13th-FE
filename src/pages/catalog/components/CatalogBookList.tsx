@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 
+import { QuickAddToCartButton } from "@/features/cart/components/QuickAddToCartButton";
 import { BookCover } from "@/common/components/BookCover";
 import { useCoverLinkClick } from "@/common/lib/coverTransition";
 import { ProductAvailabilityBadge } from "@/common/components/ProductAvailabilityBadge";
@@ -232,11 +233,16 @@ export function CatalogBookList({
     <div className="page-content pb-6">
       <ol aria-label={mode === "ranking" ? "책 랭킹 목록" : "추천 도서 목록"}>
         {items.map((book, index) => (
-          <li className="border-b border-hairline last:border-b-0" key={book.key}>
-            <CatalogBookRow
-              book={book}
-              rank={mode === "ranking" ? index + 1 : undefined}
-            />
+          <li className="flex items-center gap-2 border-b border-hairline last:border-b-0" key={book.key}>
+            <div className="min-w-0 flex-1">
+              <CatalogBookRow
+                book={book}
+                rank={mode === "ranking" ? index + 1 : undefined}
+              />
+            </div>
+            {mode === "ranking" && book.productId !== null ? (
+              <QuickAddToCartButton productId={book.productId} thumbnailUrl={book.thumbnailUrl} title={book.title} />
+            ) : null}
           </li>
         ))}
       </ol>
