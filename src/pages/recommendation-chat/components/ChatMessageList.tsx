@@ -151,7 +151,7 @@ function RecommendationCard({
         </div>
       ) : null}
       <p className="mt-1.5 line-clamp-2 type-caption text-text-secondary">
-        <span className="font-semibold tabular-nums text-accent">매칭 {recommendation.matchScore}%</span>
+        <span className="font-semibold tabular-nums text-text-primary">취향 매칭 {recommendation.matchScore}%</span>
         {recommendation.reasonShort ? ` · ${recommendation.reasonShort}` : null}
       </p>
     </article>
