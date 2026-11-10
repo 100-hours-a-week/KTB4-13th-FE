@@ -7,17 +7,15 @@ import { CameraIcon } from "@/common/components/AppIcons";
 import { BookCover } from "@/common/components/BookCover";
 import { Button } from "@/common/components/Button";
 import { libraryPreviewBooks, photoScanPreviewCases, type PhotoScanPreviewCase } from "@/dev/fixtures/photoScan";
+import { createPreviewSaveBooks, createPreviewScanPhoto } from "@/dev/photoScanPreview";
 import { AuthContext, type AuthContextValue } from "@/features/auth/context/authContext";
 import { PhotoCaptureSheet } from "@/features/library/components/PhotoCaptureSheet";
 import { PhotoScanEntryCard } from "@/features/library/components/PhotoScanEntryCard";
 import { PhotoScanFlow } from "@/features/library/components/PhotoScanFlow";
 import { PhotoScanSavedBanner } from "@/features/library/components/PhotoScanSavedBanner";
-import { foundBooks, type PhotoScanSaved } from "@/features/library/hooks/usePhotoScan";
-import type { SaveScannedBooks, ScanPhoto } from "@/features/library/types/photoScan";
+import { foundBooks } from "@/features/library/hooks/usePhotoScan";
+import type { PhotoScanSaved } from "@/features/library/types/photoScan";
 import { AppPageHeader } from "@/features/navigation/components/AppPageHeader";
-
-const UPLOAD_DELAY_MS = 800;
-const RECOGNIZE_DELAY_MS = 2000;
 
 const previewAuth: AuthContextValue = {
   accessToken: null,
@@ -25,16 +23,6 @@ const previewAuth: AuthContextValue = {
   setAccessToken: () => {},
   status: "authenticated",
 };
-
-function wait(ms: number, signal?: AbortSignal) {
-  return new Promise<void>((resolve) => {
-    const timer = window.setTimeout(resolve, ms);
-    signal?.addEventListener("abort", () => {
-      window.clearTimeout(timer);
-      resolve();
-    });
-  });
-}
 
 interface PreviewProps {
   previewCase: PhotoScanPreviewCase;
@@ -133,20 +121,8 @@ function PhotoScanPreview({ previewCase }: Pick<PreviewProps, "previewCase">) {
   const navigate = useNavigate();
   const location = useLocation();
   const photo = (location.state as { photo?: File } | null)?.photo;
-  const { result, saveFails } = photoScanPreviewCases[previewCase];
-
-  const scanPhoto: ScanPhoto = async (_photo, { onPhase, signal }) => {
-    onPhase("uploading");
-    await wait(UPLOAD_DELAY_MS, signal);
-    onPhase("recognizing");
-    await wait(RECOGNIZE_DELAY_MS, signal);
-    return result === "timeout" ? { ok: false, reason: "timeout" } : { data: result, ok: true };
-  };
-
-  const saveBooks: SaveScannedBooks = async () => {
-    await wait(UPLOAD_DELAY_MS);
-    return saveFails ? { ok: false } : { ok: true };
-  };
+  const scanPhoto = createPreviewScanPhoto(previewCase);
+  const saveBooks = createPreviewSaveBooks(previewCase);
 
   if (!photo) return <Navigate replace to="/my/library" />;
 

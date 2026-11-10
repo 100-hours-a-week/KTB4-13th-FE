@@ -35,3 +35,18 @@ export type ScanPhoto = (
 export type SaveScannedBooks = (
   isbns: string[],
 ) => Promise<{ ok: true } | { ok: false }>;
+
+export interface PhotoScanSaved {
+  missedCount: number;
+  savedCount: number;
+}
+
+// 나의 도서관 → 사진 화면으로 고른 사진을 넘긴다
+export interface LibraryPhotoLocationState {
+  photo?: File;
+}
+
+// 사진 화면에서 담고 나의 도서관으로 돌아갈 때 결과를 넘긴다
+export interface LibraryLocationState {
+  photoScanSaved?: PhotoScanSaved;
+}

@@ -4,6 +4,7 @@ import { preparePhoto } from "@/features/library/lib/preparePhoto";
 import type {
   PhotoScanBook,
   PhotoScanResult,
+  PhotoScanSaved,
   SaveScannedBooks,
   ScanPhoto,
 } from "@/features/library/types/photoScan";
@@ -25,10 +26,6 @@ export function foundBooks(result: PhotoScanResult): PhotoScanBook[] {
   return [...books.values()];
 }
 
-export interface PhotoScanSaved {
-  missedCount: number;
-  savedCount: number;
-}
 
 interface UsePhotoScanOptions {
   initialPhoto: File;
