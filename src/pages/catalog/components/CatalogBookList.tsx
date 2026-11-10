@@ -47,19 +47,42 @@ function CatalogBookRow({
   book: CatalogBookItem;
   rank?: number;
 }) {
-  const row = (
+  const isFeatured = rank === 1;
+  const row = isFeatured ? (
+    // The first place gets its own dark card so the order reads at a glance.
+    <article className="my-3 flex gap-4 rounded-panel bg-primary p-4 text-white">
+      <div className="w-24 shrink-0 rounded-cover shadow-[0_10px_20px_-12px_rgba(0,0,0,0.8)]">
+        <BookCover alt="" fallbackTitle={book.title} radius="cover" thumbnailUrl={book.thumbnailUrl} />
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
+        <span className="type-numeral text-2xl text-[#f6c3c8]">
+          01<span className="sr-only">위</span>
+        </span>
+        <h2 className="line-clamp-2 break-keep type-title">{book.title}</h2>
+        <p className="truncate type-body-small text-white/70">{book.author ?? "저자 정보 없음"}</p>
+        {book.price !== null ? (
+          <p className="type-body-small font-semibold tabular-nums">{priceFormatter.format(book.price)}원</p>
+        ) : null}
+        {book.productId === null ? (
+          <div className="flex">
+            <ProductAvailabilityBadge />
+          </div>
+        ) : null}
+      </div>
+    </article>
+  ) : (
     <article className="flex gap-4 py-4">
       {rank !== undefined ? (
         <span
           className={`w-9 shrink-0 self-center type-numeral text-xl ${
-            rank <= 3 ? "text-text-primary" : "text-text-tertiary"
+            rank <= 3 ? "text-accent" : "text-text-tertiary"
           }`}
         >
           {String(rank).padStart(2, "0")}
           <span className="sr-only">위</span>
         </span>
       ) : null}
-      <div className="w-[4.5rem] shrink-0">
+      <div className={`shrink-0 ${rank !== undefined && rank > 3 ? "w-14" : "w-[4.5rem]"}`}>
         <BookCover
           alt=""
           fallbackTitle={book.title}
@@ -100,7 +123,9 @@ function CatalogBookRow({
   return (
     <Link
       aria-label={`${book.title} 상세 보기`}
-      className="block transition-colors hover:bg-muted/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className={`block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+        isFeatured ? "rounded-panel" : "hover:bg-muted/60"
+      }`}
       to={`/products/${book.productId}`}
     >
       {row}

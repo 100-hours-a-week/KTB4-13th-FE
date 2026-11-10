@@ -29,7 +29,7 @@ export function CatalogHeader({
   const copy = HEADER_COPY[mode];
   const description =
     mode === "ranking"
-      ? "책 랭킹 · 인기순"
+      ? "많이 팔린 순서 · 1시간마다 갱신"
       : `추천 도서 · ${SORT_LABEL[recommendationSort]}`;
 
   return (

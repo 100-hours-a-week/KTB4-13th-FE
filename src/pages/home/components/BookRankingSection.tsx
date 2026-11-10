@@ -3,11 +3,11 @@ import { Link } from "react-router-dom";
 import { BookCover } from "@/common/components/BookCover";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
+import type { ProductListItem } from "@/features/product/types/product";
 import type { BookRankingState } from "@/pages/home/hooks/useBookRanking";
 
-const SKELETON_COUNT = 3;
-const RANK_CARD_CLASS_NAME = "w-[10.25rem] shrink-0";
-const RANK_COLORS = ["text-[#e7828d]", "text-[#c8aa87]", "text-[#eea078]", "text-[#b9a7a0]"];
+const MEDIUM_COUNT = 2;
+const LIST_COUNT = 4;
 
 interface BookRankingSectionProps {
   onMoreClick: () => void;
@@ -16,14 +16,120 @@ interface BookRankingSectionProps {
   retry: () => void;
 }
 
-function RankNumeral({ rank }: { rank: number }) {
+function ReviewLine({ item, tone = "default" }: { item: ProductListItem; tone?: "default" | "inverse" }) {
+  const hasRate =
+    typeof item.reviewCount === "number" &&
+    item.reviewCount > 0 &&
+    typeof item.reviewRate === "number" &&
+    item.reviewRate > 0;
+  const mutedClassName = tone === "inverse" ? "text-white/60" : "text-text-tertiary";
+
+  if (hasRate) {
+    return (
+      <p className={`flex items-center gap-1 type-caption font-semibold ${tone === "inverse" ? "text-[#f6c3c8]" : "text-[#d96f7a]"}`}>
+        <span aria-hidden="true">★</span>
+        <span className="tabular-nums">
+          {item.reviewRate?.toFixed(1)} ({item.reviewCount?.toLocaleString("ko-KR")})
+        </span>
+      </p>
+    );
+  }
+
   return (
-    <span
-      aria-hidden="true"
-      className={`rank-number mt-3 block w-10 shrink-0 select-none whitespace-nowrap text-center tabular-nums ${rank >= 10 ? "rank-number-double" : ""} ${RANK_COLORS[(rank - 1) % RANK_COLORS.length]}`}
-    >
-      {rank}
-    </span>
+    <p className={`type-caption ${mutedClassName}`}>
+      {item.reviewCount && item.reviewCount > 0
+        ? `리뷰 ${item.reviewCount.toLocaleString("ko-KR")}건`
+        : "아직 리뷰가 없어요"}
+    </p>
+  );
+}
+
+// 1st large, 2nd-3rd medium, then a short list: the order should be readable at a glance.
+function RankingTiers({
+  items,
+  onProductClick,
+}: {
+  items: ProductListItem[];
+  onProductClick: () => void;
+}) {
+  const [first, ...rest] = items;
+  const medium = rest.slice(0, MEDIUM_COUNT);
+  const listed = rest.slice(MEDIUM_COUNT, MEDIUM_COUNT + LIST_COUNT);
+
+  return (
+    <ol aria-label="책 랭킹 목록" className="mt-3 px-4">
+      <li>
+        <Link
+          aria-label={`1위, ${first.itemName} 상세 보기`}
+          className="flex gap-4 rounded-panel bg-primary p-3 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          onClick={onProductClick}
+          to={`/products/${first.itemId}`}
+        >
+          <div className="w-24 shrink-0 rounded-cover shadow-[0_10px_20px_-12px_rgba(0,0,0,0.8)]">
+            <BookCover alt="" fallbackTitle={first.itemName} radius="cover" thumbnailUrl={first.thumbnailUrl} />
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
+            <span aria-hidden="true" className="type-numeral text-2xl text-[#f6c3c8]">01</span>
+            <p className="line-clamp-2 break-keep type-title">{first.itemName}</p>
+            <p className="truncate type-caption text-white/70">{first.author}</p>
+            <ReviewLine item={first} tone="inverse" />
+          </div>
+        </Link>
+      </li>
+
+      {medium.length > 0 ? (
+        <li className="mt-3">
+          <ol className="grid grid-cols-2 gap-3" start={2}>
+            {medium.map((item, index) => (
+              <li key={item.itemId}>
+                <Link
+                  aria-label={`${index + 2}위, ${item.itemName} 상세 보기`}
+                  className="flex h-full gap-2.5 rounded-panel bg-white/80 p-2.5 ring-1 ring-[#f3e7e1] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  onClick={onProductClick}
+                  to={`/products/${item.itemId}`}
+                >
+                  <div className="w-12 shrink-0">
+                    <BookCover alt="" fallbackTitle={item.itemName} radius="cover" thumbnailUrl={item.thumbnailUrl} />
+                  </div>
+                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span aria-hidden="true" className="type-numeral text-base text-[#d96f7a]">
+                      {String(index + 2).padStart(2, "0")}
+                    </span>
+                    <p className="line-clamp-2 break-keep type-caption font-semibold text-text-primary">
+                      {item.itemName}
+                    </p>
+                    <p className="truncate type-caption text-text-tertiary">{item.author}</p>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </li>
+      ) : null}
+
+      {listed.length > 0 ? (
+        <li className="mt-3">
+          <ol className="divide-y divide-[#f3e7e1] rounded-panel bg-white/60 px-3" start={MEDIUM_COUNT + 2}>
+            {listed.map((item, index) => (
+              <li key={item.itemId}>
+                <Link
+                  aria-label={`${index + MEDIUM_COUNT + 2}위, ${item.itemName} 상세 보기`}
+                  className="flex min-h-11 items-center gap-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  onClick={onProductClick}
+                  to={`/products/${item.itemId}`}
+                >
+                  <span aria-hidden="true" className="w-5 shrink-0 type-caption font-semibold tabular-nums text-text-tertiary">
+                    {String(index + MEDIUM_COUNT + 2).padStart(2, "0")}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate type-body-small text-text-primary">{item.itemName}</span>
+                  <span className="max-w-[35%] shrink-0 truncate type-caption text-text-tertiary">{item.author}</span>
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </li>
+      ) : null}
+    </ol>
   );
 }
 
@@ -62,7 +168,7 @@ export function BookRankingSection({
               책 랭킹
             </h2>
             <p className="truncate text-[0.6875rem] leading-4 text-[#9d7d76]">
-              지금, 가장 사랑받는 책이에요
+              많이 팔린 순서 · 1시간마다 갱신
             </p>
           </div>
           <button
@@ -77,20 +183,24 @@ export function BookRankingSection({
         </div>
 
         {ranking.kind === "loading" ? (
-          <div aria-busy="true" className="mt-3">
+          <div aria-busy="true" className="mt-3 px-4">
             <p className="sr-only" role="status">
               책 랭킹을 불러오는 중이에요
             </p>
-            <div aria-hidden="true" className="flex overflow-hidden px-4">
-              {Array.from({ length: SKELETON_COUNT }, (_, index) => (
-                <div className={RANK_CARD_CLASS_NAME} key={index}>
-                  <div className="flex items-start gap-2">
-                    <div className="mt-3 h-14 w-10 rounded-control bg-white/70" />
-                    <div className="aspect-[3/4] w-24 rounded-control bg-white/70" />
-                  </div>
-                  <div className="ml-12 mt-2.5 h-[4.75rem] w-24 rounded-control bg-white/70" />
+            <div aria-hidden="true">
+              <div className="flex gap-4 rounded-panel bg-white/70 p-3">
+                <div className="aspect-[3/4] w-24 rounded-control bg-white" />
+                <div className="flex flex-1 flex-col justify-center gap-2">
+                  <div className="h-6 w-8 rounded bg-white" />
+                  <div className="h-5 w-3/4 rounded bg-white" />
+                  <div className="h-4 w-1/2 rounded bg-white" />
                 </div>
-              ))}
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                {Array.from({ length: MEDIUM_COUNT }, (_, index) => (
+                  <div className="h-24 rounded-panel bg-white/70" key={index} />
+                ))}
+              </div>
             </div>
           </div>
         ) : null}
@@ -110,70 +220,7 @@ export function BookRankingSection({
         ) : null}
 
         {ranking.kind === "ready" && ranking.items.length > 0 ? (
-          <div
-            aria-label="책 랭킹 목록"
-            className="mt-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
-            role="region"
-            tabIndex={0}
-          >
-            <ol className="flex">
-              {ranking.items.map((item, index) => {
-                const hasReviewSummary =
-                  typeof item.reviewCount === "number" &&
-                  item.reviewCount > 0 &&
-                  typeof item.reviewRate === "number" &&
-                  item.reviewRate > 0;
-
-                return (
-                  <li className={RANK_CARD_CLASS_NAME} key={item.itemId}>
-                    <Link
-                      aria-label={`${index + 1}위, ${item.itemName} 상세 보기`}
-                      className="group block rounded-control focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                      onClick={onProductClick}
-                      to={`/products/${item.itemId}`}
-                    >
-                      <div className="flex items-start gap-2 overflow-visible">
-                        <RankNumeral rank={index + 1} />
-                        <div className="w-24 shrink-0 rounded-control bg-muted shadow-[0_13px_22px_-14px_rgba(86,58,50,0.42)] transition-transform duration-300 group-hover:-translate-y-1 group-focus-visible:-translate-y-1 [&>div]:!rounded-control [&>div]:!border-transparent">
-                          <BookCover
-                            alt=""
-                            fallbackTitle={item.itemName}
-                            radius="control"
-                            thumbnailUrl={item.thumbnailUrl}
-                          />
-                        </div>
-                      </div>
-                      <div className="ml-12 mt-2.5 flex h-[4.75rem] w-24 flex-col">
-                        <p className="line-clamp-2 shrink-0 break-keep type-body-small font-bold leading-5 text-text-primary">
-                          {item.itemName}
-                        </p>
-                        <p className="mt-0.5 shrink-0 truncate type-caption text-text-tertiary">
-                          {item.author}
-                        </p>
-                        {hasReviewSummary ? (
-                          <p className="mt-auto flex h-4 shrink-0 items-center gap-1 type-caption font-semibold text-[#d96f7a]">
-                            <span aria-hidden="true">★</span>
-                            <span className="tabular-nums">
-                              {item.reviewRate?.toFixed(1)} ({item.reviewCount?.toLocaleString("ko-KR")})
-                            </span>
-                          </p>
-                        ) : item.reviewCount && item.reviewCount > 0 ? (
-                          <p className="mt-auto flex h-4 shrink-0 items-center gap-1 type-caption text-text-tertiary">
-                            리뷰 {item.reviewCount.toLocaleString("ko-KR")}건
-                          </p>
-                        ) : (
-                          <p className="mt-auto flex h-4 shrink-0 items-center gap-1 type-caption text-text-tertiary">
-                            <span aria-hidden="true" className="text-[#d9a0a0]">☆</span>
-                            리뷰 없음
-                          </p>
-                        )}
-                      </div>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ol>
-          </div>
+          <RankingTiers items={ranking.items} onProductClick={onProductClick} />
         ) : null}
       </div>
     </section>
