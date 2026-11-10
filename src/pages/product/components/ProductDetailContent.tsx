@@ -182,7 +182,8 @@ export function ProductDetailContent({
   product,
   recommendationReason,
 }: ProductDetailContentProps) {
-  const otherBooks = useAuthorOtherBooks(product);
+  const authorSectionRef = useRef<HTMLDivElement>(null);
+  const otherBooks = useAuthorOtherBooks(product, authorSectionRef);
   const [reviewSummary, setReviewSummary] = useState<{
     completeReviews: ProductReview[] | null;
     productId: number;
@@ -240,7 +241,7 @@ export function ProductDetailContent({
     { id: "product-book-title", label: "도서 정보" },
     ...(product.description?.trim() ? [{ id: "book-description-title", label: "책 소개" }] : []),
     { id: "product-review-title", label: "리뷰" },
-    ...(otherBooks.length ? [{ id: "product-author-books", label: "저자의 다른 책" }] : []),
+    ...(product.author.trim() ? [{ id: "product-author-books", label: "저자의 다른 책" }] : []),
   ];
 
   return (
@@ -324,7 +325,11 @@ export function ProductDetailContent({
           </p>
         </section>
       ) : null}
-      {otherBooks.length ? <AuthorOtherBooks author={product.author} books={otherBooks} /> : null}
+      {product.author.trim() ? (
+        <div ref={authorSectionRef}>
+          <AuthorOtherBooks author={product.author} books={otherBooks.books} onRetry={otherBooks.retry} status={otherBooks.status} />
+        </div>
+      ) : null}
     </article>
   );
 }

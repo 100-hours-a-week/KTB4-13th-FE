@@ -6,7 +6,6 @@ import { fetchProductReviewCount, fetchProductReviews } from "@/features/review/
 
 // Backend default page size; the API defines no maximum limit.
 const RANKING_LIMIT = 20;
-const REVIEW_COUNT_CONCURRENCY = 4;
 const REVIEW_SUMMARY_LIMIT = 20;
 // Dev-only opt-in to show real dev catalog books while the local DB has none.
 const USE_DEV_CATALOG =
@@ -35,50 +34,38 @@ export function useBookRanking() {
       }
 
       setState({ kind: "ready", items: page.items });
-      const missingCounts = page.items.filter(
-        (item) => item.reviewCount === undefined || item.reviewCount === 0,
-      );
-      let nextIndex = 0;
+      // Only the first-place card displays reviews. The other books still supply the guest carousel.
+      const featured = page.items[0];
+      if (!featured || (featured.reviewCount !== undefined && featured.reviewCount > 0)) return;
+      const result = await fetchProductReviewCount(featured.itemId, controller.signal);
+      if (!result.ok || controller.signal.aborted) return;
 
-      // The ranking snapshot can lag behind reviews. Verify only missing counts
-      // against the existing public API, limiting concurrent requests.
-      await Promise.all(
-        Array.from({ length: Math.min(REVIEW_COUNT_CONCURRENCY, missingCounts.length) }, async () => {
-          while (!controller.signal.aborted && nextIndex < missingCounts.length) {
-            const item = missingCounts[nextIndex++];
-            const result = await fetchProductReviewCount(item.itemId, controller.signal);
-            if (!result.ok || controller.signal.aborted) continue;
-            // Only calculate an average when the fetched page contains every
-            // review; a partial page would produce a misleading rating.
-            const reviews = result.count > 0 && result.count <= REVIEW_SUMMARY_LIMIT
-              ? await fetchProductReviews(item.itemId, 0, result.count, controller.signal, true)
-              : null;
-            if (controller.signal.aborted) continue;
-            const completeReviews = reviews?.ok && !reviews.data.hasNext &&
-              reviews.data.reviews.length === result.count
-              ? reviews.data.reviews
-              : null;
-            const average = completeReviews
-              ? completeReviews.reduce((sum, review) => sum + review.rate, 0) / completeReviews.length
-              : null;
-            setState((current) =>
-              current.kind === "ready"
-                ? {
-                    kind: "ready",
-                    items: current.items.map((book) =>
-                      book.itemId === item.itemId
-                        ? {
-                            ...book,
-                            reviewCount: result.count,
-                            ...(average !== null ? { reviewRate: average } : {}),
-                          }
-                        : book,
-                    ),
-                  }
-                : current,
-            );
-          }
-        }),
+      const reviews = result.count > 0 && result.count <= REVIEW_SUMMARY_LIMIT
+        ? await fetchProductReviews(featured.itemId, 0, result.count, controller.signal, true)
+        : null;
+      if (controller.signal.aborted) return;
+      const completeReviews = reviews?.ok && !reviews.data.hasNext &&
+        reviews.data.reviews.length === result.count
+        ? reviews.data.reviews
+        : null;
+      const average = completeReviews
+        ? completeReviews.reduce((sum, review) => sum + review.rate, 0) / completeReviews.length
+        : null;
+      setState((current) =>
+        current.kind === "ready"
+          ? {
+              kind: "ready",
+              items: current.items.map((book) =>
+                book.itemId === featured.itemId
+                  ? {
+                      ...book,
+                      reviewCount: result.count,
+                      ...(average !== null ? { reviewRate: average } : {}),
+                    }
+                  : book,
+              ),
+            }
+          : current,
       );
     });
 
