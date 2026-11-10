@@ -1,3 +1,5 @@
+import type { MouseEvent } from "react";
+
 import { ArrowLeftIcon } from "@/common/components/AppIcons";
 import { CartButton } from "@/features/cart/components/CartButton";
 import { ASSISTANT_NAME, AssistantAvatar } from "@/pages/recommendation-chat/components/AssistantAvatar";
@@ -5,7 +7,7 @@ import { ASSISTANT_NAME, AssistantAvatar } from "@/pages/recommendation-chat/com
 interface ChatHeaderProps {
   onBack: () => void;
   onCartClick: () => void;
-  onSessionListClick: () => void;
+  onSessionListClick: (event: MouseEvent<HTMLButtonElement>) => void;
 }
 
 export function ChatHeader({ onBack, onCartClick, onSessionListClick }: ChatHeaderProps) {

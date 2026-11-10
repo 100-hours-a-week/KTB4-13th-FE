@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { RetryButton } from "@/common/components/RetryButton";
@@ -15,6 +15,7 @@ export function AiRecommendationChatPage() {
   const parsedSessionId = Number(new URLSearchParams(location.search).get("sessionId"));
   const initialSessionId = Number.isSafeInteger(parsedSessionId) && parsedSessionId > 0 ? parsedSessionId : null;
   const [isSessionListOpen, setIsSessionListOpen] = useState(false);
+  const sessionListTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [attachmentNotice, setAttachmentNotice] = useState(false);
   const chat = useRecommendationChat(initialSessionId, (sessionId) => {
     navigate(sessionId ? `/recommendations/chat?sessionId=${sessionId}` : "/recommendations/chat", { replace: true });
@@ -34,7 +35,10 @@ export function AiRecommendationChatPage() {
       <ChatHeader
         onBack={handleBack}
         onCartClick={() => navigate("/cart")}
-        onSessionListClick={() => setIsSessionListOpen(true)}
+        onSessionListClick={(event) => {
+          sessionListTriggerRef.current = event.currentTarget;
+          setIsSessionListOpen(true);
+        }}
       />
 
       <main className="min-h-0 flex-1 overflow-y-auto bg-background">
@@ -78,7 +82,7 @@ export function AiRecommendationChatPage() {
         onSend={chat.sendMessage}
         status={chat.status}
       />
-      <ChatSessionList activeSessionId={chat.sessionId} hasError={chat.sessionsError} isOpen={isSessionListOpen} onClose={() => setIsSessionListOpen(false)} onNewSession={chat.startNewSession} onRetry={() => { void chat.loadSessions(); }} onSelect={chat.selectSession} sessions={chat.sessions} />
+      <ChatSessionList activeSessionId={chat.sessionId} hasError={chat.sessionsError} isOpen={isSessionListOpen} onClose={() => setIsSessionListOpen(false)} onNewSession={chat.startNewSession} onRetry={() => { void chat.loadSessions(); }} onSelect={chat.selectSession} returnFocusRef={sessionListTriggerRef} sessions={chat.sessions} />
     </div>
   );
 }

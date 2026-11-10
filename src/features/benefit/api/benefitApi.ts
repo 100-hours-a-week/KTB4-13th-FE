@@ -31,6 +31,7 @@ function parseOwnedCoupon(value: unknown): OwnedCoupon | null {
   if (
     !isRecord(value) ||
     !Number.isSafeInteger(value.id) ||
+    (value.couponId !== undefined && !Number.isSafeInteger(value.couponId)) ||
     !COUPON_STATUSES.includes(value.state as OwnedCouponStatus) ||
     typeof value.name !== "string" ||
     !COUPON_TYPES.includes(value.type as CouponType) ||

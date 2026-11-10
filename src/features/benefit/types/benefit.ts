@@ -11,8 +11,11 @@ export interface Coupon {
 }
 
 export interface OwnedCoupon {
+  /** Source coupon ID (`coupon.id`). Missing until the backend ships the field. */
+  couponId?: number;
   discount: number;
   expiredAt: string;
+  /** Owned coupon ID (`owned_coupon.id`), sent as `useOwnedCouponId` on payment. */
   id: number;
   maxUseCount: number;
   minOrderAmount: number;

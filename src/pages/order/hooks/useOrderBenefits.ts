@@ -30,7 +30,7 @@ export function useOrderBenefits(productIdsKey: string) {
         coupons.ok && points.ok && areProductsReady
           ? {
               balance: points.data.balance,
-              coupons: coupons.data.filter((coupon) => applicableCouponIds.has(coupon.id)),
+              coupons: coupons.data.filter((coupon) => coupon.couponId !== undefined && applicableCouponIds.has(coupon.couponId)),
               kind: "ready",
             }
           : { kind: "error" },
