@@ -6,6 +6,7 @@ import { useCoverLinkClick } from "@/common/lib/coverTransition";
 import { ProductAvailabilityBadge } from "@/common/components/ProductAvailabilityBadge";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
+import { QuickAddButton } from "@/features/cart/components/QuickAddButton";
 import type { BookSearchItem } from "@/features/search/types/bookSearch";
 import type { SearchResultState } from "@/pages/search/types/search";
 
@@ -42,16 +43,25 @@ function SearchResultCard({ item }: { item: BookSearchItem }) {
   }
 
   return (
-    <Link
-      aria-label={`${item.title} 상세 보기`}
-      className="block rounded-cover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-      onClick={(event) =>
-        onCoverLinkClick(event, `/products/${item.productId}`, { thumbnailUrl: item.coverUrl, title: item.title })
-      }
-      to={`/products/${item.productId}`}
-    >
-      {card}
-    </Link>
+    <div className="relative">
+      <Link
+        aria-label={`${item.title} 상세 보기`}
+        className="block rounded-cover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        onClick={(event) =>
+          onCoverLinkClick(event, `/products/${item.productId}`, { thumbnailUrl: item.coverUrl, title: item.title })
+        }
+        to={`/products/${item.productId}`}
+      >
+        {card}
+      </Link>
+      {/* Same box as the cover, so the button sits on its lower corner whatever the column width. */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 aspect-[3/4]">
+        <QuickAddButton
+          className="pointer-events-auto absolute bottom-1.5 right-1.5"
+          item={{ productId: item.productId, thumbnailUrl: item.coverUrl, title: item.title }}
+        />
+      </div>
+    </div>
   );
 }
 

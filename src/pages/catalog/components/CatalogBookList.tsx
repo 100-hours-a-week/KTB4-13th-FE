@@ -6,6 +6,7 @@ import { useCoverLinkClick } from "@/common/lib/coverTransition";
 import { ProductAvailabilityBadge } from "@/common/components/ProductAvailabilityBadge";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
+import { QuickAddButton } from "@/features/cart/components/QuickAddButton";
 import type { CatalogListStatus } from "@/pages/catalog/hooks/useCatalogBooks";
 import type {
   CatalogBookItem,
@@ -92,7 +93,7 @@ function CatalogBookRow({
           thumbnailUrl={book.thumbnailUrl}
         />
       </div>
-      <div className="min-w-0 flex-1 self-center">
+      <div className={`min-w-0 flex-1 self-center ${book.productId !== null ? "pr-16" : ""}`}>
         <h2 className="line-clamp-2 type-title text-text-primary">
           {book.title}
         </h2>
@@ -122,19 +123,28 @@ function CatalogBookRow({
     return row;
   }
 
+  const productId = book.productId;
+
   return (
-    <Link
-      aria-label={`${book.title} 상세 보기`}
-      className={`block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
-        isFeatured ? "rounded-panel" : "hover:bg-muted/60"
-      }`}
-      onClick={(event) =>
-        onCoverLinkClick(event, `/products/${book.productId}`, { thumbnailUrl: book.thumbnailUrl, title: book.title })
-      }
-      to={`/products/${book.productId}`}
-    >
-      {row}
-    </Link>
+    <div className="relative">
+      <Link
+        aria-label={`${book.title} 상세 보기`}
+        className={`block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+          isFeatured ? "rounded-panel" : "hover:bg-muted/60"
+        }`}
+        onClick={(event) =>
+          onCoverLinkClick(event, `/products/${book.productId}`, { thumbnailUrl: book.thumbnailUrl, title: book.title })
+        }
+        to={`/products/${book.productId}`}
+      >
+        {row}
+      </Link>
+      <QuickAddButton
+        className={`absolute ${isFeatured ? "bottom-7 right-4 border-transparent" : "bottom-4 right-0"}`}
+        item={{ productId, thumbnailUrl: book.thumbnailUrl, title: book.title }}
+        variant="label"
+      />
+    </div>
   );
 }
 

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
 import { useCoverLinkClick } from "@/common/lib/coverTransition";
+import { QuickAddButton } from "@/features/cart/components/QuickAddButton";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
 import type { ProductListItem } from "@/features/product/types/product";
@@ -60,7 +61,7 @@ function RankingTiers({
 
   return (
     <ol aria-label="책 랭킹 목록" className="mt-3 px-4">
-      <li>
+      <li className="relative">
         <Link
           aria-label={`1위, ${first.itemName} 상세 보기`}
           className="flex gap-4 rounded-panel bg-primary p-3 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
@@ -80,6 +81,11 @@ function RankingTiers({
             <ReviewLine item={first} tone="inverse" />
           </div>
         </Link>
+        <QuickAddButton
+          className="absolute bottom-3 right-3 border-transparent"
+          item={{ productId: first.itemId, thumbnailUrl: first.thumbnailUrl, title: first.itemName }}
+          variant="label"
+        />
       </li>
 
       {medium.length > 0 ? (
