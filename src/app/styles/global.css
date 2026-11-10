@@ -327,8 +327,16 @@
 .bookjeogi-wing-right,
 .bookjeogi-gaze,
 .bookjeogi-eye,
-.bookjeogi-beak {
+.bookjeogi-beak,
+.bookjeogi-ground,
+.bookjeogi-back,
+.bookjeogi-face,
+.bookjeogi-nose {
   transform-box: fill-box;
+}
+
+.bookjeogi-ground {
+  transform-origin: 50% 50%;
 }
 
 .bookjeogi-body {
@@ -379,37 +387,113 @@
   }
 }
 
-/* Idle: looks left, back, right, back, then down toward the input. */
-@keyframes bookjeogi-look-around {
+/* Idle: looks left, back, right, back, then down toward the input. The head is layered, and the nearer a layer is,
+   the further it moves (tufts against, face 6, eyes 13, beak 15), so the head reads as turning, not sliding. */
+@keyframes bookjeogi-look-back {
   0%,
   12%,
+  38%,
+  48%,
+  74%,
+  82%,
   100% {
     transform: translate(0, 0);
   }
 
   18%,
   32% {
-    transform: translate(-13px, -2px);
-  }
-
-  38%,
-  48% {
-    transform: translate(0, 0);
+    transform: translate(4px, 0px);
   }
 
   54%,
   68% {
-    transform: translate(13px, -2px);
-  }
-
-  74%,
-  82% {
-    transform: translate(0, 0);
+    transform: translate(-4px, 0px);
   }
 
   86%,
   94% {
-    transform: translate(0, 8px);
+    transform: translate(0, -2px);
+  }
+}
+
+@keyframes bookjeogi-look-face {
+  0%,
+  12%,
+  38%,
+  48%,
+  74%,
+  82%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  18%,
+  32% {
+    transform: translate(-6px, -1px);
+  }
+
+  54%,
+  68% {
+    transform: translate(6px, -1px);
+  }
+
+  86%,
+  94% {
+    transform: translate(0, 4px);
+  }
+}
+
+@keyframes bookjeogi-look-gaze {
+  0%,
+  12%,
+  38%,
+  48%,
+  74%,
+  82%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  18%,
+  32% {
+    transform: translate(-7px, -1px);
+  }
+
+  54%,
+  68% {
+    transform: translate(7px, -1px);
+  }
+
+  86%,
+  94% {
+    transform: translate(0, 4px);
+  }
+}
+
+@keyframes bookjeogi-look-nose {
+  0%,
+  12%,
+  38%,
+  48%,
+  74%,
+  82%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  18%,
+  32% {
+    transform: translate(-9px, 0px);
+  }
+
+  54%,
+  68% {
+    transform: translate(9px, 0px);
+  }
+
+  86%,
+  94% {
+    transform: translate(0, 2px);
   }
 }
 
@@ -481,16 +565,52 @@
   }
 }
 
-/* Eyes run along a shelf: left, right, back. */
-@keyframes bookjeogi-scan {
+/* Thinking: the head turns along a shelf (left, right, back) with the same layering as looking around. */
+@keyframes bookjeogi-scan-back {
   0%,
   100% {
-    transform: translate(-14px, -4px);
+    transform: translate(4px, 0px);
   }
 
   40%,
   55% {
-    transform: translate(14px, -4px);
+    transform: translate(-4px, 0px);
+  }
+}
+
+@keyframes bookjeogi-scan-face {
+  0%,
+  100% {
+    transform: translate(-6px, 0px);
+  }
+
+  40%,
+  55% {
+    transform: translate(6px, 0px);
+  }
+}
+
+@keyframes bookjeogi-scan-gaze {
+  0%,
+  100% {
+    transform: translate(-8px, -4px);
+  }
+
+  40%,
+  55% {
+    transform: translate(8px, -4px);
+  }
+}
+
+@keyframes bookjeogi-scan-nose {
+  0%,
+  100% {
+    transform: translate(-9px, 0px);
+  }
+
+  40%,
+  55% {
+    transform: translate(9px, 0px);
   }
 }
 
@@ -582,6 +702,75 @@
   }
 }
 
+/* The ground shadow stays on the floor: smaller and fainter while 북적이 is up. */
+@keyframes bookjeogi-ground-float {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  25%,
+  75% {
+    transform: scale(0.93);
+    opacity: 0.85;
+  }
+
+  50% {
+    transform: scale(0.86);
+    opacity: 0.7;
+  }
+}
+
+@keyframes bookjeogi-ground-ponder {
+  0%,
+  50%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  25%,
+  75% {
+    transform: scale(0.86);
+    opacity: 0.7;
+  }
+}
+
+@keyframes bookjeogi-ground-talk {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(0.92);
+  }
+}
+
+@keyframes bookjeogi-ground-hop {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  12% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+
+  34% {
+    transform: scale(0.6);
+    opacity: 0.35;
+  }
+
+  70% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
 /* A blink is not motion across the screen, so it also runs when reduced motion is on. */
 .bookjeogi-eye {
   transition: transform 70ms ease;
@@ -596,8 +785,24 @@
     animation: bookjeogi-float 3.2s ease-in-out infinite;
   }
 
+  .bookjeogi:is([data-mood="idle"], [data-mood="welcome"]) .bookjeogi-ground {
+    animation: bookjeogi-ground-float 3.2s ease-in-out infinite;
+  }
+
+  .bookjeogi:is([data-mood="idle"], [data-mood="welcome"]) .bookjeogi-back {
+    animation: bookjeogi-look-back 7s ease-in-out infinite;
+  }
+
+  .bookjeogi:is([data-mood="idle"], [data-mood="welcome"]) .bookjeogi-face {
+    animation: bookjeogi-look-face 7s ease-in-out infinite;
+  }
+
   .bookjeogi:is([data-mood="idle"], [data-mood="welcome"]) .bookjeogi-gaze {
-    animation: bookjeogi-look-around 7s ease-in-out infinite;
+    animation: bookjeogi-look-gaze 7s ease-in-out infinite;
+  }
+
+  .bookjeogi:is([data-mood="idle"], [data-mood="welcome"]) .bookjeogi-nose {
+    animation: bookjeogi-look-nose 7s ease-in-out infinite;
   }
 
   .bookjeogi:is([data-mood="idle"], [data-mood="welcome"]) .bookjeogi-tuft-left {
@@ -616,8 +821,24 @@
     animation: bookjeogi-ponder 1.6s ease-in-out infinite;
   }
 
+  .bookjeogi[data-mood="thinking"] .bookjeogi-ground {
+    animation: bookjeogi-ground-ponder 1.6s ease-in-out infinite;
+  }
+
+  .bookjeogi[data-mood="thinking"] .bookjeogi-back {
+    animation: bookjeogi-scan-back 2.2s ease-in-out infinite;
+  }
+
+  .bookjeogi[data-mood="thinking"] .bookjeogi-face {
+    animation: bookjeogi-scan-face 2.2s ease-in-out infinite;
+  }
+
   .bookjeogi[data-mood="thinking"] .bookjeogi-gaze {
-    animation: bookjeogi-scan 2.2s ease-in-out infinite;
+    animation: bookjeogi-scan-gaze 2.2s ease-in-out infinite;
+  }
+
+  .bookjeogi[data-mood="thinking"] .bookjeogi-nose {
+    animation: bookjeogi-scan-nose 2.2s ease-in-out infinite;
   }
 
   .bookjeogi[data-mood="thinking"] .bookjeogi-tuft-left {
@@ -632,6 +853,10 @@
     animation: bookjeogi-talk 0.4s ease-in-out infinite;
   }
 
+  .bookjeogi[data-mood="talking"] .bookjeogi-ground {
+    animation: bookjeogi-ground-talk 0.4s ease-in-out infinite;
+  }
+
   .bookjeogi[data-mood="talking"] .bookjeogi-beak {
     animation: bookjeogi-beak 0.2s ease-in-out infinite alternate;
   }
@@ -641,6 +866,12 @@
     animation:
       bookjeogi-hop 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) both,
       bookjeogi-float 3.2s ease-in-out 0.6s infinite;
+  }
+
+  .bookjeogi[data-mood="presenting"] .bookjeogi-ground {
+    animation:
+      bookjeogi-ground-hop 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) both,
+      bookjeogi-ground-float 3.2s ease-in-out 0.6s infinite;
   }
 
   .bookjeogi[data-mood="presenting"] .bookjeogi-wing-left {
@@ -654,6 +885,10 @@
   /* A tap on the welcome 북적이: one hop with both wings up, whatever it was doing. */
   .bookjeogi[data-poke] .bookjeogi-body {
     animation: bookjeogi-hop 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  }
+
+  .bookjeogi[data-poke] .bookjeogi-ground {
+    animation: bookjeogi-ground-hop 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) both;
   }
 
   .bookjeogi[data-poke] .bookjeogi-wing-left {
