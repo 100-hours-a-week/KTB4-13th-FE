@@ -16,8 +16,8 @@ export function PhotoScanEntryCard({ onClick }: PhotoScanEntryCardProps) {
         <CameraIcon aria-hidden="true" className="size-6" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block type-body font-semibold">책장 사진으로 한 번에 담기</span>
-        <span className="block type-caption text-text-secondary">사진 한 장으로 여러 권을 찾아 드려요</span>
+        <span className="block type-body font-semibold">사진으로 책 담기</span>
+        <span className="block type-caption text-text-secondary">책장은 여러 권을, 표지는 한 권을 찾아 드려요</span>
       </span>
       <svg aria-hidden="true" className="size-5 shrink-0 text-text-secondary" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" viewBox="0 0 24 24">
         <path d="m9 6 6 6-6 6" />

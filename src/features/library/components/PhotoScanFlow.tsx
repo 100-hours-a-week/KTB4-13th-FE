@@ -3,15 +3,24 @@ import { useState } from "react";
 import { BookCover } from "@/common/components/BookCover";
 import { Button } from "@/common/components/Button";
 import { Toast } from "@/common/components/Toast";
+import { BookSearchSheet } from "@/features/library/components/BookSearchSheet";
 import { PhotoCaptureSheet } from "@/features/library/components/PhotoCaptureSheet";
 import { PhotoPreview } from "@/features/library/components/PhotoPreview";
+import { PhotoScanSingleBook } from "@/features/library/components/PhotoScanSingleBook";
 import {
   foundBooks,
   usePhotoScan,
   type PhotoScanFailureReason,
   type PhotoScanStep,
 } from "@/features/library/hooks/usePhotoScan";
-import type { PhotoScanBook, PhotoScanSaved, SaveScannedBooks, ScanPhoto } from "@/features/library/types/photoScan";
+import { bookMeta } from "@/features/library/lib/bookMeta";
+import type {
+  PhotoScanResult,
+  PhotoScanSaved,
+  SaveScannedBooks,
+  ScanPhoto,
+  SearchBooks,
+} from "@/features/library/types/photoScan";
 import { AppPageHeader } from "@/features/navigation/components/AppPageHeader";
 
 interface PhotoScanFlowProps {
@@ -20,24 +29,26 @@ interface PhotoScanFlowProps {
   onSaved: (saved: PhotoScanSaved) => void;
   saveBooks: SaveScannedBooks;
   scanPhoto: ScanPhoto;
+  searchBooks: SearchBooks;
 }
 
 const SHOT_TIPS = [
-  "한 칸만 화면에 가득 차게 찍어 주세요.",
-  "빛이 책등에 반사되지 않게 각도를 바꿔 주세요.",
+  "책장은 한 칸만, 표지는 한 권만 화면에 가득 차게 찍어 주세요.",
+  "빛이 글자에 반사되지 않게 각도를 바꿔 주세요.",
   "메신저로 받은 사진은 작아져서 잘 안 읽힐 수 있어요.",
 ];
 
 const FAILURE_COPY: Record<PhotoScanFailureReason, { description: string; hasTips: boolean; title: string }> = {
   error: { description: "잠시 뒤에 다시 시도해 주세요.", hasTips: false, title: "책을 찾지 못했어요" },
-  no_books: { description: "사진이 흐리거나 너무 멀리서 찍은 것 같아요.", hasTips: true, title: "책등 글자를 읽지 못했어요" },
+  no_books: { description: "사진이 흐리거나 너무 멀리서 찍은 것 같아요.", hasTips: true, title: "책 글자를 읽지 못했어요" },
   timeout: { description: "책장은 한 칸씩 나눠 찍으면 더 빨라요.", hasTips: true, title: "시간이 너무 오래 걸렸어요" },
   too_large: { description: "다른 사진으로 다시 골라 주세요.", hasTips: false, title: "사진이 너무 커요" },
   unreadable: { description: "JPG나 PNG 사진으로 다시 골라 주세요.", hasTips: false, title: "이 사진은 열 수 없어요" },
 };
 
-function bookMeta(book: PhotoScanBook) {
-  return [book.author, book.publisher, book.year].filter(Boolean).join(" · ");
+// 표지 한 권이면 체크리스트 대신 그 책 하나만 크게 보여 준다
+function isSingleCover(result: PhotoScanResult) {
+  return result.photoType === "cover" && result.items.length === 1;
 }
 
 function CheckMark() {
@@ -65,7 +76,7 @@ function ScanProgress({ phase }: { phase: Extract<PhotoScanStep, { kind: "scanni
           aria-hidden="true"
           className={`size-5.5 shrink-0 rounded-full border-2 ${isUploaded ? "animate-spin border-primary border-t-transparent motion-reduce:animate-none" : "border-border-strong"}`}
         />
-        책등 제목을 읽는 중이에요
+        책 제목을 읽는 중이에요
       </li>
       <li className="flex items-center gap-2.5 text-text-secondary">
         <span aria-hidden="true" className="size-5.5 shrink-0 rounded-full border-2 border-border-strong" />
@@ -75,25 +86,66 @@ function ScanProgress({ phase }: { phase: Extract<PhotoScanStep, { kind: "scanni
   );
 }
 
-export function PhotoScanFlow({ initialPhoto, onExit, onSaved, saveBooks, scanPhoto }: PhotoScanFlowProps) {
-  const { isSaving, photo, retake, retry, saveError, saveSelected, selectedBookIds, step, toggleBook } =
+export function PhotoScanFlow({ initialPhoto, onExit, onSaved, saveBooks, scanPhoto, searchBooks }: PhotoScanFlowProps) {
+  const { chooseBook, isSaving, photo, retake, retry, saveError, saveSelected, selectedBookIds, step, toggleBook } =
     usePhotoScan({ initialPhoto, onSaved, saveBooks, scanPhoto });
   const [isCaptureOpen, setIsCaptureOpen] = useState(false);
+  // 검색해서 고를 사진 속 책의 자리(결과 items 의 index). 시트를 닫으면 null
+  const [searchIndex, setSearchIndex] = useState<number | null>(null);
+  const searchItem = step.kind === "result" && searchIndex !== null ? step.result.items[searchIndex] : undefined;
 
-  const captureSheet = (
-    <PhotoCaptureSheet isOpen={isCaptureOpen} onClose={() => setIsCaptureOpen(false)} onPick={retake} />
+  const handleRetake = (file: File) => {
+    setSearchIndex(null);
+    retake(file);
+  };
+
+  const sheets = (
+    <>
+      <PhotoCaptureSheet isOpen={isCaptureOpen} onClose={() => setIsCaptureOpen(false)} onPick={handleRetake} />
+      {searchIndex !== null && searchItem ? (
+        <BookSearchSheet
+          initialQuery={searchItem.state === "FOUND" ? searchItem.book.title : searchItem.readText}
+          key={searchIndex}
+          onClose={() => setSearchIndex(null)}
+          onPick={(book) => {
+            setSearchIndex(null);
+            chooseBook(searchIndex, book);
+          }}
+          searchBooks={searchBooks}
+        />
+      ) : null}
+    </>
   );
+
+  if (step.kind === "result" && isSingleCover(step.result)) {
+    return (
+      <>
+        <PhotoScanSingleBook
+          isSaving={isSaving}
+          item={step.result.items[0]}
+          onRetake={() => setIsCaptureOpen(true)}
+          onSave={() => { void saveSelected(); }}
+          onSearch={() => setSearchIndex(0)}
+          photo={photo}
+          saveError={saveError}
+          searchBooks={searchBooks}
+        />
+        {sheets}
+      </>
+    );
+  }
 
   if (step.kind === "result") {
     const books = foundBooks(step.result);
-    const missed = step.result.items.filter((item) => item.state === "NOT_FOUND");
+    // 검색해서 고르면 그 자리의 책을 바꾸므로 원래 자리를 같이 둔다
+    const missed = step.result.items.flatMap((item, index) => (item.state === "NOT_FOUND" ? [{ index, readText: item.readText }] : []));
 
     return (
       <div className="flex h-full flex-col bg-surface">
         <AppPageHeader fallbackPath="/my/library" showCart={false} title="찾은 책 확인" />
         <main className="page-content min-h-0 flex-1 overflow-y-auto pb-6">
           <div className="flex items-center gap-3 pt-4">
-            <PhotoPreview alt="올린 책장 사진" className="h-13.5 w-18 shrink-0 rounded-control object-cover" photo={photo} />
+            <PhotoPreview alt="올린 사진" className="h-13.5 w-18 shrink-0 rounded-control object-cover" photo={photo} />
             <div>
               <p className="type-title">책 {step.result.items.length}종을 읽었어요</p>
               <p className="type-caption text-text-secondary">
@@ -147,12 +199,20 @@ export function PhotoScanFlow({ initialPhoto, onExit, onSaved, saveBooks, scanPh
               <h2 className="flex min-h-12 items-center type-body font-semibold" id="photo-scan-missed">
                 찾지 못했어요 <span className="ml-1.5 text-text-secondary">{missed.length}</span>
               </h2>
-              <p className="mb-1 type-caption text-text-secondary">이 책들은 이번에 담기지 않아요.</p>
+              <p className="mb-1 type-caption text-text-secondary">검색해서 고르면 함께 담을 수 있어요.</p>
               <ul>
-                {missed.map((item, index) => (
-                  // AI 는 못 찾은 책에 번호를 주지 않는다. 결과 목록은 바뀌지 않아 순서로 구분한다
-                  <li className="flex min-h-11 items-center border-t border-hairline type-caption" key={`${index}-${item.readText}`}>
-                    <span className="truncate">{item.readText}</span>
+                {missed.map(({ index, readText }) => (
+                  // AI 는 못 찾은 책에 번호를 주지 않는다. 결과 목록의 자리로 구분한다
+                  <li className="flex min-h-11 items-center gap-2 border-t border-hairline type-caption" key={`${index}-${readText}`}>
+                    <span className="min-w-0 flex-1 truncate">{readText}</span>
+                    <button
+                      aria-label={`${readText} 검색해서 담기`}
+                      className="-mr-2 inline-flex min-h-11 shrink-0 items-center px-2 font-semibold text-accent focus-visible:outline-2 focus-visible:outline-primary"
+                      onClick={() => setSearchIndex(index)}
+                      type="button"
+                    >
+                      검색해서 담기
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -181,7 +241,7 @@ export function PhotoScanFlow({ initialPhoto, onExit, onSaved, saveBooks, scanPh
             <Button className="min-h-12 w-full" onClick={() => setIsCaptureOpen(true)}>다시 찍기</Button>
           )}
         </div>
-        {captureSheet}
+        {sheets}
       </div>
     );
   }
@@ -191,12 +251,12 @@ export function PhotoScanFlow({ initialPhoto, onExit, onSaved, saveBooks, scanPh
 
   return (
     <div className="flex h-full flex-col bg-surface">
-      <AppPageHeader fallbackPath="/my/library" showCart={false} title="책장 사진으로 담기" />
+      <AppPageHeader fallbackPath="/my/library" showCart={false} title="사진으로 담기" />
       <main className="page-content flex min-h-0 flex-1 flex-col overflow-y-auto py-5">
         <div className="relative h-65.5 shrink-0 overflow-hidden rounded-panel bg-muted">
           {canShowPhoto ? (
             <PhotoPreview
-              alt="올린 책장 사진"
+              alt="올린 사진"
               className={`size-full object-cover ${failure ? "blur-xs" : ""}`}
               photo={photo}
             />
@@ -208,8 +268,8 @@ export function PhotoScanFlow({ initialPhoto, onExit, onSaved, saveBooks, scanPh
 
         {step.kind === "scanning" ? (
           <div aria-live="polite" role="status">
-            <h2 className="mt-6 type-heading">책등 제목을 읽고 있어요</h2>
-            <p className="mt-1 type-body-small text-text-secondary">보통 20~30초 걸려요.</p>
+            <h2 className="mt-6 type-heading">책 제목을 읽고 있어요</h2>
+            <p className="mt-1 type-body-small text-text-secondary">보통 10~30초 걸려요.</p>
             <ScanProgress phase={step.phase} />
           </div>
         ) : null}
@@ -242,7 +302,7 @@ export function PhotoScanFlow({ initialPhoto, onExit, onSaved, saveBooks, scanPh
           )}
         </div>
       </main>
-      {captureSheet}
+      {sheets}
     </div>
   );
 }

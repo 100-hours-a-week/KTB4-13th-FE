@@ -1,5 +1,5 @@
-import { photoScanPreviewCases, type PhotoScanPreviewCase } from "@/dev/fixtures/photoScan";
-import type { SaveScannedBooks, ScanPhoto } from "@/features/library/types/photoScan";
+import { photoScanPreviewCases, searchPreviewBooks, type PhotoScanPreviewCase } from "@/dev/fixtures/photoScan";
+import type { SaveScannedBooks, ScanPhoto, SearchBooks } from "@/features/library/types/photoScan";
 
 const UPLOAD_DELAY_MS = 800;
 const RECOGNIZE_DELAY_MS = 2000;
@@ -34,3 +34,9 @@ export function createPreviewSaveBooks(previewCase: PhotoScanPreviewCase): SaveS
     return saveFails ? { ok: false } : { ok: true };
   };
 }
+
+// 실제 검색 요청 없이 정해 둔 책을 돌려준다
+export const previewSearchBooks: SearchBooks = async (_query, signal) => {
+  await wait(UPLOAD_DELAY_MS, signal);
+  return { data: searchPreviewBooks, ok: true };
+};

@@ -172,8 +172,8 @@ export function LibraryPage() {
               <CameraIcon aria-hidden="true" className="size-8" />
             </span>
             <h2 className="mt-4 type-title">아직 담아둔 책이 없어요</h2>
-            <p className="mt-2 type-body-small text-text-tertiary">집에 있는 책장을 찍으면 한 번에 담을 수 있어요.</p>
-            <Button className="mt-5 px-5" onClick={() => setIsCaptureOpen(true)}>책장 사진으로 담기</Button>
+            <p className="mt-2 type-body-small text-text-tertiary">책장이나 책 표지를 찍으면 바로 담을 수 있어요.</p>
+            <Button className="mt-5 px-5" onClick={() => setIsCaptureOpen(true)}>사진으로 담기</Button>
             <Link className="mt-2 inline-flex min-h-11 items-center rounded-control border border-border px-5 type-body-small font-semibold" to="/recommendations/chat">AI 추천 열기</Link>
           </section>
         ) : null}
@@ -189,7 +189,7 @@ export function LibraryPage() {
         <div className="page-content absolute inset-x-0 bottom-0 border-t border-hairline bg-surface py-2.5">
           <Button className="w-full" onClick={() => setIsCaptureOpen(true)} variant="secondary">
             <CameraIcon aria-hidden="true" className="size-5" />
-            다른 칸도 찍기
+            사진 더 찍기
           </Button>
         </div>
       ) : null}

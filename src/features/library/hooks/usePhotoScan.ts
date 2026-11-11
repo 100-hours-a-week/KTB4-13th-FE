@@ -103,6 +103,28 @@ export function usePhotoScan({ initialPhoto, onSaved, saveBooks, scanPhoto }: Us
     );
   };
 
+  // 사용자가 검색해서 고른 책으로 사진 속 책 하나(items 의 index 번째)를 바꾼다. 못 찾은 책이면 찾은 책이 된다
+  const chooseBook = (index: number, book: PhotoScanBook) => {
+    if (step.kind !== "result") return;
+    const previous = step.result.items[index];
+    if (!previous) return;
+    const items = step.result.items.map((item, itemIndex) =>
+      itemIndex === index ? { book, readText: item.readText, state: "FOUND" as const } : item,
+    );
+    // 바꾼 책이 다른 자리에도 있으면 그 책은 그대로 고른 채 둔다
+    const droppedBookId =
+      previous.state === "FOUND" &&
+      !items.some((item) => item.state === "FOUND" && item.book.bookId === previous.book.bookId)
+        ? previous.book.bookId
+        : null;
+    setStep({ kind: "result", result: { ...step.result, items } });
+    setSelectedBookIds((bookIds) => {
+      const kept = bookIds.filter((value) => value !== droppedBookId);
+      return kept.includes(book.bookId) ? kept : [...kept, book.bookId];
+    });
+    setSaveError(null);
+  };
+
   const saveSelected = async () => {
     if (isSaving || selectedBookIds.length === 0 || step.kind !== "result") return;
     setIsSaving(true);
@@ -120,6 +142,7 @@ export function usePhotoScan({ initialPhoto, onSaved, saveBooks, scanPhoto }: Us
   };
 
   return {
+    chooseBook,
     isSaving,
     photo,
     retake,
