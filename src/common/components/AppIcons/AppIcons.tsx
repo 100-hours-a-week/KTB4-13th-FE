@@ -26,6 +26,15 @@ export function ArrowLeftIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function BookOpenIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M3 5.5c2.8-1 5.8-1 9 1 3.2-2 6.2-2 9-1V19c-2.8-1-5.8-1-9 1-3.2-2-6.2-2-9-1z" />
+      <path d="M12 6.5V20" />
+    </Icon>
+  );
+}
+
 export function CartIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>
@@ -67,6 +76,15 @@ export function SparkleIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>
       <path d="M12 3.5 13.9 10l6.6 2-6.6 2L12 20.5 10.1 14l-6.6-2 6.6-2z" />
+    </Icon>
+  );
+}
+
+export function TagIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M3 12V4h8l9.5 9.5-8 8z" />
+      <circle cx="7.5" cy="8.5" r="1.3" />
     </Icon>
   );
 }

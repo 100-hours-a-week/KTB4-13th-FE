@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 import { displayBookTitle } from "@/common/lib/bookTitle";
+import { BookOpenIcon, SparkleIcon } from "@/common/components/AppIcons";
 import { BookCover } from "@/common/components/BookCover";
 import { ProductAvailabilityBadge } from "@/common/components/ProductAvailabilityBadge";
 import { LoginRequiredDialog } from "@/features/auth/components/LoginRequiredDialog";
@@ -9,9 +10,11 @@ import { useAuth } from "@/features/auth/context/useAuth";
 import { addCartItem, fetchCart } from "@/features/cart/api/cartApi";
 import { notifyCartChanged } from "@/features/cart/lib/cartEvents";
 import { ASSISTANT_NAME, AssistantAvatar, WelcomeAvatar } from "@/pages/recommendation-chat/components/AssistantAvatar";
+import { CHAT_EXAMPLE_CHIP_CLASS_NAME, ChatGuideAnswerList } from "@/pages/recommendation-chat/components/ChatGuideTopics";
 import type { BookjeogiMood } from "@/common/components/BookjeogiCharacter";
 import { useRevealedText } from "@/pages/recommendation-chat/hooks/useRevealedText";
 import { useScriptClock } from "@/pages/recommendation-chat/hooks/useScriptClock";
+import { CHAT_GUIDE_QUESTION } from "@/pages/recommendation-chat/lib/chatGuide";
 import { similarBooksMessage } from "@/pages/recommendation-chat/lib/followupOptions";
 import type {
   CartProposalItemViewModel,
@@ -34,6 +37,8 @@ const FOLLOW_THRESHOLD_PX = 120;
 
 const ASSISTANT_BUBBLE_CLASS_NAME =
   "w-fit max-w-[88%] whitespace-pre-wrap break-words rounded-panel border border-hairline bg-surface px-3.5 py-2.5 type-body leading-relaxed text-text-primary";
+const USER_BUBBLE_CLASS_NAME =
+  "max-w-[78%] whitespace-pre-wrap break-words rounded-panel bg-accent-soft px-3.5 py-2.5 type-body leading-relaxed text-text-primary";
 
 const ERROR_MESSAGES: Record<ChatErrorReason, string> = {
   busy: "요청이 많아요. 잠시 후 다시 보내 주세요",
@@ -551,7 +556,7 @@ function ChatBubble({
   if (message.role === "user") {
     return (
       <div className="flex justify-end">
-        <p className={`max-w-[78%] whitespace-pre-wrap break-words rounded-panel bg-accent-soft px-3.5 py-2.5 type-body leading-relaxed text-text-primary ${isGroupStart ? "rounded-tr-sm" : ""}`}>
+        <p className={`${USER_BUBBLE_CLASS_NAME} ${isGroupStart ? "rounded-tr-sm" : ""}`}>
           {message.content}
         </p>
       </div>
@@ -744,29 +749,16 @@ function AssistantMessage({
   );
 }
 
-// What 북적이 can do, each with questions that are sent as-is when tapped. Every question was sent as a first turn to
-// the dev chatbot twice (2026-11-11) and gave the same kind of answer both times; the two search questions came back
-// with cards rather than a narrowing question. Leave out questions that change the cart ("…담아 줘" adds a book the user
-// never picked) or point at a card (there are no cards yet). Kept short enough to fit a 375x812 screen with the avatar.
-const STARTER_GROUPS = [
-  { title: "상황이나 주제로 찾기", questions: ["출퇴근길에 읽기 좋은 짧은 에세이", "사회초년생 재테크 입문서"] },
-  { title: "읽은 책에서 넓히기", questions: ["『아몬드』 재밌게 읽었는데 비슷한 책"] },
-  { title: "가격 묻기와 주문", questions: ["『아몬드』 얼마야?", "주문 내역 보여 줘"] },
-];
+// The first screen keeps only the guide chip and two examples that came back with cards on the dev chatbot
+// (2026-11-11). The rest of what 북적이 can do lives in the guide (lib/chatGuide), opened by the chip or the header icon.
+const WELCOME_STARTER_QUESTIONS = ["출퇴근길에 읽기 좋은 짧은 에세이", "『아몬드』 재밌게 읽었는데 비슷한 책"];
+const WELCOME_GUIDE_ANSWER = "이런 일을 할 수 있어요.";
 
-// Things to say once cards are on screen. Shown as text, not buttons: they need a card to point at.
-const AFTER_CARDS_TIPS = [
-  { label: "담기·수량·빼기", example: "1번 담아 줘, 2권으로 바꿔 줘, 맨 아래 거 빼 줘" },
-  { label: "비교하기", example: "1번이랑 2번 뭐가 달라?" },
-  { label: "예산 안에서 고르기", example: "3만 원 안에서 2권 골라 줘" },
-  { label: "주문하기", example: "1번 주문해 줘 (쓸 쿠폰·포인트를 채운 주문 화면으로 가요)" },
-];
-
-const STARTER_CHIP_CLASS_NAME =
-  "min-h-10 rounded-full border border-border bg-surface px-3.5 type-body-small text-text-primary transition-colors hover:border-border-strong hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+const GUIDE_CHIP_CLASS_NAME =
+  "inline-flex min-h-10 items-center gap-1.5 rounded-full border border-accent/30 bg-accent-soft pl-3 pr-3.5 type-body-small font-semibold text-text-primary transition-colors hover:border-accent/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
 // The greeting plays like a chat that has just opened: 북적이 types for a moment before each bubble, then the
-// questions follow group by group. Times are ms after the screen opens; the longer bubble takes longer to type.
+// chips follow. Times are ms after the screen opens; the longer bubble takes longer to type.
 const WELCOME_BUBBLES = [
   { shownAtMs: 1000, text: "안녕하세요! 저는 북적이예요 📚", typingAtMs: 300 },
   {
@@ -776,7 +768,6 @@ const WELCOME_BUBBLES = [
   },
 ];
 const STARTERS_SHOWN_AT_MS = 2700;
-const STARTER_GROUP_STAGGER_MS = 180;
 const WELCOME_STEP_TIMES_MS = [
   ...WELCOME_BUBBLES.flatMap((bubble) => [bubble.typingAtMs, bubble.shownAtMs]),
   STARTERS_SHOWN_AT_MS,
@@ -799,6 +790,38 @@ function TypingBubble({ className }: { className: string }) {
   );
 }
 
+// "북적이는 뭘 할 수 있어?" answered on the screen, like a short exchange. Nothing is sent, so it is not in the chat
+// history: it goes away with the rest of the greeting once the first message is sent, or when the chat is reopened.
+function WelcomeGuideExchange({ onQuickMessage }: { onQuickMessage: (message: string) => void }) {
+  const exchangeRef = useRef<HTMLDivElement>(null);
+
+  // The chip that opened this is gone, so keyboard focus moves here instead of falling back to the page.
+  useEffect(() => {
+    exchangeRef.current?.focus({ preventScroll: true });
+  }, []);
+
+  return (
+    <div aria-label="북적이가 할 수 있는 일" className="mt-5 outline-none" ref={exchangeRef} role="group" tabIndex={-1}>
+      <div className="chat-message-enter flex justify-end">
+        <p className={`${USER_BUBBLE_CLASS_NAME} rounded-tr-sm`}>{CHAT_GUIDE_QUESTION}</p>
+      </div>
+      <ReadReceipt />
+      <div className="chat-message-enter mt-5" style={{ animationDelay: `${TYPING_AFTER_SEND_DELAY_MS}ms` }}>
+        <AssistantRow isGroupStart>
+          <p className={`${ASSISTANT_BUBBLE_CLASS_NAME} rounded-tl-sm`}>{WELCOME_GUIDE_ANSWER}</p>
+          <ChatGuideAnswerList onQuickMessage={onQuickMessage} />
+          <p className="mt-2 flex flex-wrap items-center gap-1 type-caption text-text-secondary">
+            언제든 위
+            <BookOpenIcon className="size-4 text-text-primary" strokeWidth={2} />
+            <span className="sr-only">가이드북</span>
+            아이콘에서 다시 볼 수 있어요
+          </p>
+        </AssistantRow>
+      </div>
+    </div>
+  );
+}
+
 // FE-only greeting shown before the first message; it is never sent to or stored by the server. The profile stays
 // at the top and the greeting grows up from the composer, the way a messenger fills a new chat.
 function WelcomeMessage({
@@ -807,20 +830,24 @@ function WelcomeMessage({
   onQuickMessage: (message: string) => void;
 }) {
   const elapsedMs = useScriptClock(WELCOME_STEP_TIMES_MS);
+  const [isGuideAsked, setIsGuideAsked] = useState(false);
   const shownBubbles = WELCOME_BUBBLES.filter((bubble) => elapsedMs >= bubble.shownAtMs);
   const isTyping = WELCOME_BUBBLES.some(
     (bubble) => elapsedMs >= bubble.typingAtMs && elapsedMs < bubble.shownAtMs,
   );
   const hasStarted = elapsedMs >= WELCOME_BUBBLES[0].typingAtMs;
-  const areStartersShown = elapsedMs >= STARTERS_SHOWN_AT_MS;
+  const areStartersShown = elapsedMs >= STARTERS_SHOWN_AT_MS && !isGuideAsked;
 
   return (
     <section aria-label="북적이 첫 인사" className="flex flex-1 flex-col">
-      <div className="chat-message-enter flex flex-col items-center pb-3 text-center">
-        <WelcomeAvatar />
-        <p className="mt-2 type-title text-text-primary">{ASSISTANT_NAME}</p>
-        <p className="mt-0.5 type-caption text-text-tertiary">책 찾기부터 장바구니·주문까지 도와드려요</p>
-      </div>
+      {/* Once the guide is asked, its answer needs the room; the answer row below shows 북적이's name instead. */}
+      {isGuideAsked ? null : (
+        <div className="chat-message-enter flex flex-col items-center pb-3 text-center">
+          <WelcomeAvatar />
+          <p className="mt-2 type-title text-text-primary">{ASSISTANT_NAME}</p>
+          <p className="mt-0.5 type-caption text-text-tertiary">책 찾기부터 장바구니·주문까지 도와드려요</p>
+        </div>
+      )}
       {hasStarted ? (
         <div className="mt-auto">
           {/* The profile right above already names 북적이, so the bubbles skip the name line. */}
@@ -835,46 +862,24 @@ function WelcomeMessage({
             ))}
             {isTyping ? <TypingBubble className={shownBubbles.length === 0 ? "rounded-tl-sm" : "mt-1.5"} /> : null}
             {areStartersShown ? (
-              <>
-                <div aria-label="이렇게 물어보세요" className="mt-3 flex flex-col gap-3" role="group">
-                  {STARTER_GROUPS.map((group, index) => (
-                    <div
-                      className="chat-message-enter"
-                      key={group.title}
-                      style={{ animationDelay: `${index * STARTER_GROUP_STAGGER_MS}ms` }}
-                    >
-                      <p className="type-caption font-semibold text-text-secondary">{group.title}</p>
-                      <ul aria-label={group.title} className="mt-1.5 flex flex-wrap gap-2">
-                        {group.questions.map((question) => (
-                          <li key={question}>
-                            <button className={STARTER_CHIP_CLASS_NAME} onClick={() => onQuickMessage(question)} type="button">
-                              {question}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-                <details
-                  className="chat-message-enter mt-3 rounded-panel border border-hairline bg-surface px-3.5 py-2.5"
-                  style={{ animationDelay: `${STARTER_GROUPS.length * STARTER_GROUP_STAGGER_MS}ms` }}
-                >
-                  <summary className="cursor-pointer type-body-small font-semibold text-text-secondary">
-                    추천받은 뒤에는 이렇게도 말할 수 있어요
-                  </summary>
-                  <dl className="mt-2 flex flex-col gap-2">
-                    {AFTER_CARDS_TIPS.map((tip) => (
-                      <div key={tip.label}>
-                        <dt className="type-caption font-semibold text-text-primary">{tip.label}</dt>
-                        <dd className="type-caption text-text-secondary">{tip.example}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </details>
-              </>
+              <ul aria-label="이렇게 물어보세요" className="chat-message-enter mt-3 flex flex-wrap gap-2">
+                <li>
+                  <button className={GUIDE_CHIP_CLASS_NAME} onClick={() => setIsGuideAsked(true)} type="button">
+                    <SparkleIcon className="size-4 shrink-0 text-accent-hover" strokeWidth={2} />
+                    {CHAT_GUIDE_QUESTION}
+                  </button>
+                </li>
+                {WELCOME_STARTER_QUESTIONS.map((question) => (
+                  <li key={question}>
+                    <button className={CHAT_EXAMPLE_CHIP_CLASS_NAME} onClick={() => onQuickMessage(question)} type="button">
+                      {question}
+                    </button>
+                  </li>
+                ))}
+              </ul>
             ) : null}
           </AssistantRow>
+          {isGuideAsked ? <WelcomeGuideExchange onQuickMessage={onQuickMessage} /> : null}
         </div>
       ) : null}
     </section>

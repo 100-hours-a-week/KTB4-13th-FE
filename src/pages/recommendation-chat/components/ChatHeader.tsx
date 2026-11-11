@@ -1,16 +1,17 @@
 import type { MouseEvent } from "react";
 
-import { ArrowLeftIcon, HistoryIcon } from "@/common/components/AppIcons";
+import { ArrowLeftIcon, BookOpenIcon, HistoryIcon } from "@/common/components/AppIcons";
 import { CartButton } from "@/features/cart/components/CartButton";
 import { ASSISTANT_NAME, AssistantAvatar } from "@/pages/recommendation-chat/components/AssistantAvatar";
 
 interface ChatHeaderProps {
   onBack: () => void;
   onCartClick: () => void;
+  onGuideClick: () => void;
   onSessionListClick: (event: MouseEvent<HTMLButtonElement>) => void;
 }
 
-export function ChatHeader({ onBack, onCartClick, onSessionListClick }: ChatHeaderProps) {
+export function ChatHeader({ onBack, onCartClick, onGuideClick, onSessionListClick }: ChatHeaderProps) {
   const iconButtonClassName =
     "inline-flex size-11 shrink-0 items-center justify-center rounded-full text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
@@ -31,6 +32,15 @@ export function ChatHeader({ onBack, onCartClick, onSessionListClick }: ChatHead
           <p className="truncate type-caption text-text-tertiary">AI 책 추천</p>
         </div>
       </div>
+      <button
+        aria-haspopup="dialog"
+        aria-label="북적이 가이드북 열기"
+        className={iconButtonClassName}
+        onClick={onGuideClick}
+        type="button"
+      >
+        <BookOpenIcon className="size-6" />
+      </button>
       <button
         aria-label="대화 목록 열기"
         className={iconButtonClassName}

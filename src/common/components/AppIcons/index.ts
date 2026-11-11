@@ -1,6 +1,7 @@
 export {
   ArrowLeftIcon,
   BellIcon,
+  BookOpenIcon,
   CameraIcon,
   CartIcon,
   ChevronDownIcon,
@@ -10,5 +11,6 @@ export {
   PlusIcon,
   SearchIcon,
   SparkleIcon,
+  TagIcon,
   UserIcon,
 } from "@/common/components/AppIcons/AppIcons";
