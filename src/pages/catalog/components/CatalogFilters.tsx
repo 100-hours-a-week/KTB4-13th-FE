@@ -1,4 +1,8 @@
 import { RetryButton } from "@/common/components/RetryButton";
+import {
+  INTEREST_CATEGORIES,
+  toInterestCategory,
+} from "@/features/onboarding/lib/interestCategories";
 import type { CategoryState } from "@/pages/catalog/hooks/useCatalogCategories";
 import type {
   CatalogFilterState,
@@ -23,9 +27,6 @@ const MATCH_SCORE_OPTIONS: { label: string; value: number | null }[] = [
   { label: "70점 이상", value: 70 },
   { label: "80점 이상", value: 80 },
 ];
-
-const pendingFilterClassName =
-  "inline-flex min-h-11 items-center rounded-control bg-muted px-3 type-caption text-text-tertiary";
 
 const selectClassName =
   "min-h-11 rounded-control border bg-surface px-3 type-caption focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:text-text-tertiary";
@@ -70,6 +71,10 @@ export function CatalogFilters({
     onFilterChange({ categoryId: value === "all" ? null : Number(value) });
   };
 
+  const handleInterestCategoryChange = (value: string) => {
+    onFilterChange({ interestCategory: toInterestCategory(value) });
+  };
+
   const handlePublicationYearFromChange = (value: string) => {
     onFilterChange({ publicationYearFrom: value === "all" ? null : Number(value) });
   };
@@ -88,14 +93,23 @@ export function CatalogFilters({
       className="border-b border-hairline bg-surface px-5 py-3"
     >
       <div className="flex gap-2 overflow-x-auto pb-1">
-        {/* The recommendation feed accepts onboarding category labels, not /api/v1/categories ids. */}
+        {/* The recommendation feed filters by onboarding interest label, not /api/v1/categories id. */}
         {mode === "recommendation" ? (
-          <span
-            aria-label="도서종류 필터: 전체, 현재 전체 조건만 선택할 수 있습니다"
-            className={`${pendingFilterClassName} shrink-0`}
-          >
-            도서종류 전체
-          </span>
+          <label className="shrink-0">
+            <span className="sr-only">도서종류</span>
+            <select
+              className={getFilterSelectClassName(filters.interestCategory !== null)}
+              onChange={(event) => handleInterestCategoryChange(event.target.value)}
+              value={filters.interestCategory ?? "all"}
+            >
+              <option value="all">도서종류 전체</option>
+              {INTEREST_CATEGORIES.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+          </label>
         ) : (
           <label className="shrink-0">
             <span className="sr-only">도서종류</span>

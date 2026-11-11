@@ -78,6 +78,7 @@ function toSearchParams(query: RecommendationFeedQuery) {
       : [
           ["size", query.size],
           ["sort", query.sort],
+          ["category", query.category],
           ["pubYearFrom", query.pubYearFrom],
           ["pubYearTo", query.pubYearTo],
           ["matchScoreMin", query.matchScoreMin],
