@@ -5,6 +5,9 @@ import { BookCover } from "@/common/components/BookCover";
 import { isBlankCover } from "@/common/lib/blankCover";
 import { COVER_TRANSITION_NAME, type CoverPreview } from "@/common/lib/coverTransition";
 import { resetMouseTilt, tiltTowardMouse } from "@/common/lib/mouseTilt";
+import { useAuth } from "@/features/auth/context/useAuth";
+import { LibraryOwnedMark } from "@/features/library/components/LibraryOwnedMark";
+import { useLibraryIndex } from "@/features/library/lib/libraryIndex";
 import type { ProductDetail } from "@/features/product/types/product";
 import { fetchProductReviewCount, fetchProductReviews } from "@/features/review/api/reviewApi";
 import { ReviewRatingDistribution } from "@/features/review/components/ReviewRatingDistribution";
@@ -195,6 +198,8 @@ export function ProductDetailContent({
 }: ProductDetailContentProps) {
   const authorSectionRef = useRef<HTMLDivElement>(null);
   const otherBooks = useAuthorOtherBooks(product, authorSectionRef);
+  const { status } = useAuth();
+  const isInLibrary = useLibraryIndex(status === "authenticated")?.productIds.has(product.productId) ?? false;
   const [reviewSummary, setReviewSummary] = useState<{
     completeReviews: ProductReview[] | null;
     productId: number;
@@ -288,6 +293,11 @@ export function ProductDetailContent({
               </dd>
             </div>
           </dl>
+          {isInLibrary ? (
+            <div className="mt-3">
+              <LibraryOwnedMark asLink />
+            </div>
+          ) : null}
           <div className="mt-5 border-t border-hairline pt-5">
             <ProductPrice product={product} />
           </div>

@@ -7,6 +7,9 @@ import { useCoverLinkClick } from "@/common/lib/coverTransition";
 import { ProductAvailabilityBadge } from "@/common/components/ProductAvailabilityBadge";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
+import { useAuth } from "@/features/auth/context/useAuth";
+import { LibraryOwnedMark } from "@/features/library/components/LibraryOwnedMark";
+import { useLibraryIndex } from "@/features/library/lib/libraryIndex";
 import type { BookSearchItem } from "@/features/search/types/bookSearch";
 import type { SearchResultState } from "@/pages/search/types/search";
 
@@ -71,6 +74,8 @@ export function SearchResultsContent({
   state,
 }: SearchResultsContentProps) {
   const loadMoreButtonRef = useRef<HTMLButtonElement>(null);
+  const { status } = useAuth();
+  const libraryIndex = useLibraryIndex(status === "authenticated");
   const isLoadingMore =
     state.kind === "ready" && state.paginationStatus === "loadingMore";
   const hasLoadMoreError =
@@ -160,6 +165,11 @@ export function SearchResultsContent({
         {state.items.map((item, index) => (
           <li className="min-w-0" key={item.bookId}>
             <SearchResultCard item={item} priority={index < 3} />
+            {libraryIndex?.bookIds.has(item.bookId) ? (
+              <div className="mt-1">
+                <LibraryOwnedMark />
+              </div>
+            ) : null}
             {item.productId !== null && item.inStock ? (
               <div className="mt-2">
                 <QuickAddToCartButton productId={item.productId} thumbnailUrl={item.coverUrl} title={item.title} />
