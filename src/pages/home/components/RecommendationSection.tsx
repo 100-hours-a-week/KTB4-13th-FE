@@ -1,4 +1,12 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
@@ -63,12 +71,81 @@ function wrapIndex(index: number, length: number) {
   return ((index % length) + length) % length;
 }
 
-function updateCoverPosition(card: HTMLDivElement, shade: HTMLSpanElement | null, distance: number, visualScale: number) {
+// Every book stays mounted so a fast swipe never re-creates and re-decodes a cover; books past the
+// visible neighbours are only hidden, judged from the live rotation rather than the lagging React state.
+function updateCoverPosition(
+  card: HTMLDivElement,
+  shade: HTMLSpanElement | null,
+  distance: number,
+  visualScale: number,
+  angleStep: number,
+) {
+  const hidden = Math.abs(distance) > (VISIBLE_NEIGHBORS + 0.5) * angleStep;
+  card.style.visibility = hidden ? "hidden" : "";
+  if (hidden) return;
   const visualDistance = Math.abs(distance) * visualScale;
+  card.style.zIndex = String(200 - Math.round(Math.abs(distance)));
   card.style.opacity = String(Math.max(0.15, 1 - visualDistance / 150));
   card.style.transform = `rotateY(${-distance * (1 - visualScale)}deg) scale(${Math.max(0.65, 1.05 - visualDistance / 400)})`;
   if (shade) shade.style.opacity = String(Math.min(0.45, visualDistance / 200));
 }
+
+// Memoized so an active-book change during a swipe re-renders only the two slots whose state flips.
+const CoverflowSlot = memo(function CoverflowSlot({
+  angle,
+  book,
+  isActive,
+  onCardNode,
+  onPress,
+  onShadeNode,
+  slot,
+}: {
+  angle: number;
+  book: RecommendationFeedItem;
+  isActive: boolean;
+  onCardNode: (slot: number, node: HTMLDivElement | null) => void;
+  onPress: (slot: number, isActive: boolean) => void;
+  onShadeNode: (slot: number, node: HTMLSpanElement | null) => void;
+  slot: number;
+}) {
+  return (
+    <div
+      // The turned 3D boxes overlap their neighbours; only the book button should take a tap.
+      className="pointer-events-none absolute inset-0"
+      style={{
+        transform: `rotateY(${angle}deg) translateZ(var(--cylinder-radius))`,
+        transformStyle: "preserve-3d",
+      }}
+    >
+      <div
+        className="relative size-full"
+        ref={(node) => onCardNode(slot, node)}
+        style={{ transformStyle: "preserve-3d" }}
+      >
+        <button
+          aria-label={isActive ? `${book.title}, 현재 선택됨` : `${book.title} 선택`}
+          aria-pressed={isActive}
+          className={`pointer-events-auto absolute inset-0 cursor-pointer rounded-control outline-offset-4 focus-visible:outline-2 focus-visible:outline-primary ${
+            isActive ? "book-lift" : ""
+          }`}
+          data-press="none"
+          onClick={() => onPress(slot, isActive)}
+          style={{ backfaceVisibility: "hidden" }}
+          type="button"
+        >
+          <div className="book-lift-cover relative size-full overflow-hidden rounded-control bg-muted shadow-[0_14px_30px_-12px_rgba(36,33,31,0.38)] [&>div]:!h-full [&>div]:!aspect-auto [&>div]:!rounded-control [&>div]:!border-transparent">
+            <BookCover alt={book.title} fallbackTitle={book.title} priority={isActive} radius="cover" thumbnailUrl={book.coverUrl} />
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 bg-black"
+              ref={(node) => onShadeNode(slot, node)}
+            />
+          </div>
+        </button>
+      </div>
+    </div>
+  );
+});
 
 export function CoverflowRecommendations({
   books,
@@ -141,7 +218,7 @@ export function CoverflowRecommendations({
       cardRefs.current.forEach((card, slot) => {
         if (!card) return;
         const signedDistance = wrapAngle(slot * angleStep - rotation);
-        updateCoverPosition(card, shadeRefs.current[slot], signedDistance, visualAngleScale);
+        updateCoverPosition(card, shadeRefs.current[slot], signedDistance, visualAngleScale, angleStep);
       });
       const next = wrapIndex(Math.round(rotation / angleStep), slotCount);
       if (next !== activeSlotRef.current) {
@@ -227,6 +304,34 @@ export function CoverflowRecommendations({
       animateTo((Math.round(rotationRef.current / angleStep) + shortest) * angleStep);
     }
   };
+
+  // Slots are memoized, so they get stable callbacks; the latest press handler is read through a ref.
+  const pressBookRef = useRef<(slot: number, isActive: boolean) => void>(() => {});
+  useLayoutEffect(() => {
+    pressBookRef.current = (slot, isActive) => {
+      const book = books[slot];
+      if (!isActive) {
+        selectBook(slot);
+      } else if (!isPreview && book && book.productId !== null) {
+        onProductClick();
+        navigate(`/products/${book.productId}`);
+      }
+    };
+  });
+  const pressBook = useCallback((slot: number, isActive: boolean) => pressBookRef.current(slot, isActive), []);
+
+  const setCardNode = useCallback(
+    (slot: number, node: HTMLDivElement | null) => {
+      cardRefs.current[slot] = node;
+      if (node) {
+        updateCoverPosition(node, shadeRefs.current[slot], wrapAngle(slot * angleStep - rotationRef.current), visualAngleScale, angleStep);
+      }
+    },
+    [angleStep, visualAngleScale],
+  );
+  const setShadeNode = useCallback((slot: number, node: HTMLSpanElement | null) => {
+    shadeRefs.current[slot] = node;
+  }, []);
 
   const startDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
     // A second finger does not take over a drag in progress. A press that never turned into a drag
@@ -365,63 +470,18 @@ export function CoverflowRecommendations({
           ref={wheelRef}
           style={{ transformStyle: "preserve-3d" }}
         >
-          {books.map((book, slot) => {
-            const angle = slot * angleStep;
-            const isActive = slot === activeSlot;
-            const slotDistance = Math.min(wrapIndex(slot - activeSlot, slotCount), wrapIndex(activeSlot - slot, slotCount));
-            if (slotDistance > VISIBLE_NEIGHBORS) return null;
-            const distance = slotDistance * angleStep;
-            return (
-              <div
-                // The turned 3D boxes overlap their neighbours; only the book button should take a tap.
-                className="pointer-events-none absolute inset-0"
-                key={book.bookId}
-                style={{
-                  transform: `rotateY(${angle}deg) translateZ(var(--cylinder-radius))`,
-                  transformStyle: "preserve-3d",
-                }}
-              >
-                <div
-                  className="relative size-full"
-                  ref={(node) => {
-                    cardRefs.current[slot] = node;
-                    if (node) {
-                      updateCoverPosition(node, shadeRefs.current[slot], wrapAngle(angle - rotationRef.current), visualAngleScale);
-                    }
-                  }}
-                  style={{ transformStyle: "preserve-3d", zIndex: 200 - Math.round(distance) }}
-                >
-                  <button
-                    aria-label={isActive ? `${book.title}, 현재 선택됨` : `${book.title} 선택`}
-                    aria-pressed={isActive}
-                    className={`pointer-events-auto absolute inset-0 cursor-pointer rounded-control outline-offset-4 focus-visible:outline-2 focus-visible:outline-primary ${
-                      isActive ? "book-lift" : ""
-                    }`}
-                    data-press="none"
-                    onClick={() => {
-                      if (!isActive) {
-                        selectBook(slot);
-                      } else if (!isPreview && book.productId !== null) {
-                        onProductClick();
-                        navigate(`/products/${book.productId}`);
-                      }
-                    }}
-                    style={{ backfaceVisibility: "hidden" }}
-                    type="button"
-                  >
-                    <div className="book-lift-cover relative size-full overflow-hidden rounded-control bg-muted shadow-[0_14px_30px_-12px_rgba(36,33,31,0.38)] [&>div]:!h-full [&>div]:!aspect-auto [&>div]:!rounded-control [&>div]:!border-transparent">
-                      <BookCover alt={book.title} fallbackTitle={book.title} priority={isActive} radius="cover" thumbnailUrl={book.coverUrl} />
-                      <span
-                        aria-hidden="true"
-                        className="pointer-events-none absolute inset-0 bg-black"
-                        ref={(node) => { shadeRefs.current[slot] = node; }}
-                      />
-                    </div>
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+          {books.map((book, slot) => (
+            <CoverflowSlot
+              angle={slot * angleStep}
+              book={book}
+              isActive={slot === activeSlot}
+              key={book.bookId}
+              onCardNode={setCardNode}
+              onPress={pressBook}
+              onShadeNode={setShadeNode}
+              slot={slot}
+            />
+          ))}
         </div>
       </div>
 
