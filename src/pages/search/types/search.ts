@@ -1,9 +1,11 @@
+import type { InterestCategory } from "@/features/onboarding/lib/interestCategories";
 import type {
   BookSearchItem,
   BookSearchSort,
 } from "@/features/search/types/bookSearch";
 
 export interface SearchFilters {
+  category: InterestCategory | null;
   priceMax: number | null;
   priceMin: number | null;
   pubYearFrom: number | null;

@@ -77,6 +77,7 @@ function toSearchParams(query: BookSearchQuery) {
     sort: query.sort,
   });
   const optionalParams: [string, number | string | null][] = [
+    ["category", query.category],
     ["priceMin", query.priceMin],
     ["priceMax", query.priceMax],
     ["pubYearFrom", query.pubYearFrom],

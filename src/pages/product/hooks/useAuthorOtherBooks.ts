@@ -30,6 +30,7 @@ export function useAuthorOtherBooks(product: ProductDetail, sectionRef: RefObjec
       setResult({ productId, books: [], status: "loading" });
 
       void fetchBookSearchResults({
+        category: null,
         cursor: null,
         priceMax: null,
         priceMin: null,
