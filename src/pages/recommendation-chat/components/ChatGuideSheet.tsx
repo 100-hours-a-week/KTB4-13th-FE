@@ -1,8 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { CHAT_EXAMPLE_CHIP_CLASS_NAME, ChatGuideTopicIcon } from "@/pages/recommendation-chat/components/ChatGuideTopics";
-import { CHAT_GUIDE_TOPICS, quoteExamples } from "@/pages/recommendation-chat/lib/chatGuide";
+import { ChatGuideTopicList } from "@/pages/recommendation-chat/components/ChatGuideTopics";
 
 interface ChatGuideSheetProps {
   // While a reply is still coming the chat ignores new messages, so the examples are disabled.
@@ -15,7 +14,7 @@ interface ChatGuideSheetProps {
 // Downward drag distance (px) that closes the sheet on release.
 const SWIPE_CLOSE_THRESHOLD = 80;
 
-// The guidebook opened from the header icon: the same topics as the "뭘 할 수 있어?" answer, reachable at any point in
+// The guidebook opened from the header icon: the same rows as the "뭘 할 수 있어?" answer, reachable at any point in
 // the chat. Opens the way ChatSessionList does: inside the app shell, with the rest of the shell made inert.
 export function ChatGuideSheet({ canSend, isOpen, onClose, onSelect }: ChatGuideSheetProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -97,47 +96,8 @@ export function ChatGuideSheet({ canSend, isOpen, onClose, onSelect }: ChatGuide
           </p>
         </div>
 
-        <div className="safe-area-bottom min-h-0 flex-1 overflow-y-auto px-5 pb-5 pt-4">
-          <div className="flex flex-col gap-4.5">
-            {CHAT_GUIDE_TOPICS.map((topic) => (
-              <section aria-labelledby={`${titleId}-${topic.id}`} key={topic.id}>
-                <div className="flex items-start gap-2.5">
-                  <ChatGuideTopicIcon topic={topic} />
-                  <div className="min-w-0">
-                    <h3 className="type-body font-semibold text-text-primary" id={`${titleId}-${topic.id}`}>
-                      {topic.title}
-                    </h3>
-                    <p className="type-caption text-text-secondary">{topic.description}</p>
-                  </div>
-                </div>
-                {topic.kind === "questions" ? (
-                  <ul aria-label={topic.title} className="ml-10.5 mt-2.5 flex flex-wrap gap-2">
-                    {topic.questions.map((question) => (
-                      <li key={question}>
-                        <button
-                          className={CHAT_EXAMPLE_CHIP_CLASS_NAME}
-                          disabled={!canSend}
-                          onClick={() => onSelect(question)}
-                          type="button"
-                        >
-                          {question}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <dl className="ml-10.5 mt-2.5 flex flex-col gap-1.5">
-                    {topic.tips.map((tip) => (
-                      <div className="flex items-baseline gap-2.5 rounded-control bg-muted px-3 py-2" key={tip.label}>
-                        <dt className="w-16 shrink-0 type-caption text-text-secondary">{tip.label}</dt>
-                        <dd className="type-body-small text-text-primary">{quoteExamples(tip.examples)}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                )}
-              </section>
-            ))}
-          </div>
+        <div className="safe-area-bottom min-h-0 flex-1 overflow-y-auto pt-3">
+          <ChatGuideTopicList appearance="sheet" canSend={canSend} onSelect={onSelect} />
         </div>
       </dialog>
     </div>,
