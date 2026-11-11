@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { QuickAddToCartButton } from "@/features/cart/components/QuickAddToCartButton";
 import { BookCover } from "@/common/components/BookCover";
 import { ProductAvailabilityBadge } from "@/common/components/ProductAvailabilityBadge";
 import { RetryButton } from "@/common/components/RetryButton";
@@ -350,9 +349,6 @@ export function CoverflowRecommendations({
             </p>
           ) : null}
           {activeBook.productId === null ? <ProductAvailabilityBadge /> : null}
-          {!isPreview && activeBook.productId !== null && activeBook.inStock ? (
-            <QuickAddToCartButton productId={activeBook.productId} thumbnailUrl={activeBook.coverUrl} title={activeBook.title} />
-          ) : null}
         </div>
       </div>
     </div>
