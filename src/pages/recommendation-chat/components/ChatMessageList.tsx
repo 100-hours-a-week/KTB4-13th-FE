@@ -10,7 +10,7 @@ import { useAuth } from "@/features/auth/context/useAuth";
 import { addCartItem, fetchCart } from "@/features/cart/api/cartApi";
 import { notifyCartChanged } from "@/features/cart/lib/cartEvents";
 import { ASSISTANT_NAME, AssistantAvatar, WelcomeAvatar } from "@/pages/recommendation-chat/components/AssistantAvatar";
-import { CHAT_EXAMPLE_CHIP_CLASS_NAME, ChatGuideAnswerList } from "@/pages/recommendation-chat/components/ChatGuideTopics";
+import { CHAT_EXAMPLE_CHIP_CLASS_NAME, ChatGuideTopicList } from "@/pages/recommendation-chat/components/ChatGuideTopics";
 import type { BookjeogiMood } from "@/common/components/BookjeogiCharacter";
 import { useRevealedText } from "@/pages/recommendation-chat/hooks/useRevealedText";
 import { useScriptClock } from "@/pages/recommendation-chat/hooks/useScriptClock";
@@ -809,7 +809,7 @@ function WelcomeGuideExchange({ onQuickMessage }: { onQuickMessage: (message: st
       <div className="chat-message-enter mt-5" style={{ animationDelay: `${TYPING_AFTER_SEND_DELAY_MS}ms` }}>
         <AssistantRow isGroupStart>
           <p className={`${ASSISTANT_BUBBLE_CLASS_NAME} rounded-tl-sm`}>{WELCOME_GUIDE_ANSWER}</p>
-          <ChatGuideAnswerList onQuickMessage={onQuickMessage} />
+          <ChatGuideTopicList appearance="card" onSelect={onQuickMessage} />
           <p className="mt-2 flex flex-wrap items-center gap-1 type-caption text-text-secondary">
             언제든 위
             <BookOpenIcon className="size-4 text-text-primary" strokeWidth={2} />
