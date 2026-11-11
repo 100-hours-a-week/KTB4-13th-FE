@@ -15,7 +15,7 @@ const HOME_RANKING_COUNT = 5;
 const MEDIUM_COUNT = 2;
 // Card corner for the round + button. Its 44px hit area overhangs the 32px circle, so every tier
 // lines the circles up on the same vertical axis.
-const CORNER_ADD_CLASS_NAME = "absolute bottom-1 right-1 z-10";
+const CORNER_ADD_CLASS_NAME = "absolute bottom-0.5 right-0.5 z-10";
 
 interface BookRankingSectionProps {
   onMoreClick: () => void;
@@ -82,7 +82,7 @@ function RankingTiers({
             <BookCover alt="" fallbackTitle={first.itemName} radius="cover" thumbnailUrl={first.thumbnailUrl} />
           </div>
           {/* Right padding keeps a long author line clear of the + circle. */}
-          <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 pr-8">
+          <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 pr-7">
             <span aria-hidden="true" className="type-numeral text-2xl text-[#f6c3c8]">01</span>
             <p className="line-clamp-2 break-keep type-title">{first.itemName}</p>
             <p className="truncate type-caption text-white/70">{first.author}</p>
@@ -115,7 +115,7 @@ function RankingTiers({
                   <div className="book-lift-cover w-16 shrink-0 self-start rounded-cover">
                     <BookCover alt="" fallbackTitle={item.itemName} radius="cover" thumbnailUrl={item.thumbnailUrl} />
                   </div>
-                  <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 pr-8">
+                  <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 pr-7">
                     <span aria-hidden="true" className="type-numeral text-lg text-[#d96f7a]">
                       {String(index + 2).padStart(2, "0")}
                     </span>
@@ -157,7 +157,7 @@ function RankingTiers({
                 </Link>
                 {/* Pulled into the row padding so this circle shares the cards' vertical axis. */}
                 <QuickAddToCartButton
-                  className="-mr-2"
+                  className="-mr-2.5"
                   productId={item.itemId}
                   thumbnailUrl={item.thumbnailUrl}
                   title={item.itemName}

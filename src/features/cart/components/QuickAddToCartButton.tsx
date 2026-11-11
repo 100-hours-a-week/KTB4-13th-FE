@@ -11,8 +11,8 @@ interface QuickAddToCartButtonProps extends QuickCartItem {
 }
 
 const ICON_CIRCLE_CLASS_NAME = {
-  icon: "size-8 [&>svg]:size-4",
-  "icon-small": "size-7 [&>svg]:size-3.5",
+  icon: "size-6.5 [&>svg]:size-3.5",
+  "icon-small": "size-5.5 [&>svg]:size-3",
 } as const;
 
 export function QuickAddToCartButton({ className = "", variant = "text", ...item }: QuickAddToCartButtonProps) {

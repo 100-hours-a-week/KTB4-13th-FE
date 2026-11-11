@@ -77,7 +77,7 @@ function RankingBookRow({
         </div>
         {productId !== null ? (
           <QuickAddToCartButton
-            className="absolute -bottom-1 -right-1 z-10"
+            className="absolute -bottom-1.5 -right-1.5 z-10"
             productId={productId}
             thumbnailUrl={book.thumbnailUrl}
             title={book.title}
