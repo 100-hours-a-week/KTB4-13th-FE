@@ -17,13 +17,15 @@ function SearchResultCard({ item, priority }: { item: BookSearchItem; priority: 
   const onCoverLinkClick = useCoverLinkClick();
   const card = (
     <article className="flex min-w-0 flex-col gap-1">
-      <BookCover
-        alt=""
-        fallbackTitle={item.title}
-        priority={priority}
-        radius="cover"
-        thumbnailUrl={item.coverUrl}
-      />
+      <div className="book-lift-cover rounded-cover">
+        <BookCover
+          alt=""
+          fallbackTitle={item.title}
+          priority={priority}
+          radius="cover"
+          thumbnailUrl={item.coverUrl}
+        />
+      </div>
       <h2 className="mt-1.5 line-clamp-2 min-h-10 type-body-small font-semibold text-text-primary">
         {item.title}
       </h2>
@@ -46,7 +48,7 @@ function SearchResultCard({ item, priority }: { item: BookSearchItem; priority: 
   return (
     <Link
       aria-label={`${item.title} 상세 보기`}
-      className="block rounded-cover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className="book-lift block rounded-cover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       onClick={(event) =>
         onCoverLinkClick(event, `/products/${item.productId}`, { thumbnailUrl: item.coverUrl, title: item.title })
       }

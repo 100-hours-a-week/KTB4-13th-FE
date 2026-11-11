@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
 import { COVER_TRANSITION_NAME, type CoverPreview } from "@/common/lib/coverTransition";
+import { resetMouseTilt, tiltTowardMouse } from "@/common/lib/mouseTilt";
 import type { ProductDetail } from "@/features/product/types/product";
 import { fetchProductReviewCount, fetchProductReviews } from "@/features/review/api/reviewApi";
 import { ReviewRatingDistribution } from "@/features/review/components/ReviewRatingDistribution";
@@ -53,8 +54,10 @@ function DetailCoverHero({
     <div className="relative -mx-5 flex justify-center overflow-hidden bg-muted px-5 pb-9 pt-10">
       <CoverBackdrop thumbnailUrl={thumbnailUrl} />
       <div
-        className="relative w-[48%] max-w-52 rounded-cover shadow-[0_0_4px_rgba(0,0,0,0.12),2px_6px_12px_rgba(0,0,0,0.12)]"
+        className="mouse-tilt relative w-[48%] max-w-52 rounded-cover shadow-[0_0_4px_rgba(0,0,0,0.12),2px_6px_12px_rgba(0,0,0,0.12)]"
         data-cover-target=""
+        onPointerLeave={resetMouseTilt}
+        onPointerMove={tiltTowardMouse}
         style={{ viewTransitionName: COVER_TRANSITION_NAME }}
       >
         <BookCover alt={alt} fallbackTitle={title} radius="cover" thumbnailUrl={thumbnailUrl} />

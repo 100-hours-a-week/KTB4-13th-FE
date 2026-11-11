@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
@@ -21,12 +21,39 @@ interface RecommendationSectionProps {
 
 const priceFormatter = new Intl.NumberFormat("ko-KR");
 const SKELETON_COUNT = 3;
-const SWIPE_THRESHOLD = 40;
 const AUTO_HOLD_MS = 1500;
 const AUTO_ANIMATION_MS = 900;
 const CONTROL_ANIMATION_MS = 240;
 const VISIBLE_NEIGHBORS = 3;
 const REFERENCE_ANGLE_STEP = 20;
+// Movement before a press becomes a drag; below it the press stays a tap on a book.
+const DRAG_START_PX = 6;
+// Only the last moments of a drag set the release speed, so a finger that stops and lifts does not fling.
+const VELOCITY_WINDOW_MS = 80;
+// A release keeps travelling as if the finger moved this much longer at the same speed.
+const FLING_PROJECTION_MS = 180;
+const MAX_FLING_STEPS = 4;
+const SETTLE_MAX_MS = 700;
+const MIN_FLING_DEG_PER_MS = 0.02;
+const CLICK_AFTER_DRAG_MS = 100;
+
+interface DragState {
+  axis: "x" | null;
+  degreesPerPx: number;
+  pointerId: number;
+  samples: { time: number; x: number }[];
+  startRotation: number;
+  startX: number;
+  startY: number;
+}
+
+function releaseVelocity(samples: DragState["samples"], releasedAt: number) {
+  const last = samples[samples.length - 1];
+  const first = samples.find((sample) => last.time - sample.time <= VELOCITY_WINDOW_MS) ?? last;
+  // Held still before lifting: no fling.
+  if (releasedAt - last.time > VELOCITY_WINDOW_MS || last.time === first.time) return 0;
+  return (last.x - first.x) / (last.time - first.time);
+}
 
 function wrapAngle(angle: number) {
   return ((angle + 180) % 360 + 360) % 360 - 180;
@@ -55,7 +82,10 @@ export function CoverflowRecommendations({
 }) {
   const navigate = useNavigate();
   const [activeSlot, setActiveSlot] = useState(0);
-  const touchStartX = useRef<number | null>(null);
+  const dragRef = useRef<DragState | null>(null);
+  const draggingRef = useRef(false);
+  const suppressClickRef = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [paused, setPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -131,7 +161,14 @@ export function CoverflowRecommendations({
           animationRef.current = null;
           nextAdvanceAt = time + AUTO_HOLD_MS;
         }
-      } else if (!paused && !reducedMotion && isVisibleRef.current && !document.hidden && books.length > 1) {
+      } else if (
+        !paused &&
+        !draggingRef.current &&
+        !reducedMotion &&
+        isVisibleRef.current &&
+        !document.hidden &&
+        books.length > 1
+      ) {
         if (nextAdvanceAt === null) {
           nextAdvanceAt = time + AUTO_HOLD_MS;
         } else if (time >= nextAdvanceAt) {
@@ -191,18 +228,108 @@ export function CoverflowRecommendations({
     }
   };
 
-  const finishSwipe = (endX: number) => {
-    if (touchStartX.current === null) return;
-    const delta = endX - touchStartX.current;
-    touchStartX.current = null;
-    if (Math.abs(delta) >= SWIPE_THRESHOLD) move(delta < 0 ? 1 : -1);
+  const startDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    // A second finger does not take over a drag in progress. A press that never turned into a drag
+    // (released outside the wheel, so no pointerup reached it) is simply replaced.
+    if (books.length <= 1 || dragRef.current?.axis === "x") return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    // A click swallowed after the previous drag may never have fired; this press is a new gesture.
+    suppressClickRef.current = false;
+    dragRef.current = {
+      axis: null,
+      // One book width of drag turns the wheel by one book.
+      degreesPerPx: angleStep / Math.max(1, wheelRef.current?.offsetWidth ?? 1),
+      pointerId: event.pointerId,
+      samples: [{ time: event.timeStamp, x: event.clientX }],
+      startRotation: rotationRef.current,
+      startX: event.clientX,
+      startY: event.clientY,
+    };
+  };
+
+  const continueDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag || event.pointerId !== drag.pointerId) return;
+
+    if (drag.axis === null) {
+      const dx = Math.abs(event.clientX - drag.startX);
+      const dy = Math.abs(event.clientY - drag.startY);
+      if (Math.max(dx, dy) < DRAG_START_PX) return;
+      if (dy > dx) {
+        // Vertical intent: leave the gesture to page scrolling (touch-action: pan-y).
+        dragRef.current = null;
+        return;
+      }
+      drag.axis = "x";
+      // Pick up from wherever an automatic turn had reached, without a jump.
+      animationRef.current = null;
+      drag.startRotation = rotationRef.current;
+      drag.startX = event.clientX;
+      draggingRef.current = true;
+      setIsDragging(true);
+      try {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      } catch {
+        // The pointer may already be gone; the drag still ends on pointerup/cancel.
+      }
+    }
+
+    rotationRef.current = drag.startRotation - (event.clientX - drag.startX) * drag.degreesPerPx;
+    drag.samples.push({ time: event.timeStamp, x: event.clientX });
+    while (drag.samples.length > 2 && event.timeStamp - drag.samples[0].time > VELOCITY_WINDOW_MS) {
+      drag.samples.shift();
+    }
+  };
+
+  const endDrag = (event: ReactPointerEvent<HTMLDivElement>, cancelled: boolean) => {
+    const drag = dragRef.current;
+    if (!drag || event.pointerId !== drag.pointerId) return;
+    dragRef.current = null;
+    if (drag.axis !== "x") return;
+
+    draggingRef.current = false;
+    setIsDragging(false);
+    // The click that follows a mouse drag arrives right after pointerup; touch drags usually send none,
+    // so the flag must not outlive this gesture and swallow a later keyboard Enter.
+    suppressClickRef.current = true;
+    window.setTimeout(() => {
+      suppressClickRef.current = false;
+    }, CLICK_AFTER_DRAG_MS);
+
+    const current = rotationRef.current;
+    const currentStep = Math.round(current / angleStep);
+    if (reducedMotion || cancelled) {
+      animateTo(currentStep * angleStep);
+      return;
+    }
+
+    const degreesPerMs = -releaseVelocity(drag.samples, event.timeStamp) * drag.degreesPerPx;
+    const projectedStep = Math.round((current + degreesPerMs * FLING_PROJECTION_MS) / angleStep);
+    const targetStep = Math.min(currentStep + MAX_FLING_STEPS, Math.max(currentStep - MAX_FLING_STEPS, projectedStep));
+    const target = targetStep * angleStep;
+    // The ease-out curve starts at 3x its average speed: size it so the wheel leaves at the finger's speed.
+    const duration = Math.abs(degreesPerMs) >= MIN_FLING_DEG_PER_MS
+      ? Math.min(SETTLE_MAX_MS, Math.max(CONTROL_ANIMATION_MS, (3 * Math.abs(target - current)) / Math.abs(degreesPerMs)))
+      : CONTROL_ANIMATION_MS;
+    animationRef.current = { duration, from: current, startedAt: null, to: target };
   };
 
   return (
     <div
       aria-label="추천 도서 캐러셀"
       aria-roledescription="캐러셀"
-      className="-mx-5 w-[calc(100%+2.5rem)] min-w-0 overflow-x-clip [--book-width:110px] [--book-height:165px] [--cylinder-radius:calc(350px*var(--radius-scale))] sm:[--book-width:130px] sm:[--book-height:195px] sm:[--cylinder-radius:calc(420px*var(--radius-scale))]"
+      className={`-mx-5 w-[calc(100%+2.5rem)] min-w-0 touch-pan-y select-none overflow-x-clip [--book-width:110px] [--book-height:165px] [--cylinder-radius:calc(350px*var(--radius-scale))] sm:[--book-width:130px] sm:[--book-height:195px] sm:[--cylinder-radius:calc(420px*var(--radius-scale))] ${
+        books.length > 1 ? "cursor-grab data-dragging:cursor-grabbing data-dragging:**:cursor-grabbing" : ""
+      }`}
+      data-dragging={isDragging ? "" : undefined}
+      onClickCapture={(event) => {
+        if (!suppressClickRef.current) return;
+        // The press ended a drag, not a tap on a book.
+        suppressClickRef.current = false;
+        event.preventDefault();
+        event.stopPropagation();
+      }}
+      onDragStart={(event) => event.preventDefault()}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
@@ -219,15 +346,10 @@ export function CoverflowRecommendations({
           move(1);
         }
       }}
-      onTouchStart={(event) => {
-        touchStartX.current = event.touches[0]?.clientX ?? null;
-      }}
-      onTouchEnd={(event) => {
-        if (event.changedTouches[0]) finishSwipe(event.changedTouches[0].clientX);
-      }}
-      onTouchCancel={() => {
-        touchStartX.current = null;
-      }}
+      onPointerCancel={(event) => endDrag(event, true)}
+      onPointerDown={startDrag}
+      onPointerMove={continueDrag}
+      onPointerUp={(event) => endDrag(event, false)}
       ref={carouselRef}
       role="region"
       style={{ ["--radius-scale" as string]: radiusScale }}
@@ -251,7 +373,8 @@ export function CoverflowRecommendations({
             const distance = slotDistance * angleStep;
             return (
               <div
-                className="absolute inset-0"
+                // The turned 3D boxes overlap their neighbours; only the book button should take a tap.
+                className="pointer-events-none absolute inset-0"
                 key={book.bookId}
                 style={{
                   transform: `rotateY(${angle}deg) translateZ(var(--cylinder-radius))`,
@@ -271,7 +394,9 @@ export function CoverflowRecommendations({
                   <button
                     aria-label={isActive ? `${book.title}, 현재 선택됨` : `${book.title} 선택`}
                     aria-pressed={isActive}
-                    className="absolute inset-0 cursor-pointer rounded-control outline-offset-4 focus-visible:outline-2 focus-visible:outline-primary"
+                    className={`pointer-events-auto absolute inset-0 cursor-pointer rounded-control outline-offset-4 focus-visible:outline-2 focus-visible:outline-primary ${
+                      isActive ? "book-lift" : ""
+                    }`}
                     data-press="none"
                     onClick={() => {
                       if (!isActive) {
@@ -284,7 +409,7 @@ export function CoverflowRecommendations({
                     style={{ backfaceVisibility: "hidden" }}
                     type="button"
                   >
-                    <div className="relative size-full overflow-hidden rounded-control bg-muted shadow-[0_14px_30px_-12px_rgba(36,33,31,0.38)] [&>div]:!h-full [&>div]:!aspect-auto [&>div]:!rounded-control [&>div]:!border-transparent">
+                    <div className="book-lift-cover relative size-full overflow-hidden rounded-control bg-muted shadow-[0_14px_30px_-12px_rgba(36,33,31,0.38)] [&>div]:!h-full [&>div]:!aspect-auto [&>div]:!rounded-control [&>div]:!border-transparent">
                       <BookCover alt={book.title} fallbackTitle={book.title} priority={isActive} radius="cover" thumbnailUrl={book.coverUrl} />
                       <span
                         aria-hidden="true"
