@@ -10,6 +10,7 @@ import { notifyCartChanged } from "@/features/cart/lib/cartEvents";
 import { ASSISTANT_NAME, AssistantAvatar, WelcomeAvatar } from "@/pages/recommendation-chat/components/AssistantAvatar";
 import type { BookjeogiMood } from "@/common/components/BookjeogiCharacter";
 import { useRevealedText } from "@/pages/recommendation-chat/hooks/useRevealedText";
+import { useScriptClock } from "@/pages/recommendation-chat/hooks/useScriptClock";
 import { similarBooksMessage } from "@/pages/recommendation-chat/lib/followupOptions";
 import type {
   CartProposalItemViewModel,
@@ -513,16 +514,18 @@ function AssistantRow({
   children,
   isGroupStart,
   mood = "still",
+  showName = true,
 }: {
   children: ReactNode;
   isGroupStart: boolean;
   mood?: BookjeogiMood;
+  showName?: boolean;
 }) {
   return (
     <div className="flex min-w-0 gap-2">
       {isGroupStart ? <AssistantAvatar mood={mood} /> : <span aria-hidden="true" className="w-9 shrink-0" />}
       <div className="flex min-w-0 flex-1 flex-col">
-        {isGroupStart ? (
+        {isGroupStart && showName ? (
           <p className="mb-1 type-caption font-semibold text-text-secondary">{ASSISTANT_NAME}</p>
         ) : null}
         {children}
@@ -760,61 +763,163 @@ const AFTER_CARDS_TIPS = [
 const STARTER_CHIP_CLASS_NAME =
   "min-h-10 rounded-full border border-border bg-surface px-3.5 type-body-small text-text-primary transition-colors hover:border-border-strong hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
-// FE-only greeting shown before the first message; it is never sent to or stored by the server.
+// The greeting plays like a chat that has just opened: 북적이 types for a moment before each bubble, then the
+// questions follow group by group. Times are ms after the screen opens; the longer bubble takes longer to type.
+const WELCOME_BUBBLES = [
+  { shownAtMs: 1000, text: "안녕하세요! 저는 북적이예요 📚", typingAtMs: 300 },
+  {
+    shownAtMs: 2300,
+    text: "기분이나 상황, 관심 주제를 말해 주시면 어울리는 책을 골라 드릴게요.",
+    typingAtMs: 1350,
+  },
+];
+const STARTERS_SHOWN_AT_MS = 2700;
+const STARTER_GROUP_STAGGER_MS = 180;
+const WELCOME_STEP_TIMES_MS = [
+  ...WELCOME_BUBBLES.flatMap((bubble) => [bubble.typingAtMs, bubble.shownAtMs]),
+  STARTERS_SHOWN_AT_MS,
+];
+
+// Three dots in a bubble while 북적이 "types" the next greeting line. Decorative: the lines themselves follow.
+function TypingBubble({ className }: { className: string }) {
+  return (
+    <p aria-hidden="true" className={`chat-message-enter flex w-fit rounded-panel border border-hairline bg-surface px-3.5 py-2.5 ${className}`}>
+      <span className="flex h-6 items-center gap-1">
+        {[0, 160, 320].map((delay) => (
+          <span
+            className="chat-typing-dot size-1.5 rounded-full bg-text-tertiary"
+            key={delay}
+            style={{ animationDelay: `${delay}ms` }}
+          />
+        ))}
+      </span>
+    </p>
+  );
+}
+
+// FE-only greeting shown before the first message; it is never sent to or stored by the server. The profile stays
+// at the top and the greeting grows up from the composer, the way a messenger fills a new chat.
 function WelcomeMessage({
   onQuickMessage,
 }: {
   onQuickMessage: (message: string) => void;
 }) {
+  const elapsedMs = useScriptClock(WELCOME_STEP_TIMES_MS);
+  const shownBubbles = WELCOME_BUBBLES.filter((bubble) => elapsedMs >= bubble.shownAtMs);
+  const isTyping = WELCOME_BUBBLES.some(
+    (bubble) => elapsedMs >= bubble.typingAtMs && elapsedMs < bubble.shownAtMs,
+  );
+  const hasStarted = elapsedMs >= WELCOME_BUBBLES[0].typingAtMs;
+  const areStartersShown = elapsedMs >= STARTERS_SHOWN_AT_MS;
+
   return (
-    <section aria-label="북적이 첫 인사" className="chat-message-enter">
-      <div className="flex flex-col items-center pb-4 text-center">
+    <section aria-label="북적이 첫 인사" className="flex flex-1 flex-col">
+      <div className="chat-message-enter flex flex-col items-center pb-3 text-center">
         <WelcomeAvatar />
         <p className="mt-2 type-title text-text-primary">{ASSISTANT_NAME}</p>
         <p className="mt-0.5 type-caption text-text-tertiary">책 찾기부터 장바구니·주문까지 도와드려요</p>
       </div>
-      <AssistantRow isGroupStart>
-        <p className={`${ASSISTANT_BUBBLE_CLASS_NAME} rounded-tl-sm`}>
-          {"안녕하세요! 저는 북적이예요 📚\n기분이나 상황, 관심 주제를 말해 주시면 어울리는 책을 골라 드릴게요."}
-        </p>
-        <div aria-label="이렇게 물어보세요" className="mt-3 flex flex-col gap-3" role="group">
-          {STARTER_GROUPS.map((group) => (
-            <div key={group.title}>
-              <p className="type-caption font-semibold text-text-secondary">{group.title}</p>
-              <ul aria-label={group.title} className="mt-1.5 flex flex-wrap gap-2">
-                {group.questions.map((question) => (
-                  <li key={question}>
-                    <button className={STARTER_CHIP_CLASS_NAME} onClick={() => onQuickMessage(question)} type="button">
-                      {question}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-        <details className="mt-3 rounded-panel border border-hairline bg-surface px-3.5 py-2.5">
-          <summary className="cursor-pointer type-body-small font-semibold text-text-secondary">
-            추천받은 뒤에는 이렇게도 말할 수 있어요
-          </summary>
-          <dl className="mt-2 flex flex-col gap-2">
-            {AFTER_CARDS_TIPS.map((tip) => (
-              <div key={tip.label}>
-                <dt className="type-caption font-semibold text-text-primary">{tip.label}</dt>
-                <dd className="type-caption text-text-secondary">{tip.example}</dd>
-              </div>
+      {hasStarted ? (
+        <div className="mt-auto">
+          {/* The profile right above already names 북적이, so the bubbles skip the name line. */}
+          <AssistantRow isGroupStart showName={false}>
+            {shownBubbles.map((bubble, index) => (
+              <p
+                className={`chat-message-enter ${ASSISTANT_BUBBLE_CLASS_NAME} break-keep ${index === 0 ? "rounded-tl-sm" : "mt-1.5"}`}
+                key={bubble.text}
+              >
+                {bubble.text}
+              </p>
             ))}
-          </dl>
-        </details>
-      </AssistantRow>
+            {isTyping ? <TypingBubble className={shownBubbles.length === 0 ? "rounded-tl-sm" : "mt-1.5"} /> : null}
+            {areStartersShown ? (
+              <>
+                <div aria-label="이렇게 물어보세요" className="mt-3 flex flex-col gap-3" role="group">
+                  {STARTER_GROUPS.map((group, index) => (
+                    <div
+                      className="chat-message-enter"
+                      key={group.title}
+                      style={{ animationDelay: `${index * STARTER_GROUP_STAGGER_MS}ms` }}
+                    >
+                      <p className="type-caption font-semibold text-text-secondary">{group.title}</p>
+                      <ul aria-label={group.title} className="mt-1.5 flex flex-wrap gap-2">
+                        {group.questions.map((question) => (
+                          <li key={question}>
+                            <button className={STARTER_CHIP_CLASS_NAME} onClick={() => onQuickMessage(question)} type="button">
+                              {question}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+                <details
+                  className="chat-message-enter mt-3 rounded-panel border border-hairline bg-surface px-3.5 py-2.5"
+                  style={{ animationDelay: `${STARTER_GROUPS.length * STARTER_GROUP_STAGGER_MS}ms` }}
+                >
+                  <summary className="cursor-pointer type-body-small font-semibold text-text-secondary">
+                    추천받은 뒤에는 이렇게도 말할 수 있어요
+                  </summary>
+                  <dl className="mt-2 flex flex-col gap-2">
+                    {AFTER_CARDS_TIPS.map((tip) => (
+                      <div key={tip.label}>
+                        <dt className="type-caption font-semibold text-text-primary">{tip.label}</dt>
+                        <dd className="type-caption text-text-secondary">{tip.example}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </details>
+              </>
+            ) : null}
+          </AssistantRow>
+        </div>
+      ) : null}
     </section>
   );
 }
 
-// 북적이 itself is the waiting sign: it thinks beside a short line until the first reply text arrives.
+// A messenger-style read mark under the newest bubble the user sent on this screen. The chat stream has no
+// "received" event and its first text comes seconds later, so the mark shows a beat after sending, as 북적이 taking
+// the message up, and stops saying "방금" after a minute. Decorative for assistive tech: the waiting status follows.
+const READ_RECEIPT_DELAY_MS = 450;
+const READ_RECEIPT_FRESH_MS = 60_000;
+// 북적이 starts "typing" only after it has read the message.
+const TYPING_AFTER_SEND_DELAY_MS = READ_RECEIPT_DELAY_MS + 300;
+
+function ReadReceipt() {
+  const [readState, setReadState] = useState<"unread" | "just-read" | "read">("unread");
+
+  useEffect(() => {
+    const timers = [
+      window.setTimeout(() => setReadState("just-read"), READ_RECEIPT_DELAY_MS),
+      window.setTimeout(() => setReadState("read"), READ_RECEIPT_DELAY_MS + READ_RECEIPT_FRESH_MS),
+    ];
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, []);
+
+  // The line keeps its height while unread, so the list does not jump when the mark appears.
+  return (
+    <p
+      aria-hidden="true"
+      className={`mt-1 text-right type-caption text-text-tertiary transition-opacity duration-300 motion-reduce:transition-none ${
+        readState === "unread" ? "opacity-0" : "opacity-100"
+      }`}
+    >
+      {readState === "read" ? "읽음" : "방금 읽음"}
+    </p>
+  );
+}
+
+// 북적이 itself is the waiting sign: it thinks beside a short line until the first reply text arrives. Right after a
+// user message it waits for the read mark first.
 function TypingIndicator({ isGroupStart }: { isGroupStart: boolean }) {
   return (
-    <div className={`chat-message-enter ${isGroupStart ? "mt-5" : "mt-1.5"}`} role="status">
+    <div
+      className={`chat-message-enter ${isGroupStart ? "mt-5" : "mt-1.5"}`}
+      role="status"
+      style={isGroupStart ? { animationDelay: `${TYPING_AFTER_SEND_DELAY_MS}ms` } : undefined}
+    >
       <AssistantRow isGroupStart={isGroupStart} mood="thinking">
         <p className="flex min-h-6 items-center gap-1.5 type-caption text-text-tertiary">
           답을 준비하고 있어요
@@ -862,6 +967,15 @@ export function ChatMessageList({
   const lastMessage = messages.at(-1);
   const isLastMessagePending =
     lastMessage?.role === "assistant" && lastMessage.isPending === true;
+  // Only the newest user message sent on this screen gets a read mark: it is being answered now, or its reply
+  // arrived live. Restored history and failed sends get none.
+  const lastUserIndex = messages.findLastIndex((message) => message.role === "user");
+  const messageAfterLastUser = messages[lastUserIndex + 1];
+  const isLastUserMessageRead =
+    lastUserIndex !== -1 &&
+    (messageAfterLastUser === undefined
+      ? status === "sending"
+      : messageAfterLastUser.role === "assistant" && messageAfterLastUser.isLive === true);
 
   useEffect(() => {
     // Jump on first paint, then glide to each new message like a messenger.
@@ -919,6 +1033,9 @@ export function ChatMessageList({
                 onRetryProposal={onRetryProposal}
                 status={status}
               />
+              {index === lastUserIndex && isLastUserMessageRead && message.role === "user" && !message.errorReason ? (
+                <ReadReceipt />
+              ) : null}
               {message.role === "user" && message.errorReason ? (
                 <div
                   className="mt-1 flex flex-wrap items-center justify-end gap-x-1"
