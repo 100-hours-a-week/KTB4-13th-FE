@@ -739,11 +739,26 @@ function AssistantMessage({
   );
 }
 
-const STARTER_QUESTIONS = [
-  "살인 사건을 수사하는 추리소설을 추천해줘",
-  "인간관계를 다룬 책을 추천해줘",
-  "개발 공부를 하고싶어",
+// What 북적이 can do, each with questions that are sent as-is when tapped. Every question was sent as a first turn to
+// the dev chatbot twice (2026-11-11) and gave the same kind of answer both times; the two search questions came back
+// with cards rather than a narrowing question. Leave out questions that change the cart ("…담아 줘" adds a book the user
+// never picked) or point at a card (there are no cards yet). Kept short enough to fit a 375x812 screen with the avatar.
+const STARTER_GROUPS = [
+  { title: "상황이나 주제로 찾기", questions: ["출퇴근길에 읽기 좋은 짧은 에세이", "사회초년생 재테크 입문서"] },
+  { title: "읽은 책에서 넓히기", questions: ["『아몬드』 재밌게 읽었는데 비슷한 책"] },
+  { title: "가격 묻기와 주문", questions: ["『아몬드』 얼마야?", "주문 내역 보여 줘"] },
 ];
+
+// Things to say once cards are on screen. Shown as text, not buttons: they need a card to point at.
+const AFTER_CARDS_TIPS = [
+  { label: "담기·수량·빼기", example: "1번 담아 줘, 2권으로 바꿔 줘, 맨 아래 거 빼 줘" },
+  { label: "비교하기", example: "1번이랑 2번 뭐가 달라?" },
+  { label: "예산 안에서 고르기", example: "3만 원 안에서 2권 골라 줘" },
+  { label: "주문하기", example: "1번 주문해 줘 (쓸 쿠폰·포인트를 채운 주문 화면으로 가요)" },
+];
+
+const STARTER_CHIP_CLASS_NAME =
+  "min-h-10 rounded-full border border-border bg-surface px-3.5 type-body-small text-text-primary transition-colors hover:border-border-strong hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
 // FE-only greeting shown before the first message; it is never sent to or stored by the server.
 function WelcomeMessage({
@@ -753,31 +768,44 @@ function WelcomeMessage({
 }) {
   return (
     <section aria-label="북적이 첫 인사" className="chat-message-enter">
-      <div className="flex flex-col items-center pb-8 text-center">
+      <div className="flex flex-col items-center pb-4 text-center">
         <WelcomeAvatar />
         <p className="mt-2 type-title text-text-primary">{ASSISTANT_NAME}</p>
-        <p className="mt-0.5 type-caption text-text-tertiary">취향에 맞는 책을 함께 찾아드려요</p>
+        <p className="mt-0.5 type-caption text-text-tertiary">책 찾기부터 장바구니·주문까지 도와드려요</p>
       </div>
       <AssistantRow isGroupStart>
-        <div className="flex flex-col gap-1.5">
-          <p className={`${ASSISTANT_BUBBLE_CLASS_NAME} rounded-tl-sm`}>안녕하세요! 저는 북적이예요 📚</p>
-          <p className={ASSISTANT_BUBBLE_CLASS_NAME}>
-            {"오늘은 어떤 책을 찾고 계세요?\n요즘 기분이나 취향, 책을 읽을 상황을 알려 주시면 어울리는 책을 골라 드릴게요."}
-          </p>
-        </div>
-        <ul aria-label="추천 질문" className="mt-3 flex flex-wrap gap-2">
-          {STARTER_QUESTIONS.map((question) => (
-            <li key={question}>
-              <button
-                className="min-h-10 rounded-full border border-border bg-surface px-3.5 type-body-small text-text-primary transition-colors hover:border-border-strong hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                onClick={() => onQuickMessage(question)}
-                type="button"
-              >
-                {question}
-              </button>
-            </li>
+        <p className={`${ASSISTANT_BUBBLE_CLASS_NAME} rounded-tl-sm`}>
+          {"안녕하세요! 저는 북적이예요 📚\n기분이나 상황, 관심 주제를 말해 주시면 어울리는 책을 골라 드릴게요."}
+        </p>
+        <div aria-label="이렇게 물어보세요" className="mt-3 flex flex-col gap-3" role="group">
+          {STARTER_GROUPS.map((group) => (
+            <div key={group.title}>
+              <p className="type-caption font-semibold text-text-secondary">{group.title}</p>
+              <ul aria-label={group.title} className="mt-1.5 flex flex-wrap gap-2">
+                {group.questions.map((question) => (
+                  <li key={question}>
+                    <button className={STARTER_CHIP_CLASS_NAME} onClick={() => onQuickMessage(question)} type="button">
+                      {question}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
+        <details className="mt-3 rounded-panel border border-hairline bg-surface px-3.5 py-2.5">
+          <summary className="cursor-pointer type-body-small font-semibold text-text-secondary">
+            추천받은 뒤에는 이렇게도 말할 수 있어요
+          </summary>
+          <dl className="mt-2 flex flex-col gap-2">
+            {AFTER_CARDS_TIPS.map((tip) => (
+              <div key={tip.label}>
+                <dt className="type-caption font-semibold text-text-primary">{tip.label}</dt>
+                <dd className="type-caption text-text-secondary">{tip.example}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
       </AssistantRow>
     </section>
   );
