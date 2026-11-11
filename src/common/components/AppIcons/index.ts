@@ -5,6 +5,7 @@ export {
   CartIcon,
   HistoryIcon,
   HomeIcon,
+  PlusIcon,
   SearchIcon,
   SparkleIcon,
   UserIcon,

@@ -8,8 +8,12 @@ import { Toast } from "@/common/components/Toast";
 import type { ProductListItem } from "@/features/product/types/product";
 import type { BookRankingState } from "@/pages/home/hooks/useBookRanking";
 
+// Home shows the top five only; the full list lives behind 더보기.
+const HOME_RANKING_COUNT = 5;
 const MEDIUM_COUNT = 2;
-const LIST_COUNT = 4;
+// Card corner for the round + button. Its 44px hit area overhangs the 32px circle, so every tier
+// lines the circles up on the same vertical axis.
+const CORNER_ADD_CLASS_NAME = "absolute bottom-1 right-1 z-10";
 
 interface BookRankingSectionProps {
   onMoreClick: () => void;
@@ -47,6 +51,7 @@ function ReviewLine({ item, tone = "default" }: { item: ProductListItem; tone?: 
 }
 
 // 1st large, 2nd-3rd medium, then a short list: the order should be readable at a glance.
+// The + sits on each card's bottom-right corner as a sibling of the link, since a button cannot nest in a link.
 function RankingTiers({
   items,
   onProductClick,
@@ -57,11 +62,11 @@ function RankingTiers({
   const onCoverLinkClick = useCoverLinkClick();
   const [first, ...rest] = items;
   const medium = rest.slice(0, MEDIUM_COUNT);
-  const listed = rest.slice(MEDIUM_COUNT, MEDIUM_COUNT + LIST_COUNT);
+  const listed = rest.slice(MEDIUM_COUNT, HOME_RANKING_COUNT - 1);
 
   return (
     <ol aria-label="책 랭킹 목록" className="mt-3 px-4">
-      <li>
+      <li className="relative">
         <Link
           aria-label={`1위, ${first.itemName} 상세 보기`}
           className="book-lift flex gap-4 rounded-panel bg-primary p-3 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
@@ -74,48 +79,57 @@ function RankingTiers({
           <div className="book-lift-cover w-24 shrink-0 rounded-cover shadow-[0_10px_20px_-12px_rgba(0,0,0,0.8)]">
             <BookCover alt="" fallbackTitle={first.itemName} radius="cover" thumbnailUrl={first.thumbnailUrl} />
           </div>
-          <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
+          {/* Right padding keeps a long author line clear of the + circle. */}
+          <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 pr-8">
             <span aria-hidden="true" className="type-numeral text-2xl text-[#f6c3c8]">01</span>
             <p className="line-clamp-2 break-keep type-title">{first.itemName}</p>
             <p className="truncate type-caption text-white/70">{first.author}</p>
             <ReviewLine item={first} tone="inverse" />
           </div>
         </Link>
-        <div className="mt-2 flex justify-end">
-          <QuickAddToCartButton productId={first.itemId} thumbnailUrl={first.thumbnailUrl} title={first.itemName} />
-        </div>
+        <QuickAddToCartButton
+          className={CORNER_ADD_CLASS_NAME}
+          productId={first.itemId}
+          thumbnailUrl={first.thumbnailUrl}
+          title={first.itemName}
+          variant="icon"
+        />
       </li>
 
       {medium.length > 0 ? (
         <li className="mt-3">
-          <ol className="grid grid-cols-2 gap-3" start={2}>
+          <ol className="flex flex-col gap-3" start={2}>
             {medium.map((item, index) => (
-              <li className="flex min-w-0 flex-col" key={item.itemId}>
+              <li className="relative min-w-0" key={item.itemId}>
                 <Link
                   aria-label={`${index + 2}위, ${item.itemName} 상세 보기`}
-                  className="book-lift flex h-full gap-2.5 rounded-panel bg-white/80 p-2.5 ring-1 ring-[#f3e7e1] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  className="book-lift flex gap-3 rounded-panel bg-white/80 p-3 ring-1 ring-[#f3e7e1] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   onClick={(event) => {
                     onProductClick();
                     onCoverLinkClick(event, `/products/${item.itemId}`, { thumbnailUrl: item.thumbnailUrl, title: item.itemName });
                   }}
                   to={`/products/${item.itemId}`}
                 >
-                  <div className="book-lift-cover w-12 shrink-0 self-start rounded-cover">
+                  <div className="book-lift-cover w-16 shrink-0 self-start rounded-cover">
                     <BookCover alt="" fallbackTitle={item.itemName} radius="cover" thumbnailUrl={item.thumbnailUrl} />
                   </div>
-                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span aria-hidden="true" className="type-numeral text-base text-[#d96f7a]">
+                  <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 pr-8">
+                    <span aria-hidden="true" className="type-numeral text-lg text-[#d96f7a]">
                       {String(index + 2).padStart(2, "0")}
                     </span>
-                    <p className="line-clamp-2 break-keep type-caption font-semibold text-text-primary">
+                    <p className="line-clamp-2 break-keep type-body-small font-semibold text-text-primary">
                       {item.itemName}
                     </p>
                     <p className="truncate type-caption text-text-tertiary">{item.author}</p>
                   </div>
                 </Link>
-                <div className="mt-2 flex justify-end">
-                  <QuickAddToCartButton productId={item.itemId} thumbnailUrl={item.thumbnailUrl} title={item.itemName} />
-                </div>
+                <QuickAddToCartButton
+                  className={CORNER_ADD_CLASS_NAME}
+                  productId={item.itemId}
+                  thumbnailUrl={item.thumbnailUrl}
+                  title={item.itemName}
+                  variant="icon"
+                />
               </li>
             ))}
           </ol>
@@ -126,7 +140,7 @@ function RankingTiers({
         <li className="mt-3">
           <ol className="divide-y divide-[#f3e7e1] rounded-panel bg-white/60 px-3" start={MEDIUM_COUNT + 2}>
             {listed.map((item, index) => (
-              <li className="flex items-center gap-2" key={item.itemId}>
+              <li className="flex items-center gap-1" key={item.itemId}>
                 <Link
                   aria-label={`${index + MEDIUM_COUNT + 2}위, ${item.itemName} 상세 보기`}
                   className="flex min-h-11 min-w-0 flex-1 items-center gap-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
@@ -139,7 +153,14 @@ function RankingTiers({
                   <span className="min-w-0 flex-1 truncate type-body-small text-text-primary">{item.itemName}</span>
                   <span className="max-w-[35%] shrink-0 truncate type-caption text-text-tertiary">{item.author}</span>
                 </Link>
-                <QuickAddToCartButton productId={item.itemId} thumbnailUrl={item.thumbnailUrl} title={item.itemName} />
+                {/* Pulled into the row padding so this circle shares the cards' vertical axis. */}
+                <QuickAddToCartButton
+                  className="-mr-2"
+                  productId={item.itemId}
+                  thumbnailUrl={item.thumbnailUrl}
+                  title={item.itemName}
+                  variant="icon"
+                />
               </li>
             ))}
           </ol>
@@ -212,9 +233,9 @@ export function BookRankingSection({
                   <div className="h-4 w-1/2 rounded bg-white" />
                 </div>
               </div>
-              <div className="mt-3 grid grid-cols-2 gap-3">
+              <div className="mt-3 flex flex-col gap-3">
                 {Array.from({ length: MEDIUM_COUNT }, (_, index) => (
-                  <div className="h-24 rounded-panel bg-white/70" key={index} />
+                  <div className="h-28 rounded-panel bg-white/70" key={index} />
                 ))}
               </div>
             </div>
