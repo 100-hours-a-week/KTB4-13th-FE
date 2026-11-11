@@ -36,6 +36,10 @@ function SearchResultCard({ item, priority }: { item: BookSearchItem; priority: 
       <p className="truncate type-caption text-text-tertiary">
         {item.author ?? "저자 정보 없음"}
       </p>
+      {/* Same-title editions only differ by publisher in this list, so it gets its own line (FE #194). */}
+      {item.publisher ? (
+        <p className="truncate type-caption text-text-tertiary">{item.publisher}</p>
+      ) : null}
       {item.price !== null ? (
         <p className="type-body-small font-semibold tabular-nums text-text-primary">
           {priceFormatter.format(item.price)}원
