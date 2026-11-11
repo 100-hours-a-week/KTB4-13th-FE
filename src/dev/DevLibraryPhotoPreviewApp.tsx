@@ -1,21 +1,15 @@
-import { useState } from "react";
 import { MemoryRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 
 import { AppLayout } from "@/app/layouts/AppLayout";
 import { BottomNavigationLayout } from "@/app/layouts/BottomNavigationLayout";
-import { CameraIcon } from "@/common/components/AppIcons";
-import { BookCover } from "@/common/components/BookCover";
 import { Button } from "@/common/components/Button";
-import { libraryPreviewBooks, photoScanPreviewCases, type PhotoScanPreviewCase } from "@/dev/fixtures/photoScan";
-import { createPreviewSaveBooks, createPreviewScanPhoto, previewSearchBooks } from "@/dev/photoScanPreview";
+import { photoScanPreviewCases, type PhotoScanPreviewCase } from "@/dev/fixtures/photoScan";
+import { previewLibraryApi, previewSearchBooks, resetPreviewLibrary } from "@/dev/libraryPreview";
+import { createPreviewSaveBooks, createPreviewScanPhoto } from "@/dev/photoScanPreview";
 import { AuthContext, type AuthContextValue } from "@/features/auth/context/authContext";
-import { PhotoCaptureSheet } from "@/features/library/components/PhotoCaptureSheet";
-import { PhotoScanEntryCard } from "@/features/library/components/PhotoScanEntryCard";
 import { PhotoScanFlow } from "@/features/library/components/PhotoScanFlow";
-import { PhotoScanSavedBanner } from "@/features/library/components/PhotoScanSavedBanner";
-import { foundBooks } from "@/features/library/hooks/usePhotoScan";
-import type { PhotoScanSaved } from "@/features/library/types/photoScan";
-import { AppPageHeader } from "@/features/navigation/components/AppPageHeader";
+import type { LibraryLocationState } from "@/features/library/types/photoScan";
+import { LibraryPage } from "@/pages/library/LibraryPage";
 
 const previewAuth: AuthContextValue = {
   accessToken: null,
@@ -24,105 +18,19 @@ const previewAuth: AuthContextValue = {
   status: "authenticated",
 };
 
-interface PreviewProps {
-  previewCase: PhotoScanPreviewCase;
-  setPreviewCase: (previewCase: PhotoScanPreviewCase) => void;
+// 사진 인식 결과는 주소로 고른다: /dev/library-photo-preview?case=cover (shelf·emptyLibrary·cover·coverMissed·allMissed·noBooks·timeout·saveFailed)
+function readPreviewCase(): PhotoScanPreviewCase {
+  const value = new URLSearchParams(window.location.search).get("case");
+  return value !== null && value in photoScanPreviewCases ? (value as PhotoScanPreviewCase) : "shelf";
 }
 
-// 실제 LibraryPage 대신 쓰는 미리보기용 도서관. 연동 PR 에서 입구·배너를 LibraryPage 에 넣는다
-function LibraryPreview({ previewCase, setPreviewCase }: PreviewProps) {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const saved = (location.state as { saved?: PhotoScanSaved } | null)?.saved ?? null;
-  const [isCaptureOpen, setIsCaptureOpen] = useState(false);
-  const { result } = photoScanPreviewCases[previewCase];
-  const savedBooks = saved && result !== "timeout" ? foundBooks(result).slice(0, saved.savedCount) : [];
-  const isEmpty = photoScanPreviewCases[previewCase].isLibraryEmpty;
-  const books = [
-    ...savedBooks.map((book) => ({ author: book.author, coverUrl: book.coverUrl, title: book.title })),
-    // 미리보기 도서관에 이미 있는 책은 두 번 넣지 않는다
-    ...(isEmpty ? [] : libraryPreviewBooks.filter((book) => !savedBooks.some((saved) => saved.title === book.title))),
-  ];
+const previewCase = readPreviewCase();
+resetPreviewLibrary(photoScanPreviewCases[previewCase].isLibraryEmpty ?? false);
 
-  return (
-    <div className="relative flex h-full flex-col bg-surface">
-      <AppPageHeader action={<span />} fallbackPath="/my" title="나의 도서관" />
-      <main className="min-h-0 flex-1 overflow-y-auto pb-6">
-        <div className="page-content flex min-h-14 items-center">
-          <strong className="type-body">담아둔 책 {books.length}</strong>
-        </div>
-        {books.length > 0 ? (
-          <>
-            <div className="page-content pb-5">
-              {saved ? <PhotoScanSavedBanner {...saved} /> : <PhotoScanEntryCard onClick={() => setIsCaptureOpen(true)} />}
-            </div>
-            <ul className="page-content grid grid-cols-3 gap-x-3 gap-y-6">
-              {books.map((book, index) => (
-                <li key={`${index}-${book.title}`}>
-                  <BookCover alt="" fallbackTitle={book.title} thumbnailUrl={book.coverUrl} />
-                  <h2 className="mt-2 line-clamp-2 type-caption font-semibold text-text-primary">{book.title}</h2>
-                  <p className="mt-0.5 truncate text-[0.7rem] text-text-tertiary">{book.author}</p>
-                </li>
-              ))}
-            </ul>
-          </>
-        ) : (
-          <section className="page-content flex min-h-96 flex-col items-center justify-center text-center">
-            <span className="inline-flex size-18 items-center justify-center rounded-full bg-muted text-primary">
-              <CameraIcon aria-hidden="true" className="size-8" />
-            </span>
-            <h2 className="mt-4 type-title">아직 담아둔 책이 없어요</h2>
-            <p className="mt-2 type-body-small text-text-secondary">책장이나 책 표지를 찍으면 바로 담을 수 있어요.</p>
-            <Button className="mt-5 px-5" onClick={() => setIsCaptureOpen(true)}>사진으로 담기</Button>
-            <Button className="mt-2 px-5" variant="secondary">AI 추천 열기</Button>
-          </section>
-        )}
-
-        <fieldset className="page-content mt-8">
-          <legend className="type-caption text-text-tertiary">개발 전용 · 인식 결과 고르기 (실제 요청 없음)</legend>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {(Object.keys(photoScanPreviewCases) as PhotoScanPreviewCase[]).map((caseKey) => (
-              <button
-                aria-pressed={previewCase === caseKey}
-                className={`min-h-9 rounded-control border px-3 type-caption font-semibold ${
-                  previewCase === caseKey ? "border-primary bg-primary text-white" : "border-border bg-surface text-text-primary"
-                }`}
-                key={caseKey}
-                onClick={() => {
-                  setPreviewCase(caseKey);
-                  navigate("/my/library", { replace: true });
-                }}
-                type="button"
-              >
-                {photoScanPreviewCases[caseKey].label}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-      </main>
-      {saved ? (
-        <div className="page-content shrink-0 border-t border-hairline py-2.5">
-          <Button className="w-full" onClick={() => setIsCaptureOpen(true)} variant="secondary">
-            <CameraIcon aria-hidden="true" className="size-5" />
-            사진 더 찍기
-          </Button>
-        </div>
-      ) : null}
-      <PhotoCaptureSheet
-        isOpen={isCaptureOpen}
-        onClose={() => setIsCaptureOpen(false)}
-        onPick={(photo) => navigate("/my/library/photo", { state: { photo } })}
-      />
-    </div>
-  );
-}
-
-function PhotoScanPreview({ previewCase }: Pick<PreviewProps, "previewCase">) {
+function PhotoScanPreview() {
   const navigate = useNavigate();
   const location = useLocation();
   const photo = (location.state as { photo?: File } | null)?.photo;
-  const scanPhoto = createPreviewScanPhoto(previewCase);
-  const saveBooks = createPreviewSaveBooks(previewCase);
 
   if (!photo) return <Navigate replace to="/my/library" />;
 
@@ -130,30 +38,44 @@ function PhotoScanPreview({ previewCase }: Pick<PreviewProps, "previewCase">) {
     <PhotoScanFlow
       initialPhoto={photo}
       onExit={() => navigate("/my/library", { replace: true })}
-      onSaved={(saved) => navigate("/my/library", { replace: true, state: { saved } })}
-      saveBooks={saveBooks}
-      scanPhoto={scanPhoto}
+      onSaved={(saved) => {
+        const state: LibraryLocationState = { photoScanSaved: saved };
+        navigate("/my/library", { replace: true, state });
+      }}
+      saveBooks={createPreviewSaveBooks(previewCase)}
+      scanPhoto={createPreviewScanPhoto(previewCase)}
       searchBooks={previewSearchBooks}
     />
   );
 }
 
-export default function DevLibraryPhotoPreviewApp() {
-  const [previewCase, setPreviewCase] = useState<PhotoScanPreviewCase>("shelf");
+// 상품·챗봇 화면은 미리보기에 없어 어디로 가려 했는지만 보여 준다(비슷한 책 질문 확인용)
+function LeftPreview() {
+  const navigate = useNavigate();
+  const { pathname, search } = useLocation();
+  const ask = new URLSearchParams(search).get("ask");
 
+  return (
+    <div className="page-content flex min-h-dvh flex-col justify-center gap-3">
+      <p className="type-caption text-text-tertiary">개발 전용 · 미리보기 밖 화면</p>
+      <p className="break-all type-body font-semibold">{pathname}</p>
+      {ask ? <p className="type-body-small text-text-secondary">보낼 질문: {ask}</p> : null}
+      <Button onClick={() => navigate(-1)} variant="secondary">돌아가기</Button>
+    </div>
+  );
+}
+
+export default function DevLibraryPhotoPreviewApp() {
   return (
     <AuthContext.Provider value={previewAuth}>
       <MemoryRouter initialEntries={["/my/library"]}>
         <AppLayout>
           <Routes>
             <Route element={<BottomNavigationLayout />}>
-              <Route element={<LibraryPreview previewCase={previewCase} setPreviewCase={setPreviewCase} />} path="/my/library" />
-              <Route element={<Navigate replace to="/my/library" />} path="*" />
+              <Route element={<LibraryPage api={previewLibraryApi} />} path="/my/library" />
             </Route>
-            <Route
-              element={<div className="h-dvh"><PhotoScanPreview previewCase={previewCase} /></div>}
-              path="/my/library/photo"
-            />
+            <Route element={<div className="h-dvh"><PhotoScanPreview /></div>} path="/my/library/photo" />
+            <Route element={<LeftPreview />} path="*" />
           </Routes>
         </AppLayout>
       </MemoryRouter>

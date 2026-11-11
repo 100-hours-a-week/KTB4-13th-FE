@@ -4,12 +4,11 @@ import { BookCover } from "@/common/components/BookCover";
 import { Button } from "@/common/components/Button";
 import { Toast } from "@/common/components/Toast";
 import { PhotoPreview } from "@/features/library/components/PhotoPreview";
+import { SimilarBooksLink } from "@/features/library/components/SimilarBooksLink";
 import { useBookProductId } from "@/features/library/hooks/useBookProductId";
 import { bookMeta } from "@/features/library/lib/bookMeta";
-import { similarBooksAsk } from "@/features/library/lib/similarBooksAsk";
 import type { PhotoScanBook, PhotoScanItem, SearchBooks } from "@/features/library/types/photoScan";
 import { AppPageHeader } from "@/features/navigation/components/AppPageHeader";
-import { chatAskPath, rememberChatAsk } from "@/features/recommendation/lib/chatEntry";
 
 interface PhotoScanSingleBookProps {
   isSaving: boolean;
@@ -47,26 +46,6 @@ function ProductAction({ book, searchBooks }: { book: PhotoScanBook; searchBooks
   return null;
 }
 
-function SimilarBooksLink({ title }: { title: string }) {
-  const path = chatAskPath(similarBooksAsk(title));
-
-  return (
-    <Link
-      className={SECONDARY_LINK_CLASS_NAME}
-      onClick={(event) => {
-        if (event.defaultPrevented || event.button !== 0 ||
-          event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-        // 앱에서 고른 질문만 채팅 화면이 바로 보낸다(chatEntry)
-        rememberChatAsk(path);
-      }}
-      replace
-      to={path}
-    >
-      비슷한 책 추천받기
-    </Link>
-  );
-}
-
 function FoundBook({
   book,
   isSaving,
@@ -99,7 +78,7 @@ function FoundBook({
 
         <div className="mt-6 flex gap-2">
           <ProductAction book={book} searchBooks={searchBooks} />
-          <SimilarBooksLink title={book.title} />
+          <SimilarBooksLink className={SECONDARY_LINK_CLASS_NAME} replace title={book.title} />
         </div>
         <p className="mt-4 text-center type-caption text-text-secondary">
           다른 책이에요?{" "}

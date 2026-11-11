@@ -1,6 +1,7 @@
 import { parseApiResponse } from "@/common/api/apiResponse";
 import { fetchWithAuth } from "@/features/auth/lib/httpClient";
-import type { LibraryBook } from "@/features/library/types/library";
+import { searchLibraryBooks } from "@/features/library/api/libraryBookSearchApi";
+import type { LibraryApi, LibraryBook } from "@/features/library/types/library";
 
 type LibraryFailure = { ok: false; reason: "unauthorized" | "error" };
 
@@ -95,3 +96,10 @@ export async function deleteLibraryBooks(
     return { ok: false, reason: "error" };
   }
 }
+
+export const libraryApi: LibraryApi = {
+  addBooks: addLibraryBooks,
+  deleteBooks: deleteLibraryBooks,
+  fetchBooks: fetchLibraryBooks,
+  searchBooks: searchLibraryBooks,
+};

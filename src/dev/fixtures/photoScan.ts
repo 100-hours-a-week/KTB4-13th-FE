@@ -58,12 +58,40 @@ export const searchPreviewBooks: PhotoScanSearchBook[] = [
   { author: "Peter Cooper 외", bookId: 90013, coverUrl: null, productId: 90113, publisher: "생능출판사", title: "Julia 프로그래밍", year: null },
 ];
 
-// 미리보기 도서관에 이미 담겨 있는 책
-export const libraryPreviewBooks = [
-  { author: "린다 리우카스, 이지선", coverUrl: null, title: "헬로 루비" },
-  { author: "손원평", coverUrl: null, title: "아몬드" },
-  { author: "김영하", coverUrl: null, title: "여행의 이유" },
-  { author: "칼 세이건", coverUrl: null, title: "코스모스" },
-  { author: "김호연", coverUrl: null, title: "불편한 편의점" },
-  { author: "이미예", coverUrl: null, title: "달러구트 꿈 백화점" },
+// 미리보기 도서관·검색이 쓰는 책. 담은 날짜는 미리보기를 연 날 기준으로 며칠 전인지로 둔다(이번 달·지난달 묶음이 보이게)
+export interface PreviewLibrarySeed {
+  book: PhotoScanSearchBook;
+  daysAgo: number;
+}
+
+const libraryBook = (bookId: number, title: string, author: string, productId: number | null): PhotoScanSearchBook => ({
+  author,
+  bookId,
+  coverUrl: null,
+  productId,
+  publisher: null,
+  title,
+  year: null,
+});
+
+export const libraryPreviewSeeds: PreviewLibrarySeed[] = [
+  { book: libraryBook(91001, "소년이 온다", "한강", 91101), daysAgo: 0 },
+  { book: libraryBook(91002, "작별하지 않는다", "한강", 91102), daysAgo: 2 },
+  { book: searchPreviewBooks[0], daysAgo: 5 },
+  { book: libraryBook(91004, "불편한 편의점", "김호연", 91104), daysAgo: 30 },
+  { book: libraryBook(91005, "데미안", "헤르만 헤세", null), daysAgo: 32 },
+  { book: libraryBook(91006, "채식주의자", "한강", 91106), daysAgo: 33 },
+  { book: libraryBook(91007, "여행의 이유", "김영하", 91107), daysAgo: 34 },
+  { book: libraryBook(91008, "코스모스", "칼 세이건", 91108), daysAgo: 65 },
+  { book: libraryBook(90004, "헬로 루비", "린다 리우카스, 이지선", null), daysAgo: 66 },
+];
+
+// 도서관에는 없고 검색에만 나오는 책. 한강의 다른 책 줄과 '이름만 같은 다른 저자' 거르기를 볼 수 있다
+export const libraryPreviewCatalog: PhotoScanSearchBook[] = [
+  libraryBook(91011, "흰", "한강", 91111),
+  libraryBook(91012, "희랍어 시간", "한강", 91112),
+  libraryBook(91013, "바람이 분다, 가라", "한강", null),
+  libraryBook(91014, "채식주의자 (리커버)", "한강", 91114),
+  libraryBook(91015, "한강 유역의 역사", "김철수", 91115),
+  libraryBook(91016, "아몬드", "손원평", 91116),
 ];

@@ -1,5 +1,6 @@
 import { useEffect, useState, type RefObject } from "react";
 
+import { normalizeAuthor, normalizeTitle } from "@/common/lib/authorName";
 import type { ProductDetail } from "@/features/product/types/product";
 import { fetchBookSearchResults } from "@/features/search/api/bookSearchApi";
 import type { BookSearchItem } from "@/features/search/types/bookSearch";
@@ -8,10 +9,6 @@ interface AuthorBooksResult {
   productId: number;
   books: BookSearchItem[];
   status: "idle" | "loading" | "ready" | "error";
-}
-
-function normalizeAuthor(author: string) {
-  return author.trim().normalize("NFC").replace(/\s+/g, " ").toLocaleLowerCase("ko-KR");
 }
 
 export function useAuthorOtherBooks(product: ProductDetail, sectionRef: RefObject<HTMLDivElement | null>) {
@@ -48,7 +45,7 @@ export function useAuthorOtherBooks(product: ProductDetail, sectionRef: RefObjec
         const authorKey = normalizeAuthor(authorQuery);
         const books = response.data.items.filter((book) =>
           book.productId !== productId &&
-          book.title.trim().normalize("NFC") !== itemName.trim().normalize("NFC") &&
+          normalizeTitle(book.title) !== normalizeTitle(itemName) &&
           book.author !== null && normalizeAuthor(book.author) === authorKey,
         ).slice(0, 3);
         setResult({ productId, books, status: "ready" });

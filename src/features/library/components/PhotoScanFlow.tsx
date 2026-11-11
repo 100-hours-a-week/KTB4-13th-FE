@@ -104,6 +104,7 @@ export function PhotoScanFlow({ initialPhoto, onExit, onSaved, saveBooks, scanPh
       <PhotoCaptureSheet isOpen={isCaptureOpen} onClose={() => setIsCaptureOpen(false)} onPick={handleRetake} />
       {searchIndex !== null && searchItem ? (
         <BookSearchSheet
+          hint="사진 속 책과 같은 책을 골라 주세요."
           initialQuery={searchItem.state === "FOUND" ? searchItem.book.title : searchItem.readText}
           key={searchIndex}
           onClose={() => setSearchIndex(null)}
@@ -112,6 +113,7 @@ export function PhotoScanFlow({ initialPhoto, onExit, onSaved, saveBooks, scanPh
             chooseBook(searchIndex, book);
           }}
           searchBooks={searchBooks}
+          title="검색해서 고르기"
         />
       ) : null}
     </>
