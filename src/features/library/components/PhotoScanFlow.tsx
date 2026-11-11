@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { displayBookTitle } from "@/common/lib/bookTitle";
 import { BookCover } from "@/common/components/BookCover";
 import { Button } from "@/common/components/Button";
 import { Toast } from "@/common/components/Toast";
@@ -169,7 +170,7 @@ export function PhotoScanFlow({ initialPhoto, onExit, onSaved, saveBooks, scanPh
                     return (
                       <li className="flex items-start gap-3 border-t border-hairline py-3" key={book.bookId}>
                         <button
-                          aria-label={`${book.title} ${isSelected ? "선택 해제" : "선택"}`}
+                          aria-label={`${displayBookTitle(book.title)} ${isSelected ? "선택 해제" : "선택"}`}
                           aria-pressed={isSelected}
                           className="-mx-2.5 inline-flex size-11 shrink-0 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-primary"
                           onClick={() => toggleBook(book.bookId)}
@@ -185,7 +186,7 @@ export function PhotoScanFlow({ initialPhoto, onExit, onSaved, saveBooks, scanPh
                           <BookCover alt="" fallbackTitle={book.title} radius="control" thumbnailUrl={book.coverUrl} />
                         </span>
                         <div className="min-w-0 flex-1">
-                          <h3 className="line-clamp-2 type-body-small font-semibold">{book.title}</h3>
+                          <h3 className="line-clamp-2 type-body-small font-semibold">{displayBookTitle(book.title)}</h3>
                           <p className="truncate text-xs leading-[1.125rem] text-text-secondary">{bookMeta(book)}</p>
                         </div>
                       </li>

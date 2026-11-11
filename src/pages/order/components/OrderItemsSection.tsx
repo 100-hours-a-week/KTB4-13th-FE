@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { displayBookTitle } from "@/common/lib/bookTitle";
 import { BookCover } from "@/common/components/BookCover";
 import type { OrderItemViewModel } from "@/features/order/types/order";
 import { formatWon } from "@/pages/order/lib/orderTotals";
@@ -28,8 +29,8 @@ export function OrderItemsSection({ items }: OrderItemsSectionProps) {
 
   const summary =
     items.length === 1
-      ? `${items[0].itemName} · ${items[0].quantity}권`
-      : `${items[0].itemName} 외 ${items.length - 1}건`;
+      ? `${displayBookTitle(items[0].itemName)} · ${items[0].quantity}권`
+      : `${displayBookTitle(items[0].itemName)} 외 ${items.length - 1}건`;
 
   return (
     <section aria-labelledby="order-items-title" className="space-y-3">
@@ -66,7 +67,7 @@ export function OrderItemsSection({ items }: OrderItemsSectionProps) {
               </div>
               <div className="min-w-0 flex-1 self-center">
                 <p className="line-clamp-2 type-body-small font-semibold text-text-primary">
-                  {item.itemName}
+                  {displayBookTitle(item.itemName)}
                 </p>
                 <p className="mt-1 type-caption tabular-nums text-text-secondary">
                   수량 {item.quantity}권

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+import { displayBookTitle } from "@/common/lib/bookTitle";
 import { BookCover } from "@/common/components/BookCover";
 import { RetryButton } from "@/common/components/RetryButton";
 import { useCoverLinkClick } from "@/common/lib/coverTransition";
@@ -36,7 +37,7 @@ export function AuthorOtherBooks({ author, books, onRetry, status }: AuthorOther
               <div className="book-lift-cover rounded-cover">
                 <BookCover alt="" fallbackTitle={title} radius="cover" thumbnailUrl={coverUrl} />
               </div>
-              <span className="mt-2 block line-clamp-2 break-words type-body-small font-semibold">{title}</span>
+              <span className="mt-2 block line-clamp-2 break-words type-body-small font-semibold">{displayBookTitle(title)}</span>
             </>
           );
           return (

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+import { displayBookTitle } from "@/common/lib/bookTitle";
 import { BookCover } from "@/common/components/BookCover";
 
 export interface CartAddedItem {
@@ -19,7 +20,7 @@ export function CartAddedNotice({ item }: { item: CartAddedItem }) {
         <BookCover alt="" fallbackTitle={item.title} radius="cover" thumbnailUrl={item.thumbnailUrl} />
       </div>
       <p className="min-w-0 flex-1 type-body-small">
-        <span className="block truncate font-semibold">{item.title}</span>
+        <span className="block truncate font-semibold">{displayBookTitle(item.title)}</span>
         <span className="text-white/75">장바구니에 담았어요</span>
       </p>
       <Link
