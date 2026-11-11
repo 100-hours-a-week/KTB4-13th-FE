@@ -1,7 +1,8 @@
-import { useMemo, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 
-import { ChevronDownIcon } from "@/common/components/AppIcons";
+import { ChevronDownIcon, InfoIcon } from "@/common/components/AppIcons";
 import { RetryButton } from "@/common/components/RetryButton";
+import { getRankingBaseTime } from "@/features/product/lib/rankingBaseTime";
 import type { CategoryState } from "@/pages/catalog/hooks/useCatalogCategories";
 import { groupCategories } from "@/pages/catalog/lib/categoryGroups";
 import { getPublicationYears } from "@/pages/catalog/lib/publicationYears";
@@ -66,6 +67,9 @@ export function RankingFilters({
   onFilterChange,
   onRetryCategories,
 }: RankingFiltersProps) {
+  // Taken once when the page opens, alongside its first ranking request.
+  const [baseTime] = useState(() => getRankingBaseTime());
+  const [isNoteOpen, setIsNoteOpen] = useState(false);
   const groups = useMemo(
     () => (categoryState.kind === "ready" ? groupCategories(categoryState.categories) : []),
     [categoryState],
@@ -163,10 +167,21 @@ export function RankingFilters({
             </p>
           ) : null}
         </div>
-        <p className="shrink-0 px-1 pb-2 type-caption text-text-tertiary">
-          1시간마다 갱신
-        </p>
+        <button
+          aria-controls="ranking-base-time-note"
+          aria-expanded={isNoteOpen}
+          aria-label={`${baseTime.label} 기준`}
+          className="-mr-1 inline-flex min-h-11 shrink-0 items-center gap-1 rounded-control px-1 type-caption tabular-nums text-text-tertiary hover:text-text-secondary focus-visible:outline-2 focus-visible:outline-primary"
+          onClick={() => setIsNoteOpen((current) => !current)}
+          type="button"
+        >
+          <time dateTime={baseTime.dateTime}>{baseTime.label}</time> 기준
+          <InfoIcon className="size-4" />
+        </button>
       </div>
+      <p className="px-1 pb-3 text-right type-caption text-text-secondary" hidden={!isNoteOpen} id="ranking-base-time-note">
+        매시 정각에 순위를 새로 매겨요.
+      </p>
     </section>
   );
 }

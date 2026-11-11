@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { QuickAddToCartButton } from "@/features/cart/components/QuickAddToCartButton";
@@ -5,6 +6,7 @@ import { BookCover } from "@/common/components/BookCover";
 import { useCoverLinkClick } from "@/common/lib/coverTransition";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
+import { getRankingBaseTime } from "@/features/product/lib/rankingBaseTime";
 import type { ProductListItem } from "@/features/product/types/product";
 import type { BookRankingState } from "@/pages/home/hooks/useBookRanking";
 
@@ -189,6 +191,9 @@ export function BookRankingSection({
   ranking,
   retry,
 }: BookRankingSectionProps) {
+  // Taken once when home opens, alongside its ranking request.
+  const [baseTime] = useState(() => getRankingBaseTime());
+
   return (
     <section
       aria-labelledby="book-ranking-title"
@@ -204,8 +209,8 @@ export function BookRankingSection({
             >
               책 랭킹
             </h2>
-            <p className="truncate text-[0.6875rem] leading-4 text-[#9d7d76]">
-              1시간마다 갱신
+            <p className="truncate text-[0.6875rem] leading-4 tabular-nums text-[#9d7d76]">
+              <time dateTime={baseTime.dateTime}>{baseTime.label}</time> 기준
             </p>
           </div>
           <button

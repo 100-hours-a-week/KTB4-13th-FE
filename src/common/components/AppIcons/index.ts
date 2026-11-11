@@ -6,6 +6,7 @@ export {
   ChevronDownIcon,
   HistoryIcon,
   HomeIcon,
+  InfoIcon,
   PlusIcon,
   SearchIcon,
   SparkleIcon,
