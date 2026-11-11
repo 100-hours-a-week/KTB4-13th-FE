@@ -8,6 +8,7 @@ const RESULT_SIZE = 20;
 // 사진으로 담기에서 쓰는 책 검색. 검색 화면과 같은 GET /api/v1/search 를 부른다
 export const searchLibraryBooks: SearchBooks = async (query, signal) => {
   const result = await fetchBookSearchResults({
+    category: null,
     cursor: null,
     priceMax: null,
     priceMin: null,
