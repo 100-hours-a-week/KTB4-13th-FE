@@ -6,6 +6,7 @@ import { BottomNavigationLayout } from "@/app/layouts/BottomNavigationLayout";
 import { chatPreviewReplies } from "@/dev/fixtures/chat";
 import { AuthContext, type AuthContextValue } from "@/features/auth/context/authContext";
 import { ChatComposer } from "@/pages/recommendation-chat/components/ChatComposer";
+import { ChatGuideSheet } from "@/pages/recommendation-chat/components/ChatGuideSheet";
 import { ChatHeader } from "@/pages/recommendation-chat/components/ChatHeader";
 import { ChatMessageList } from "@/pages/recommendation-chat/components/ChatMessageList";
 import { splitFollowup } from "@/pages/recommendation-chat/lib/followupOptions";
@@ -35,6 +36,7 @@ function wait(ms: number) {
 function ChatPreview() {
   const [messages, setMessages] = useState<ChatPresentationMessage[]>([]);
   const [status, setStatus] = useState<ChatPresentationStatus>("idle");
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const nextIdRef = useRef(1);
   const nextReplyRef = useRef(0);
 
@@ -75,7 +77,7 @@ function ChatPreview() {
 
   return (
     <div className="relative flex h-full min-w-0 flex-col overflow-hidden bg-surface">
-      <ChatHeader onBack={() => {}} onCartClick={() => {}} onSessionListClick={() => {}} />
+      <ChatHeader onBack={() => {}} onCartClick={() => {}} onGuideClick={() => setIsGuideOpen(true)} onSessionListClick={() => {}} />
       <main className="min-h-0 flex-1 overflow-y-auto bg-background">
         <ChatMessageList
           isCheckoutLoading={false}
@@ -90,6 +92,15 @@ function ChatPreview() {
         />
       </main>
       <ChatComposer onSend={(message) => { void send(message); }} status={status} />
+      <ChatGuideSheet
+        canSend={status !== "sending"}
+        isOpen={isGuideOpen}
+        onClose={() => setIsGuideOpen(false)}
+        onSelect={(question) => {
+          setIsGuideOpen(false);
+          void send(question);
+        }}
+      />
     </div>
   );
 }

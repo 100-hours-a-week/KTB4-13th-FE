@@ -5,6 +5,7 @@ import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
 import { CHAT_ASK_PARAM, consumeChatAsk, readChatAsk } from "@/features/recommendation/lib/chatEntry";
 import { ChatComposer } from "@/pages/recommendation-chat/components/ChatComposer";
+import { ChatGuideSheet } from "@/pages/recommendation-chat/components/ChatGuideSheet";
 import { ChatHeader } from "@/pages/recommendation-chat/components/ChatHeader";
 import { ChatMessageList } from "@/pages/recommendation-chat/components/ChatMessageList";
 import { ChatSessionList } from "@/pages/recommendation-chat/components/ChatSessionList";
@@ -19,6 +20,7 @@ export function AiRecommendationChatPage() {
   const initialSessionId = Number.isSafeInteger(parsedSessionId) && parsedSessionId > 0 ? parsedSessionId : null;
   const [isSessionListOpen, setIsSessionListOpen] = useState(false);
   const sessionListTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [checkoutStatus, setCheckoutStatus] = useState<"idle" | "loading" | "error">("idle");
   const checkoutRequestRef = useRef<AbortController | null | undefined>(undefined);
 
@@ -102,6 +104,7 @@ export function AiRecommendationChatPage() {
       <ChatHeader
         onBack={handleBack}
         onCartClick={() => navigate("/cart")}
+        onGuideClick={() => setIsGuideOpen(true)}
         onSessionListClick={(event) => {
           sessionListTriggerRef.current = event.currentTarget;
           setIsSessionListOpen(true);
@@ -160,6 +163,15 @@ export function AiRecommendationChatPage() {
         key={askedMessage ? `ask:${askedMessage}` : "chat"}
         onSend={handleSend}
         status={chat.status}
+      />
+      <ChatGuideSheet
+        canSend={chat.status !== "sending"}
+        isOpen={isGuideOpen}
+        onClose={() => setIsGuideOpen(false)}
+        onSelect={(question) => {
+          setIsGuideOpen(false);
+          handleSend(question);
+        }}
       />
       <ChatSessionList activeSessionId={chat.sessionId} hasError={chat.sessionsError} isOpen={isSessionListOpen} onClose={() => setIsSessionListOpen(false)} onNewSession={chat.startNewSession} onRetry={() => { void chat.loadSessions(); }} onSelect={chat.selectSession} returnFocusRef={sessionListTriggerRef} sessions={chat.sessions} />
     </div>
