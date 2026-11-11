@@ -9,14 +9,49 @@ import { AppPageHeader } from "@/features/navigation/components/AppPageHeader";
 import { fetchOrderDetail } from "@/features/order/api/orderApi";
 import {
   createProductReview,
+  fetchMyProductReview,
   updateProductReview,
+  type ReviewMutationResult,
 } from "@/features/review/api/reviewApi";
+import { isWithinReviewWindow, REVIEW_WINDOW_DAYS } from "@/features/review/lib/reviewEligibility";
 import type { ProductReview } from "@/features/review/types/review";
 import { useProductDetail } from "@/pages/product/hooks/useProductDetail";
 import { StarRating } from "@/pages/reviews/components/StarRating";
 
 const MIN_LENGTH = 10;
 const MAX_LENGTH = 255;
+
+type ReviewFailureReason = Extract<ReviewMutationResult, { ok: false }>["reason"];
+
+function failureMessage(reason: ReviewFailureReason, action: "등록" | "수정") {
+  switch (reason) {
+    case "no-reviewable-order":
+      return `리뷰를 쓸 수 있는 주문이 없어요. 리뷰는 결제 후 ${REVIEW_WINDOW_DAYS}일 안에, 주문한 책마다 한 번 쓸 수 있어요.`;
+    case "already-reviewed":
+      return "이미 리뷰를 쓴 책이에요. 리뷰 목록에서 내 리뷰를 고칠 수 있어요.";
+    case "edit-expired":
+      return `리뷰는 쓴 뒤 ${REVIEW_WINDOW_DAYS}일 안에만 고칠 수 있어요.`;
+    case "invalid-request":
+      return "구매 내역이나 기존 리뷰를 확인해 주세요.";
+    default:
+      return `리뷰를 ${action}하지 못했어요. 다시 시도해 주세요.`;
+  }
+}
+
+const BLOCKED_CREATE_COPY = {
+  denied: {
+    body: "결제 완료된 주문상품에서 리뷰 작성으로 이동할 수 있어요.",
+    title: "구매 내역에서 리뷰를 작성해 주세요",
+  },
+  expired: {
+    body: `리뷰는 결제 후 ${REVIEW_WINDOW_DAYS}일 안에 쓸 수 있어요.`,
+    title: "리뷰 작성 기간이 지났어요",
+  },
+  reviewed: {
+    body: "쓴 리뷰는 리뷰 목록에서 고칠 수 있어요.",
+    title: "이미 리뷰를 쓴 책이에요",
+  },
+} as const;
 
 export function ReviewWritePage() {
   const { productId: value, reviewId: reviewIdValue } = useParams();
@@ -33,7 +68,7 @@ export function ReviewWritePage() {
   const [orderAccess, setOrderAccess] = useState<{
     orderKey: string;
     orderItemId: number;
-    status: "loading" | "allowed" | "denied";
+    status: "loading" | "allowed" | "denied" | "expired" | "reviewed";
   } | null>(null);
   const review =
     typeof location.state === "object" &&
@@ -61,13 +96,22 @@ export function ReviewWritePage() {
   useEffect(() => {
     if (isEditing || !isProductIdValid || !hasOrderContext) return;
     const controller = new AbortController();
-    void fetchOrderDetail(orderKey, controller.signal).then((result) => {
-      if (controller.signal.aborted) return;
+    const checkAccess = async () => {
+      const result = await fetchOrderDetail(orderKey, controller.signal);
+      const payment = result.ok ? result.data.payment : null;
       const eligibleItem = result.ok && result.data.key === orderKey &&
-        result.data.status === "PAID" && result.data.payment !== null &&
+        result.data.status === "PAID" && payment !== null &&
         result.data.items.some((item) => item.orderItemId === orderItemId &&
           item.productId === productId && item.quantity > item.canceledQuantity);
-      setOrderAccess({ orderKey, orderItemId, status: eligibleItem ? "allowed" : "denied" });
+      if (!eligibleItem || payment === null) return "denied";
+      if (!isWithinReviewWindow(payment.paidAt)) return "expired";
+      // A failed lookup still lets the user try; BE rejects a duplicate with E7001.
+      const myReview = await fetchMyProductReview(productId, controller.signal);
+      return myReview.ok && myReview.review ? "reviewed" : "allowed";
+    };
+    void checkAccess().then((status) => {
+      if (controller.signal.aborted) return;
+      setOrderAccess({ orderKey, orderItemId, status });
     });
     return () => controller.abort();
   }, [hasOrderContext, isEditing, isProductIdValid, orderItemId, orderKey, productId]);
@@ -96,7 +140,7 @@ export function ReviewWritePage() {
         });
     if (!result.ok) {
       setIsSubmitting(false);
-      setError(result.reason === "invalid-request" ? "구매 내역이나 기존 리뷰를 확인해 주세요." : `리뷰를 ${canEdit ? "수정" : "등록"}하지 못했어요. 다시 시도해 주세요.`);
+      setError(failureMessage(result.reason, canEdit ? "수정" : "등록"));
       return;
     }
     navigate(`/products/${productId}/reviews`, {
@@ -124,15 +168,23 @@ export function ReviewWritePage() {
       orderAccess.orderItemId !== orderItemId ||
       orderAccess.status === "loading"
     );
+    const blockedStatus = orderAccess?.status === "expired" || orderAccess?.status === "reviewed"
+      ? orderAccess.status
+      : "denied";
+    const copy = BLOCKED_CREATE_COPY[blockedStatus];
     return (
       <div className="flex h-full flex-col bg-surface">
         <AppPageHeader fallbackPath="/my/orders" title="리뷰 쓰기" />
         <main className="page-content flex flex-1 flex-col items-center justify-center text-center">
-          <h2 className="type-title">{isLoading ? "구매 내역을 확인하고 있어요" : "구매 내역에서 리뷰를 작성해 주세요"}</h2>
+          <h2 className="type-title">{isLoading ? "구매 내역을 확인하고 있어요" : copy.title}</h2>
           <p className="mt-2 type-body-small text-text-secondary">
-            {isLoading ? "잠시만 기다려 주세요." : "결제 완료된 주문상품에서 리뷰 작성으로 이동할 수 있어요."}
+            {isLoading ? "잠시만 기다려 주세요." : copy.body}
           </p>
-          {!isLoading ? <Button className="mt-5" onClick={() => navigate("/my/orders", { replace: true })}>구매 내역 보기</Button> : null}
+          {isLoading ? null : blockedStatus === "reviewed" ? (
+            <Button className="mt-5" onClick={() => navigate(`/products/${productId}/reviews`, { replace: true })}>내 리뷰 보기</Button>
+          ) : (
+            <Button className="mt-5" onClick={() => navigate("/my/orders", { replace: true })}>구매 내역 보기</Button>
+          )}
         </main>
       </div>
     );
