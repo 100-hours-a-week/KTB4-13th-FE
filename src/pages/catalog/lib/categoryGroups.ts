@@ -15,7 +15,7 @@ function groupOrder(digit: string) {
   return digit === GENERAL_WORKS_DIGIT ? 10 : Number(digit);
 }
 
-// A category without a code, or a child whose top-level field is missing, has no place in the two rows.
+// A category without a code, or a child whose top-level field is missing, has no group to sit in.
 export function groupCategories(categories: ProductCategory[]): CategoryGroup[] {
   const groups = new Map<string, CategoryGroup>();
   const children: { category: ProductCategory; groupDigit: string }[] = [];
@@ -37,15 +37,4 @@ export function groupCategories(categories: ProductCategory[]): CategoryGroup[] 
   return [...groups.entries()]
     .sort(([left], [right]) => groupOrder(left) - groupOrder(right))
     .map(([, group]) => group);
-}
-
-export function findCategoryGroup(groups: CategoryGroup[], categoryId: number | null) {
-  if (categoryId === null) return null;
-  return (
-    groups.find(
-      (group) =>
-        group.top.id === categoryId ||
-        group.children.some((child) => child.id === categoryId),
-    ) ?? null
-  );
 }
