@@ -9,7 +9,7 @@ interface ImportMetaEnv {
   readonly VITE_DEV_HOME_RANKING_SOURCE?: string;
   // Dev server only: "true" shows fixture books when the home recommendation feed is empty or fails.
   readonly VITE_DEV_HOME_RECOMMENDATION_PREVIEW?: string;
-  // Dev server only: "true" shows the photo-scan entry in 나의 도서관 with fixture results until BE #509 is connected.
+  // Dev server only: "true" shows the photo-scan entry in 나의 도서관 and calls the real BE #545–#547 APIs until they reach dev.
   readonly VITE_DEV_LIBRARY_PHOTO_SCAN?: string;
 }
 
