@@ -54,6 +54,8 @@
   --duration-exit: 220ms;
   --press-scale: 0.97;
   --press-scale-large: 0.985;
+  --lift-distance: -4px;
+  --lift-shadow: 0 16px 26px -14px rgba(36, 33, 31, 0.5);
 }
 
 @layer base {
@@ -932,6 +934,40 @@
   :where(button, a[href], [role="button"], summary):not(:disabled):not([data-press="none"]):active {
     scale: none;
     opacity: 0.72;
+  }
+}
+
+/*
+ * Mouse-only responses for book covers. A tap on a phone also reports :hover and leaves it on,
+ * so these never apply to touch. Put .book-lift on the link or button and .book-lift-cover on
+ * the cover box inside it (not on the link: the press rule above owns the link's transition).
+ */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .book-lift-cover {
+    transition:
+      translate var(--duration-base) var(--ease-emphasized),
+      box-shadow var(--duration-base) var(--ease-standard);
+  }
+
+  .book-lift:hover .book-lift-cover {
+    translate: 0 var(--lift-distance);
+    box-shadow: var(--lift-shadow);
+  }
+
+  /* While the home wheel is being dragged the cover under the cursor keeps changing. */
+  [data-dragging] .book-lift:hover .book-lift-cover {
+    translate: none;
+  }
+
+  /* Leans toward the mouse; tiltTowardMouse (common/lib/mouseTilt) sets the angles. Quick while following, slower to settle. */
+  .mouse-tilt {
+    transform: perspective(700px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg))
+      translateY(var(--tilt-lift, 0px));
+    transition: transform var(--duration-enter) var(--ease-emphasized);
+  }
+
+  .mouse-tilt[data-tilting] {
+    transition-duration: var(--duration-fast);
   }
 }
 

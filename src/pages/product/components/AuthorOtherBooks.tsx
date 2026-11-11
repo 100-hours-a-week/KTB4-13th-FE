@@ -33,7 +33,9 @@ export function AuthorOtherBooks({ author, books, onRetry, status }: AuthorOther
         {books.map(({ bookId, productId, title, coverUrl }) => {
           const content = (
             <>
-              <BookCover alt="" fallbackTitle={title} radius="cover" thumbnailUrl={coverUrl} />
+              <div className="book-lift-cover rounded-cover">
+                <BookCover alt="" fallbackTitle={title} radius="cover" thumbnailUrl={coverUrl} />
+              </div>
               <span className="mt-2 block line-clamp-2 break-words type-body-small font-semibold">{title}</span>
             </>
           );
@@ -41,7 +43,7 @@ export function AuthorOtherBooks({ author, books, onRetry, status }: AuthorOther
             <li className="min-w-0" key={bookId}>
               {productId === null ? content : (
                 <Link
-                  className="block rounded-cover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  className="book-lift block rounded-cover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   onClick={(event) => onCoverLinkClick(event, `/products/${productId}`, { thumbnailUrl: coverUrl, title })}
                   to={`/products/${productId}`}
                 >
