@@ -10,6 +10,7 @@ import { useAuth } from "@/features/auth/context/useAuth";
 import { BookRankingSection } from "@/pages/home/components/BookRankingSection";
 import { GuestRecommendationBanner } from "@/pages/home/components/GuestRecommendationBanner";
 import { HomeHeader } from "@/pages/home/components/HomeHeader";
+import { HomeSearchHero } from "@/pages/home/components/HomeSearchHero";
 import { RecommendationSection } from "@/pages/home/components/RecommendationSection";
 import { useBookRanking } from "@/pages/home/hooks/useBookRanking";
 
@@ -84,10 +85,10 @@ export function HomePage() {
           navigate("/cart");
         }}
         onLoginClick={() => setLoginPrompt("login")}
-        onSearchSubmit={handleSearchSubmit}
       />
 
       <main className="min-h-0 flex-1 overflow-y-auto" ref={mainRef}>
+        <HomeSearchHero onSearchSubmit={handleSearchSubmit} />
         <div className="flex flex-col gap-3 pb-6">
           {/* The feed requires a token, so guests never mount the section or request it. */}
           {status === "authenticated" ? (
