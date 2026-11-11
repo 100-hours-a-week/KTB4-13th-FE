@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+import { displayBookTitle } from "@/common/lib/bookTitle";
 import { BookCover } from "@/common/components/BookCover";
 import type { CartItemViewModel } from "@/features/cart/types/cart";
 import { formatWon } from "@/pages/cart/lib/cartTotals";
@@ -32,7 +33,7 @@ export function CartItemRow({
     <li className="py-4">
       <div className="flex items-start gap-3">
         <input
-          aria-label={`${item.itemName} 선택`}
+          aria-label={`${displayBookTitle(item.itemName)} 선택`}
           checked={isSelected}
           className="mt-1 size-5 shrink-0 accent-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           disabled={!item.isPurchasable}
@@ -41,12 +42,12 @@ export function CartItemRow({
         />
 
         <Link
-          aria-label={`${item.itemName} 상세 보기`}
+          aria-label={`${displayBookTitle(item.itemName)} 상세 보기`}
           className="w-[4.5rem] shrink-0 rounded-cover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           to={`/products/${item.productId}`}
         >
           <BookCover
-            alt={`${item.itemName} 표지`}
+            alt={`${displayBookTitle(item.itemName)} 표지`}
             fallbackTitle={item.itemName}
             radius="cover"
             thumbnailUrl={item.thumbnailUrl}
@@ -60,7 +61,7 @@ export function CartItemRow({
                 className="line-clamp-1 type-body font-semibold text-text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 to={`/products/${item.productId}`}
               >
-                {item.itemName}
+                {displayBookTitle(item.itemName)}
               </Link>
               {item.isPurchasable ? (
                 <p className="mt-1 type-body-small font-semibold tabular-nums text-text-primary">
@@ -73,7 +74,7 @@ export function CartItemRow({
               )}
             </div>
             <button
-              aria-label={`${item.itemName} 삭제`}
+              aria-label={`${displayBookTitle(item.itemName)} 삭제`}
               className="-mr-2 -mt-2 inline-flex size-11 shrink-0 items-center justify-center rounded-full text-xl text-text-tertiary hover:bg-muted hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:text-text-disabled"
               disabled={isDeleteDisabled}
               onClick={() => onDelete(item.cartItemId)}
@@ -84,7 +85,7 @@ export function CartItemRow({
           </div>
 
           <div
-            aria-label={`${item.itemName} 수량`}
+            aria-label={`${displayBookTitle(item.itemName)} 수량`}
             className="mt-3 flex items-center gap-3"
             role="group"
           >

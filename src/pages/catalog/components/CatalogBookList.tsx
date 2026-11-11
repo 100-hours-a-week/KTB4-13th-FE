@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 
 import { QuickAddToCartButton } from "@/features/cart/components/QuickAddToCartButton";
+import { displayBookTitle } from "@/common/lib/bookTitle";
 import { BookCover } from "@/common/components/BookCover";
 import { useCoverLinkClick } from "@/common/lib/coverTransition";
 import { ProductAvailabilityBadge } from "@/common/components/ProductAvailabilityBadge";
@@ -91,19 +92,19 @@ function RankingBookRow({
         >
           {productId !== null ? (
             <Link
-              aria-label={`${rank}위, ${book.title} 상세 보기`}
+              aria-label={`${rank}위, ${displayBookTitle(book.title)} 상세 보기`}
               className="after:absolute after:inset-0 after:rounded-control focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-primary"
               onClick={(event) =>
                 onCoverLinkClick(event, `/products/${productId}`, { thumbnailUrl: book.thumbnailUrl, title: book.title })
               }
               to={`/products/${productId}`}
             >
-              {book.title}
+              {displayBookTitle(book.title)}
             </Link>
           ) : (
             <>
               <span className="sr-only">{rank}위, </span>
-              {book.title}
+              {displayBookTitle(book.title)}
             </>
           )}
         </h2>
@@ -155,13 +156,13 @@ function CatalogBookRow({
       </div>
       <div className="min-w-0 flex-1 self-center">
         <h2 className="line-clamp-2 type-title text-text-primary">
-          {book.title}
+          {displayBookTitle(book.title)}
         </h2>
         <p className="mt-1 truncate type-body-small text-text-secondary">
           {book.author ?? "저자 정보 없음"}
         </p>
         {book.matchScore !== null ? (
-          <p className="mt-1 type-caption font-medium tabular-nums text-text-secondary">
+          <p className="mt-1 type-caption tabular-nums text-text-secondary">
             취향 매칭 {book.matchScore}%
           </p>
         ) : null}
@@ -185,7 +186,7 @@ function CatalogBookRow({
 
   return (
     <Link
-      aria-label={`${book.title} 상세 보기`}
+      aria-label={`${displayBookTitle(book.title)} 상세 보기`}
       className="block hover:bg-muted/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       onClick={(event) =>
         onCoverLinkClick(event, `/products/${book.productId}`, { thumbnailUrl: book.thumbnailUrl, title: book.title })

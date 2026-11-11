@@ -1,3 +1,4 @@
+import { displayBookTitle } from "@/common/lib/bookTitle";
 import { BookCover } from "@/common/components/BookCover";
 import type { LibraryMonth } from "@/features/library/lib/libraryShelf";
 import type { LibraryBook } from "@/features/library/types/library";
@@ -63,7 +64,7 @@ function ShelfBook({ book, isEditing, isSelected, onOpen, onToggle }: ShelfBookP
         ) : null}
       </span>
       {/* 선반 두께만큼 띄운다 */}
-      <span aria-hidden="true" className="mt-3 block truncate type-caption font-semibold text-text-primary">{book.title}</span>
+      <span aria-hidden="true" className="mt-3 block truncate type-caption font-semibold text-text-primary">{displayBookTitle(book.title)}</span>
     </button>
   );
 }

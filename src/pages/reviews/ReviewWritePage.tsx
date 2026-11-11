@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
+import { displayBookTitle } from "@/common/lib/bookTitle";
 import { BookCover } from "@/common/components/BookCover";
 import { Button } from "@/common/components/Button";
 import { Toast } from "@/common/components/Toast";
@@ -144,7 +145,7 @@ export function ReviewWritePage() {
         {error ? <div className="page-content pt-4"><Toast variant="error">{error}</Toast></div> : null}
         <section className="page-content flex gap-3 border-b border-hairline py-5">
           <div className="w-14 shrink-0"><BookCover alt="" fallbackTitle={product?.itemName ?? "도서"} thumbnailUrl={product?.thumbnailUrl ?? null} /></div>
-          <div className="min-w-0 self-center"><span className="rounded-full bg-accent-soft px-2 py-1 type-caption font-semibold text-accent">구매한 책</span><h2 className="mt-2 line-clamp-2 type-title">{product?.itemName ?? "리뷰를 작성할 도서"}</h2></div>
+          <div className="min-w-0 self-center"><span className="rounded-full bg-accent-soft px-2 py-1 type-caption font-semibold text-accent">구매한 책</span><h2 className="mt-2 line-clamp-2 type-title">{product ? displayBookTitle(product.itemName) : "리뷰를 작성할 도서"}</h2></div>
         </section>
         <section className="page-content border-b border-hairline py-7 text-center">
           <h2 className="type-title">이 책은 어떠셨나요?</h2>

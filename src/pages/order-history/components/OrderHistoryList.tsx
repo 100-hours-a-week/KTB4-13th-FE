@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+import { displayBookTitle } from "@/common/lib/bookTitle";
 import { BookCover } from "@/common/components/BookCover";
 import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
@@ -71,7 +72,7 @@ function OrderCard({ order }: { order: OrderHistoryEntry }) {
               </div>
               <div className="min-w-0 flex-1 self-center">
                 <h2 className="line-clamp-2 type-title text-text-primary">
-                  {item.itemName}
+                  {displayBookTitle(item.itemName)}
                 </h2>
                 <p className="mt-1 truncate type-caption text-text-secondary">
                   {item.author}

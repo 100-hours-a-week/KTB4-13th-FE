@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { QuickAddToCartButton } from "@/features/cart/components/QuickAddToCartButton";
+import { displayBookTitle } from "@/common/lib/bookTitle";
 import { BookCover } from "@/common/components/BookCover";
 import { useCoverLinkClick } from "@/common/lib/coverTransition";
 import { RetryButton } from "@/common/components/RetryButton";
@@ -70,7 +71,7 @@ function RankingTiers({
     <ol aria-label="책 랭킹 목록" className="mt-3 px-4">
       <li className="relative">
         <Link
-          aria-label={`1위, ${first.itemName} 상세 보기`}
+          aria-label={`1위, ${displayBookTitle(first.itemName)} 상세 보기`}
           className="book-lift flex gap-4 rounded-panel bg-primary p-3 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           onClick={(event) => {
             onProductClick();
@@ -84,7 +85,7 @@ function RankingTiers({
           {/* Right padding keeps a long author line clear of the + circle. */}
           <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 pr-7">
             <span aria-hidden="true" className="type-numeral text-2xl text-[#f6c3c8]">01</span>
-            <p className="line-clamp-2 break-keep type-title">{first.itemName}</p>
+            <p className="line-clamp-2 break-keep type-title">{displayBookTitle(first.itemName)}</p>
             <p className="truncate type-caption text-white/70">{first.author}</p>
             <ReviewLine item={first} tone="inverse" />
           </div>
@@ -104,7 +105,7 @@ function RankingTiers({
             {medium.map((item, index) => (
               <li className="relative min-w-0" key={item.itemId}>
                 <Link
-                  aria-label={`${index + 2}위, ${item.itemName} 상세 보기`}
+                  aria-label={`${index + 2}위, ${displayBookTitle(item.itemName)} 상세 보기`}
                   className="book-lift flex gap-3 rounded-panel bg-white/80 p-3 ring-1 ring-[#f3e7e1] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   onClick={(event) => {
                     onProductClick();
@@ -120,7 +121,7 @@ function RankingTiers({
                       {String(index + 2).padStart(2, "0")}
                     </span>
                     <p className="line-clamp-2 break-keep type-body-small font-semibold text-text-primary">
-                      {item.itemName}
+                      {displayBookTitle(item.itemName)}
                     </p>
                     <p className="truncate type-caption text-text-tertiary">{item.author}</p>
                   </div>
@@ -144,7 +145,7 @@ function RankingTiers({
             {listed.map((item, index) => (
               <li className="flex items-center gap-1" key={item.itemId}>
                 <Link
-                  aria-label={`${index + MEDIUM_COUNT + 2}위, ${item.itemName} 상세 보기`}
+                  aria-label={`${index + MEDIUM_COUNT + 2}위, ${displayBookTitle(item.itemName)} 상세 보기`}
                   className="flex min-h-11 min-w-0 flex-1 items-center gap-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   onClick={onProductClick}
                   to={`/products/${item.itemId}`}
@@ -152,7 +153,7 @@ function RankingTiers({
                   <span aria-hidden="true" className="w-5 shrink-0 type-caption font-semibold tabular-nums text-text-tertiary">
                     {String(index + MEDIUM_COUNT + 2).padStart(2, "0")}
                   </span>
-                  <span className="min-w-0 flex-1 truncate type-body-small text-text-primary">{item.itemName}</span>
+                  <span className="min-w-0 flex-1 truncate type-body-small text-text-primary">{displayBookTitle(item.itemName)}</span>
                   <span className="max-w-[35%] shrink-0 truncate type-caption text-text-tertiary">{item.author}</span>
                 </Link>
                 {/* Pulled into the row padding so this circle shares the cards' vertical axis. */}

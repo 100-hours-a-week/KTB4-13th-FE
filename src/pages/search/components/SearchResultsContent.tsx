@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 
 import { QuickAddToCartButton } from "@/features/cart/components/QuickAddToCartButton";
+import { displayBookTitle } from "@/common/lib/bookTitle";
 import { BookCover } from "@/common/components/BookCover";
 import { useCoverLinkClick } from "@/common/lib/coverTransition";
 import { ProductAvailabilityBadge } from "@/common/components/ProductAvailabilityBadge";
@@ -30,11 +31,15 @@ function SearchResultCard({ item, priority }: { item: BookSearchItem; priority: 
         />
       </div>
       <h2 className="mt-1.5 line-clamp-2 min-h-10 type-body-small font-semibold text-text-primary">
-        {item.title}
+        {displayBookTitle(item.title)}
       </h2>
       <p className="truncate type-caption text-text-tertiary">
         {item.author ?? "저자 정보 없음"}
       </p>
+      {/* Same-title editions only differ by publisher in this list, so it gets its own line (FE #194). */}
+      {item.publisher ? (
+        <p className="truncate type-caption text-text-tertiary">{item.publisher}</p>
+      ) : null}
       {item.price !== null ? (
         <p className="type-body-small font-semibold tabular-nums text-text-primary">
           {priceFormatter.format(item.price)}원
@@ -50,7 +55,7 @@ function SearchResultCard({ item, priority }: { item: BookSearchItem; priority: 
 
   return (
     <Link
-      aria-label={`${item.title} 상세 보기`}
+      aria-label={`${displayBookTitle(item.title)} 상세 보기`}
       className="book-lift block rounded-cover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       onClick={(event) =>
         onCoverLinkClick(event, `/products/${item.productId}`, { thumbnailUrl: item.coverUrl, title: item.title })

@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
+import { displayBookTitle } from "@/common/lib/bookTitle";
 import { BookCover } from "@/common/components/BookCover";
 import { editionKey, normalizeAuthor } from "@/common/lib/authorName";
 import type { LibraryAuthor } from "@/features/library/lib/libraryShelf";
@@ -91,7 +92,7 @@ export function LibraryAuthorBooks({ author, books, searchBooks }: LibraryAuthor
                 <span className="book-lift-cover block rounded-cover">
                   <BookCover alt="" fallbackTitle={book.title} radius="cover" thumbnailUrl={book.coverUrl} />
                 </span>
-                <span className="mt-2 block line-clamp-2 break-words type-caption font-semibold">{book.title}</span>
+                <span className="mt-2 block line-clamp-2 break-words type-caption font-semibold">{displayBookTitle(book.title)}</span>
                 {book.productId === null ? <span className="mt-0.5 block type-caption text-text-tertiary">판매 안 함</span> : null}
               </>
             );
