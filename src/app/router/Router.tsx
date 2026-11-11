@@ -9,7 +9,6 @@ import { CartPage } from "@/pages/cart/CartPage";
 import { CatalogPage } from "@/pages/catalog/CatalogPage";
 import { HomePage } from "@/pages/home/HomePage";
 import { LoginPage } from "@/pages/login/LoginPage";
-import { IS_PHOTO_SCAN_ENABLED } from "@/features/library/config/photoScanConfig";
 import { LibraryPage } from "@/pages/library/LibraryPage";
 import { LibraryPhotoPage } from "@/pages/library-photo/LibraryPhotoPage";
 import { MyAddressCreatePage } from "@/pages/my-addresses/MyAddressCreatePage";
@@ -91,9 +90,7 @@ export function Router() {
               path="/my/preferences/onboarding"
               element={<OnboardingPage mode="edit" />}
             />
-            {IS_PHOTO_SCAN_ENABLED ? (
-              <Route path="/my/library/photo" element={<LibraryPhotoPage />} />
-            ) : null}
+            <Route path="/my/library/photo" element={<LibraryPhotoPage />} />
           </Route>
         </Route>
         <Route element={<RequireAuth />}>

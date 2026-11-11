@@ -14,7 +14,6 @@ import {
 import { PhotoCaptureSheet } from "@/features/library/components/PhotoCaptureSheet";
 import { PhotoScanEntryCard } from "@/features/library/components/PhotoScanEntryCard";
 import { PhotoScanSavedBanner } from "@/features/library/components/PhotoScanSavedBanner";
-import { IS_PHOTO_SCAN_ENABLED } from "@/features/library/config/photoScanConfig";
 import type { LibraryBook } from "@/features/library/types/library";
 import type { LibraryLocationState, LibraryPhotoLocationState } from "@/features/library/types/photoScan";
 import { AppPageHeader } from "@/features/navigation/components/AppPageHeader";
@@ -32,9 +31,7 @@ export function LibraryPage() {
   const navigate = useNavigate();
   const location = useLocation();
   // 사진으로 담고 돌아왔을 때만 있다
-  const photoScanSaved = IS_PHOTO_SCAN_ENABLED
-    ? (location.state as LibraryLocationState | null)?.photoScanSaved ?? null
-    : null;
+  const photoScanSaved = (location.state as LibraryLocationState | null)?.photoScanSaved ?? null;
 
   const openPhotoScan = (photo: File) => {
     const state: LibraryPhotoLocationState = { photo };
@@ -108,7 +105,7 @@ export function LibraryPage() {
             담아둔 책 {status === "ready" ? books.length : ""}
           </strong>
         </div>
-        {IS_PHOTO_SCAN_ENABLED && status === "ready" && books.length > 0 && !isEditing ? (
+        {status === "ready" && books.length > 0 && !isEditing ? (
           <div className="page-content pb-5">
             {photoScanSaved ? (
               <PhotoScanSavedBanner {...photoScanSaved} />
@@ -169,7 +166,7 @@ export function LibraryPage() {
             ))}
           </ul>
         ) : null}
-        {IS_PHOTO_SCAN_ENABLED && status === "ready" && books.length === 0 ? (
+        {status === "ready" && books.length === 0 ? (
           <section className="page-content flex min-h-96 flex-col items-center justify-center text-center">
             <span className="inline-flex size-18 items-center justify-center rounded-full bg-muted text-primary">
               <CameraIcon aria-hidden="true" className="size-8" />
@@ -180,14 +177,6 @@ export function LibraryPage() {
             <Link className="mt-2 inline-flex min-h-11 items-center rounded-control border border-border px-5 type-body-small font-semibold" to="/recommendations/chat">AI 추천 열기</Link>
           </section>
         ) : null}
-        {!IS_PHOTO_SCAN_ENABLED && status === "ready" && books.length === 0 ? (
-          <section className="page-content flex min-h-72 flex-col items-center justify-center text-center">
-            <div aria-hidden="true" className="text-5xl">📚</div>
-            <h2 className="mt-4 type-title">아직 담아둔 책이 없어요</h2>
-            <p className="mt-2 type-body-small text-text-tertiary">AI 추천에서 마음에 드는 책을 만나보세요.</p>
-            <Link className="mt-5 inline-flex min-h-11 items-center rounded-control bg-primary px-5 type-body-small font-semibold text-white" to="/recommendations/chat">AI 추천 열기</Link>
-          </section>
-        ) : null}
       </main>
       {isEditing ? (
         <div className="page-content absolute inset-x-0 bottom-0 border-t border-hairline bg-surface pb-5 pt-3">
@@ -196,7 +185,7 @@ export function LibraryPage() {
           </Button>
         </div>
       ) : null}
-      {IS_PHOTO_SCAN_ENABLED && photoScanSaved && !isEditing ? (
+      {photoScanSaved && !isEditing ? (
         <div className="page-content absolute inset-x-0 bottom-0 border-t border-hairline bg-surface py-2.5">
           <Button className="w-full" onClick={() => setIsCaptureOpen(true)} variant="secondary">
             <CameraIcon aria-hidden="true" className="size-5" />
@@ -204,9 +193,7 @@ export function LibraryPage() {
           </Button>
         </div>
       ) : null}
-      {IS_PHOTO_SCAN_ENABLED ? (
-        <PhotoCaptureSheet isOpen={isCaptureOpen} onClose={() => setIsCaptureOpen(false)} onPick={openPhotoScan} />
-      ) : null}
+      <PhotoCaptureSheet isOpen={isCaptureOpen} onClose={() => setIsCaptureOpen(false)} onPick={openPhotoScan} />
       <ConfirmDialog
         confirmLabel="삭제"
         description="나의 도서관에서만 삭제돼요."
