@@ -1,11 +1,12 @@
+const CONTACT_EMAIL = "bookjeok13@gmail.com";
 const PROJECT_REPOSITORY_URL = "https://github.com/100-hours-a-week/KTB4-13th-wiki";
 const DATA4LIBRARY_URL = "https://data4library.kr/";
 
 const LINK_CLASS_NAME =
   "underline underline-offset-2 hover:text-text-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
-// Business registration, terms and a contact address are left out on purpose: the service has no business
-// operator yet, the policy texts are internal drafts, and no contact address has been decided (FS-4 6.3).
+// Business registration and terms links are left out on purpose: the service has no business operator yet
+// and the policy texts are still internal drafts (FS-4 6.3).
 export function HomeFooter() {
   return (
     <footer className="page-content mt-3 border-t border-hairline pt-6 pb-2">
@@ -35,6 +36,12 @@ export function HomeFooter() {
             target="_blank"
           >
             GitHub
+          </a>
+        </p>
+        <p>
+          문의{" "}
+          <a className={LINK_CLASS_NAME} href={`mailto:${CONTACT_EMAIL}`}>
+            {CONTACT_EMAIL}
           </a>
         </p>
         <p>
