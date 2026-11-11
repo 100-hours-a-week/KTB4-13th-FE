@@ -5,9 +5,15 @@ import { QuickCartContext, type QuickCartItem } from "@/features/cart/context/qu
 
 interface QuickAddToCartButtonProps extends QuickCartItem {
   className?: string;
-  // "icon" is a round + that sits on a card corner; its 44px hit area is wider than the visible circle.
-  variant?: "text" | "icon";
+  // "icon" is a round + that sits on a card corner and "icon-small" one on a cover corner;
+  // both keep a 44px hit area wider than the visible circle.
+  variant?: "text" | "icon" | "icon-small";
 }
+
+const ICON_CIRCLE_CLASS_NAME = {
+  icon: "size-6.5 [&>svg]:size-3.5",
+  "icon-small": "size-5.5 [&>svg]:size-3",
+} as const;
 
 export function QuickAddToCartButton({ className = "", variant = "text", ...item }: QuickAddToCartButtonProps) {
   const cart = useContext(QuickCartContext);
@@ -22,7 +28,7 @@ export function QuickAddToCartButton({ className = "", variant = "text", ...item
     type: "button" as const,
   };
 
-  if (variant === "icon") {
+  if (variant !== "text") {
     return (
       <button
         {...sharedProps}
@@ -31,9 +37,9 @@ export function QuickAddToCartButton({ className = "", variant = "text", ...item
         {/* The focus ring hugs the circle in accent so it stays visible on the dark first-place card too. */}
         <span
           aria-hidden="true"
-          className="flex size-8 items-center justify-center rounded-full bg-surface text-text-primary shadow-[0_2px_8px_-3px_rgba(36,33,31,0.45)] ring-1 ring-border transition-[background-color,transform] group-hover:bg-muted group-active:scale-95 group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-accent"
+          className={`flex items-center justify-center rounded-full bg-surface text-text-primary shadow-[0_2px_8px_-3px_rgba(36,33,31,0.45)] ring-1 ring-border transition-[background-color,transform] group-hover:bg-muted group-active:scale-95 group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-accent ${ICON_CIRCLE_CLASS_NAME[variant]}`}
         >
-          <PlusIcon className="size-4" strokeWidth={2.2} />
+          <PlusIcon strokeWidth={2.2} />
         </span>
       </button>
     );
