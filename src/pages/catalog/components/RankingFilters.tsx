@@ -1,6 +1,6 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 
-import { ChevronDownIcon, InfoIcon } from "@/common/components/AppIcons";
+import { ChevronDownIcon } from "@/common/components/AppIcons";
 import { RetryButton } from "@/common/components/RetryButton";
 import type { CategoryState } from "@/pages/catalog/hooks/useCatalogCategories";
 import { groupCategories } from "@/pages/catalog/lib/categoryGroups";
@@ -66,7 +66,6 @@ export function RankingFilters({
   onFilterChange,
   onRetryCategories,
 }: RankingFiltersProps) {
-  const [isNoteOpen, setIsNoteOpen] = useState(false);
   const groups = useMemo(
     () => (categoryState.kind === "ready" ? groupCategories(categoryState.categories) : []),
     [categoryState],
@@ -164,20 +163,10 @@ export function RankingFilters({
             </p>
           ) : null}
         </div>
-        <button
-          aria-controls="ranking-update-note"
-          aria-expanded={isNoteOpen}
-          className="-mr-1 inline-flex min-h-11 shrink-0 items-center gap-1 rounded-control px-1 type-caption text-text-tertiary hover:text-text-secondary focus-visible:outline-2 focus-visible:outline-primary"
-          onClick={() => setIsNoteOpen((current) => !current)}
-          type="button"
-        >
+        <p className="shrink-0 px-1 pb-2 type-caption text-text-tertiary">
           1시간마다 갱신
-          <InfoIcon className="size-4" />
-        </button>
+        </p>
       </div>
-      <p className="px-1 pb-3 type-caption text-text-secondary" hidden={!isNoteOpen} id="ranking-update-note">
-        많이 팔린 순서로 보여 줘요. 순위는 1시간마다 갱신돼요.
-      </p>
     </section>
   );
 }

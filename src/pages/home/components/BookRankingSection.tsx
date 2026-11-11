@@ -205,7 +205,7 @@ export function BookRankingSection({
               책 랭킹
             </h2>
             <p className="truncate text-[0.6875rem] leading-4 text-[#9d7d76]">
-              많이 팔린 순서 · 1시간마다 갱신
+              1시간마다 갱신
             </p>
           </div>
           <button

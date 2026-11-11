@@ -27,7 +27,7 @@ export function CatalogHeader({
   recommendationSort,
 }: CatalogHeaderProps) {
   const copy = HEADER_COPY[mode];
-  // The ranking's "많이 팔린 순서 · 1시간마다 갱신" lives beside its filters instead.
+  // The ranking's "1시간마다 갱신" lives beside its filters instead.
   const description =
     mode === "recommendation" ? `추천 도서 · ${SORT_LABEL[recommendationSort]}` : null;
 
