@@ -9,10 +9,9 @@ import {
   foundBooks,
   usePhotoScan,
   type PhotoScanFailureReason,
-  type PhotoScanSaved,
   type PhotoScanStep,
 } from "@/features/library/hooks/usePhotoScan";
-import type { PhotoScanBook, SaveScannedBooks, ScanPhoto } from "@/features/library/types/photoScan";
+import type { PhotoScanBook, PhotoScanSaved, SaveScannedBooks, ScanPhoto } from "@/features/library/types/photoScan";
 import { AppPageHeader } from "@/features/navigation/components/AppPageHeader";
 
 interface PhotoScanFlowProps {
@@ -77,7 +76,7 @@ function ScanProgress({ phase }: { phase: Extract<PhotoScanStep, { kind: "scanni
 }
 
 export function PhotoScanFlow({ initialPhoto, onExit, onSaved, saveBooks, scanPhoto }: PhotoScanFlowProps) {
-  const { isSaving, photo, retake, retry, saveError, saveSelected, selectedIsbns, step, toggleBook } =
+  const { isSaving, photo, retake, retry, saveError, saveSelected, selectedBookIds, step, toggleBook } =
     usePhotoScan({ initialPhoto, onSaved, saveBooks, scanPhoto });
   const [isCaptureOpen, setIsCaptureOpen] = useState(false);
 
@@ -112,14 +111,14 @@ export function PhotoScanFlow({ initialPhoto, onExit, onSaved, saveBooks, scanPh
                 </h2>
                 <ul>
                   {books.map((book) => {
-                    const isSelected = selectedIsbns.includes(book.isbn);
+                    const isSelected = selectedBookIds.includes(book.bookId);
                     return (
-                      <li className="flex items-start gap-3 border-t border-hairline py-3" key={book.isbn}>
+                      <li className="flex items-start gap-3 border-t border-hairline py-3" key={book.bookId}>
                         <button
                           aria-label={`${book.title} ${isSelected ? "선택 해제" : "선택"}`}
                           aria-pressed={isSelected}
                           className="-mx-2.5 inline-flex size-11 shrink-0 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-primary"
-                          onClick={() => toggleBook(book.isbn)}
+                          onClick={() => toggleBook(book.bookId)}
                           type="button"
                         >
                           {isSelected ? (
@@ -171,11 +170,11 @@ export function PhotoScanFlow({ initialPhoto, onExit, onSaved, saveBooks, scanPh
               <Button className="min-h-12 shrink-0" onClick={() => setIsCaptureOpen(true)} variant="secondary">다시 찍기</Button>
               <Button
                 className="min-h-12 flex-1"
-                disabled={selectedIsbns.length === 0}
+                disabled={selectedBookIds.length === 0}
                 isLoading={isSaving}
                 onClick={() => { void saveSelected(); }}
               >
-                {selectedIsbns.length > 0 ? `${selectedIsbns.length}권 담기` : "담을 책을 골라 주세요"}
+                {selectedBookIds.length > 0 ? `${selectedBookIds.length}권 담기` : "담을 책을 골라 주세요"}
               </Button>
             </div>
           ) : (

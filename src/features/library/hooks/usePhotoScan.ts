@@ -4,6 +4,7 @@ import { preparePhoto } from "@/features/library/lib/preparePhoto";
 import type {
   PhotoScanBook,
   PhotoScanResult,
+  PhotoScanSaved,
   SaveScannedBooks,
   ScanPhoto,
 } from "@/features/library/types/photoScan";
@@ -16,19 +17,15 @@ export type PhotoScanStep =
   | { kind: "result"; result: PhotoScanResult };
 
 export function foundBooks(result: PhotoScanResult): PhotoScanBook[] {
-  const books = new Map<string, PhotoScanBook>();
+  const books = new Map<number, PhotoScanBook>();
   for (const item of result.items) {
-    if (item.state === "FOUND" && !books.has(item.book.isbn)) {
-      books.set(item.book.isbn, item.book);
+    if (item.state === "FOUND" && !books.has(item.book.bookId)) {
+      books.set(item.book.bookId, item.book);
     }
   }
   return [...books.values()];
 }
 
-export interface PhotoScanSaved {
-  missedCount: number;
-  savedCount: number;
-}
 
 interface UsePhotoScanOptions {
   initialPhoto: File;
@@ -63,7 +60,7 @@ export function usePhotoScan({ initialPhoto, onSaved, saveBooks, scanPhoto }: Us
   // 같은 사진으로 다시 시도할 때 올린다
   const [attempt, setAttempt] = useState(0);
   const [step, setStep] = useState<PhotoScanStep>(SCANNING);
-  const [selectedIsbns, setSelectedIsbns] = useState<string[]>([]);
+  const [selectedBookIds, setSelectedBookIds] = useState<number[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   // 부모가 렌더마다 새 함수를 넘겨도 인식을 다시 시작하지 않게 한다
@@ -81,7 +78,7 @@ export function usePhotoScan({ initialPhoto, onSaved, saveBooks, scanPhoto }: Us
     }).then((outcome) => {
       if (signal.aborted) return;
       if (outcome.kind === "result") {
-        setSelectedIsbns(foundBooks(outcome.result).map((book) => book.isbn));
+        setSelectedBookIds(foundBooks(outcome.result).map((book) => book.bookId));
       }
       setStep(outcome);
     });
@@ -90,7 +87,7 @@ export function usePhotoScan({ initialPhoto, onSaved, saveBooks, scanPhoto }: Us
 
   const retake = (file: File) => {
     setSaveError(null);
-    setSelectedIsbns([]);
+    setSelectedBookIds([]);
     setStep(SCANNING);
     setPhoto(file);
   };
@@ -100,17 +97,17 @@ export function usePhotoScan({ initialPhoto, onSaved, saveBooks, scanPhoto }: Us
     setAttempt((value) => value + 1);
   };
 
-  const toggleBook = (isbn: string) => {
-    setSelectedIsbns((isbns) =>
-      isbns.includes(isbn) ? isbns.filter((value) => value !== isbn) : [...isbns, isbn],
+  const toggleBook = (bookId: number) => {
+    setSelectedBookIds((bookIds) =>
+      bookIds.includes(bookId) ? bookIds.filter((value) => value !== bookId) : [...bookIds, bookId],
     );
   };
 
   const saveSelected = async () => {
-    if (isSaving || selectedIsbns.length === 0 || step.kind !== "result") return;
+    if (isSaving || selectedBookIds.length === 0 || step.kind !== "result") return;
     setIsSaving(true);
     setSaveError(null);
-    const saved = await saveBooks(selectedIsbns);
+    const saved = await saveBooks(selectedBookIds);
     setIsSaving(false);
     if (!saved.ok) {
       setSaveError("책을 담지 못했어요. 다시 시도해 주세요.");
@@ -118,7 +115,7 @@ export function usePhotoScan({ initialPhoto, onSaved, saveBooks, scanPhoto }: Us
     }
     onSaved({
       missedCount: step.result.items.filter((item) => item.state === "NOT_FOUND").length,
-      savedCount: selectedIsbns.length,
+      savedCount: selectedBookIds.length,
     });
   };
 
@@ -129,7 +126,7 @@ export function usePhotoScan({ initialPhoto, onSaved, saveBooks, scanPhoto }: Us
     retry,
     saveError,
     saveSelected,
-    selectedIsbns,
+    selectedBookIds,
     step,
     toggleBook,
   };

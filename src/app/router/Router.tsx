@@ -10,6 +10,7 @@ import { CatalogPage } from "@/pages/catalog/CatalogPage";
 import { HomePage } from "@/pages/home/HomePage";
 import { LoginPage } from "@/pages/login/LoginPage";
 import { LibraryPage } from "@/pages/library/LibraryPage";
+import { LibraryPhotoPage } from "@/pages/library-photo/LibraryPhotoPage";
 import { MyAddressCreatePage } from "@/pages/my-addresses/MyAddressCreatePage";
 import { MyAddressEditPage } from "@/pages/my-addresses/MyAddressEditPage";
 import { MyAddressesPage } from "@/pages/my-addresses/MyAddressesPage";
@@ -89,6 +90,7 @@ export function Router() {
               path="/my/preferences/onboarding"
               element={<OnboardingPage mode="edit" />}
             />
+            <Route path="/my/library/photo" element={<LibraryPhotoPage />} />
           </Route>
         </Route>
         <Route element={<RequireAuth />}>

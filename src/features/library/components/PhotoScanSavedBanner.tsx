@@ -1,4 +1,4 @@
-import type { PhotoScanSaved } from "@/features/library/hooks/usePhotoScan";
+import type { PhotoScanSaved } from "@/features/library/types/photoScan";
 
 // 사진으로 담고 나의 도서관에 돌아왔을 때 목록 위에 보여 준다
 export function PhotoScanSavedBanner({ missedCount, savedCount }: PhotoScanSaved) {

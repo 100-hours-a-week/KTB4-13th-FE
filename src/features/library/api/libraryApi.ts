@@ -53,6 +53,31 @@ export async function fetchLibraryBooks(
   }
 }
 
+// BE #545 는 한 번에 50권까지 받는다. 사진 한 장에서는 100권까지 나올 수 있어 나눠 보낸다.
+// 이미 담긴 책은 그대로 두는 API 라, 중간에 실패해 다시 보내도 같은 책이 두 번 담기지 않는다.
+const ADD_BOOKS_CHUNK_SIZE = 50;
+
+export async function addLibraryBooks(
+  bookIds: number[],
+): Promise<{ ok: true } | LibraryFailure> {
+  try {
+    for (let start = 0; start < bookIds.length; start += ADD_BOOKS_CHUNK_SIZE) {
+      const result = await parseApiResponse(
+        await fetchWithAuth("/api/v1/library/books", {
+          body: JSON.stringify({ bookIds: bookIds.slice(start, start + ADD_BOOKS_CHUNK_SIZE) }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+        }),
+      );
+      if (!result.ok) return failure(result.status);
+    }
+
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "error" };
+  }
+}
+
 export async function deleteLibraryBooks(
   libraryBookIds: number[],
 ): Promise<{ ok: true } | LibraryFailure> {

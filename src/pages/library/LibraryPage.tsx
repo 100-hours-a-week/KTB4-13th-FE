@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
+import { CameraIcon } from "@/common/components/AppIcons";
 import { BookCover } from "@/common/components/BookCover";
 import { Button } from "@/common/components/Button";
 import { ConfirmDialog } from "@/common/components/ConfirmDialog/ConfirmDialog";
@@ -10,7 +11,11 @@ import {
   deleteLibraryBooks,
   fetchLibraryBooks,
 } from "@/features/library/api/libraryApi";
+import { PhotoCaptureSheet } from "@/features/library/components/PhotoCaptureSheet";
+import { PhotoScanEntryCard } from "@/features/library/components/PhotoScanEntryCard";
+import { PhotoScanSavedBanner } from "@/features/library/components/PhotoScanSavedBanner";
 import type { LibraryBook } from "@/features/library/types/library";
+import type { LibraryLocationState, LibraryPhotoLocationState } from "@/features/library/types/photoScan";
 import { AppPageHeader } from "@/features/navigation/components/AppPageHeader";
 
 export function LibraryPage() {
@@ -22,6 +27,16 @@ export function LibraryPage() {
   const [isConfirming, setIsConfirming] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isCaptureOpen, setIsCaptureOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  // 사진으로 담고 돌아왔을 때만 있다
+  const photoScanSaved = (location.state as LibraryLocationState | null)?.photoScanSaved ?? null;
+
+  const openPhotoScan = (photo: File) => {
+    const state: LibraryPhotoLocationState = { photo };
+    navigate("/my/library/photo", { state });
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -90,6 +105,15 @@ export function LibraryPage() {
             담아둔 책 {status === "ready" ? books.length : ""}
           </strong>
         </div>
+        {status === "ready" && books.length > 0 && !isEditing ? (
+          <div className="page-content pb-5">
+            {photoScanSaved ? (
+              <PhotoScanSavedBanner {...photoScanSaved} />
+            ) : (
+              <PhotoScanEntryCard onClick={() => setIsCaptureOpen(true)} />
+            )}
+          </div>
+        ) : null}
         {deleteError ? (
           <div className="page-content pb-4">
             <Toast variant="error">{deleteError}</Toast>
@@ -143,11 +167,14 @@ export function LibraryPage() {
           </ul>
         ) : null}
         {status === "ready" && books.length === 0 ? (
-          <section className="page-content flex min-h-72 flex-col items-center justify-center text-center">
-            <div aria-hidden="true" className="text-5xl">📚</div>
+          <section className="page-content flex min-h-96 flex-col items-center justify-center text-center">
+            <span className="inline-flex size-18 items-center justify-center rounded-full bg-muted text-primary">
+              <CameraIcon aria-hidden="true" className="size-8" />
+            </span>
             <h2 className="mt-4 type-title">아직 담아둔 책이 없어요</h2>
-            <p className="mt-2 type-body-small text-text-tertiary">AI 추천에서 마음에 드는 책을 만나보세요.</p>
-            <Link className="mt-5 inline-flex min-h-11 items-center rounded-control bg-primary px-5 type-body-small font-semibold text-white" to="/recommendations/chat">AI 추천 열기</Link>
+            <p className="mt-2 type-body-small text-text-tertiary">집에 있는 책장을 찍으면 한 번에 담을 수 있어요.</p>
+            <Button className="mt-5 px-5" onClick={() => setIsCaptureOpen(true)}>책장 사진으로 담기</Button>
+            <Link className="mt-2 inline-flex min-h-11 items-center rounded-control border border-border px-5 type-body-small font-semibold" to="/recommendations/chat">AI 추천 열기</Link>
           </section>
         ) : null}
       </main>
@@ -158,6 +185,15 @@ export function LibraryPage() {
           </Button>
         </div>
       ) : null}
+      {photoScanSaved && !isEditing ? (
+        <div className="page-content absolute inset-x-0 bottom-0 border-t border-hairline bg-surface py-2.5">
+          <Button className="w-full" onClick={() => setIsCaptureOpen(true)} variant="secondary">
+            <CameraIcon aria-hidden="true" className="size-5" />
+            다른 칸도 찍기
+          </Button>
+        </div>
+      ) : null}
+      <PhotoCaptureSheet isOpen={isCaptureOpen} onClose={() => setIsCaptureOpen(false)} onPick={openPhotoScan} />
       <ConfirmDialog
         confirmLabel="삭제"
         description="나의 도서관에서만 삭제돼요."
