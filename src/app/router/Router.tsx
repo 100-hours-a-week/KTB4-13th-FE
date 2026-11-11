@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { BottomNavigationLayout } from "@/app/layouts/BottomNavigationLayout";
 import { OnboardingEntryGuard } from "@/app/router/OnboardingEntryGuard";
 import { RequireAuth } from "@/app/router/RequireAuth";
+import { TERMS_PATH } from "@/common/lib/serviceInfo";
 import { QuickCartProvider } from "@/features/cart/components/QuickCartProvider";
 import { KakaoCallbackPage } from "@/pages/auth/KakaoCallbackPage";
 import { CartPage } from "@/pages/cart/CartPage";
@@ -28,6 +29,7 @@ import { ProfileEditPage } from "@/pages/profile/ProfileEditPage";
 import { PreferenceEditPage } from "@/pages/preferences/PreferenceEditPage";
 import { AiRecommendationChatPage } from "@/pages/recommendation-chat/AiRecommendationChatPage";
 import { SearchResultsPage } from "@/pages/search/SearchResultsPage";
+import { TermsPage } from "@/pages/terms/TermsPage";
 import { ReviewListPage } from "@/pages/reviews/ReviewListPage";
 import { ReviewWritePage } from "@/pages/reviews/ReviewWritePage";
 import { WithdrawPage } from "@/pages/withdraw/WithdrawPage";
@@ -38,6 +40,8 @@ export function Router() {
     <BrowserRouter useTransitions={false}>
       <Routes>
         <Route path="/auth/kakao/callback" element={<KakaoCallbackPage />} />
+        {/* Outside the onboarding guard: guests and members in the middle of onboarding must be able to read it. */}
+        <Route path={TERMS_PATH} element={<TermsPage />} />
         <Route element={<OnboardingEntryGuard />}>
           <Route path="/login" element={<LoginPage />} />
           <Route element={<BottomNavigationLayout />}>

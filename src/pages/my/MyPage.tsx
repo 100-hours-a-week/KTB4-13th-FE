@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { Toast } from "@/common/components/Toast";
+import { TERMS_PATH } from "@/common/lib/serviceInfo";
 import { RetryButton } from "@/common/components/RetryButton";
 import { CartButton } from "@/features/cart/components/CartButton";
 import { useLogout } from "@/features/auth/hooks/useLogout";
@@ -146,6 +147,7 @@ export function MyPage() {
               label="배송지 관리"
               to="/my/addresses"
             />
+            <MenuLink label="이용약관" to={TERMS_PATH} />
             <MenuLink label="회원탈퇴" to="/my/withdraw" />
             <button
               className="flex min-h-14 w-full items-center justify-between border-b border-hairline py-2 text-left type-body font-medium text-text-primary transition-colors last:border-b-0 hover:bg-muted/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"

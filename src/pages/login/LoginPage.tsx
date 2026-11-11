@@ -1,6 +1,7 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { Toast } from "@/common/components/Toast";
+import { TERMS_PATH } from "@/common/lib/serviceInfo";
 import { KakaoLoginButton } from "@/features/auth/components/KakaoLoginButton";
 import { useLogin } from "@/features/auth/hooks/useLogin";
 import {
@@ -78,8 +79,14 @@ export function LoginPage() {
           onClick={() => beginLogin(returnTo)}
         />
         <p className="mx-auto mt-4 max-w-xs break-keep text-center type-caption leading-relaxed text-text-tertiary">
-          계속 진행 시 이용약관 및 개인정보 처리방침에 동의하는 것으로
-          간주합니다.
+          계속 진행하면{" "}
+          <Link
+            className="underline underline-offset-2 hover:text-text-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            to={TERMS_PATH}
+          >
+            이용약관
+          </Link>
+          에 동의하는 것으로 봅니다.
         </p>
       </footer>
     </main>

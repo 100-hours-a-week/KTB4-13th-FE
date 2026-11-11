@@ -18,7 +18,7 @@ const consentDetails = [
   {
     term: "동의 거부",
     description:
-      "동의를 거부할 수 있으며, 거부 시 개인화 추천 기능 이용이 제한돼요.",
+      "동의를 거부할 수 있어요. 다만 북적북적은 이 정보로 책을 추천하는 서비스라, 동의하지 않으면 가입을 마칠 수 없어요.",
   },
 ];
 
@@ -69,7 +69,7 @@ export function ReadingTimeStep({
                 개인화 도서 추천을 위한 정보 수집·이용에 동의합니다
               </span>
               <span className="type-caption text-text-secondary">
-                동의하지 않으면 개인화 추천 없이 홈으로 이동할 수 있어요.
+                북적북적은 이 정보로 책을 추천해요. 동의해야 가입을 마칠 수 있어요.
               </span>
             </span>
           </label>
