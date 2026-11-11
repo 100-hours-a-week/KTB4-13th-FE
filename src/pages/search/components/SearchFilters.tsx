@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
+import {
+  INTEREST_CATEGORIES,
+  type InterestCategory,
+} from "@/features/onboarding/lib/interestCategories";
 import type { SearchFilters as SearchFilterValues } from "@/pages/search/types/search";
 
 type RangeKind = "price" | "year";
+type FilterPanel = "category" | RangeKind;
 
 const controlClassName =
   "min-h-11 shrink-0 rounded-control border bg-transparent px-3 type-caption focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:text-text-tertiary";
-const pendingFilterClassName =
-  "inline-flex min-h-11 shrink-0 items-center rounded-control bg-muted px-3 type-caption text-text-tertiary";
 const priceFormatter = new Intl.NumberFormat("ko-KR");
 
 function parseOptionalInteger(value: string) {
@@ -139,6 +142,56 @@ function RangeFilterPanel({
   );
 }
 
+interface CategoryFilterPanelProps {
+  onSelect: (category: InterestCategory | null) => void;
+  selected: InterestCategory | null;
+}
+
+// One category at a time: the backend takes a single onboarding label. Picking one applies it.
+function CategoryFilterPanel({ onSelect, selected }: CategoryFilterPanelProps) {
+  const options: (InterestCategory | null)[] = [null, ...INTEREST_CATEGORIES];
+
+  return (
+    <div className="mt-3 border-t border-hairline pt-4" id="search-category-filter">
+      <p
+        className="type-body-small font-semibold text-text-primary"
+        id="search-category-filter-label"
+      >
+        카테고리
+      </p>
+      <div
+        aria-labelledby="search-category-filter-label"
+        className="mt-2 flex flex-wrap gap-x-2"
+        role="group"
+      >
+        {options.map((category) => {
+          const isSelected = category === selected;
+
+          return (
+            <button
+              aria-pressed={isSelected}
+              className="group flex min-h-11 items-center focus-visible:outline-none"
+              key={category ?? "all"}
+              onClick={() => onSelect(category)}
+              type="button"
+            >
+              <span
+                className={`whitespace-nowrap rounded-full border px-3.5 py-1.5 type-caption transition-colors group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-primary ${
+                  isSelected
+                    ? "border-primary bg-primary font-semibold text-white"
+                    : "border-border text-text-secondary group-hover:bg-muted"
+                }`}
+              >
+                {category ?? "전체"}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function formatPriceRange(min: number | null, max: number | null) {
   if (min === null && max === null) {
     return "가격대";
@@ -171,7 +224,7 @@ interface SearchFiltersProps {
 }
 
 export function SearchFilters({ filters, onChange }: SearchFiltersProps) {
-  const [openRange, setOpenRange] = useState<RangeKind | null>(null);
+  const [openPanel, setOpenPanel] = useState<FilterPanel | null>(null);
   const filterRowRef = useRef<HTMLDivElement>(null);
   const [indicator, setIndicator] = useState({ left: 0, width: 0 });
 
@@ -186,7 +239,7 @@ export function SearchFilters({ filters, onChange }: SearchFiltersProps) {
     observer.observe(row);
     observer.observe(chip);
     return () => observer.disconnect();
-  }, [openRange]);
+  }, [openPanel]);
 
   return (
     <section
@@ -197,27 +250,38 @@ export function SearchFilters({ filters, onChange }: SearchFiltersProps) {
         <div className="relative isolate flex w-max gap-2" ref={filterRowRef}>
           <span
             aria-hidden="true"
-            className={`pointer-events-none absolute inset-y-0 left-0 -z-10 rounded-control bg-muted transition-[transform,width,opacity] duration-(--duration-base) ease-standard motion-reduce:transition-none ${openRange ? "opacity-100" : "opacity-0"}`}
+            className={`pointer-events-none absolute inset-y-0 left-0 -z-10 rounded-control bg-muted transition-[transform,width,opacity] duration-(--duration-base) ease-standard motion-reduce:transition-none ${openPanel ? "opacity-100" : "opacity-0"}`}
             style={{ transform: `translateX(${indicator.left}px)`, width: indicator.width }}
           />
-          {/* Search accepts onboarding category labels, not /api/v1/categories values, so it stays unfiltered. */}
-          <span
-            aria-label="카테고리 필터: 전체, 현재 전체 조건만 선택할 수 있습니다"
-            className={pendingFilterClassName}
+          <button
+            aria-controls="search-category-filter"
+            aria-expanded={openPanel === "category"}
+            aria-label={`카테고리: ${filters.category ?? "전체"}`}
+            className={`${controlClassName} ${
+              filters.category !== null
+                ? "border-text-primary font-semibold text-text-primary"
+                : "border-border text-text-secondary"
+            }`}
+            onClick={() =>
+              setOpenPanel((current) =>
+                current === "category" ? null : "category",
+              )
+            }
+            type="button"
           >
-            카테고리 전체
-          </span>
+            {filters.category ?? "카테고리"}
+          </button>
 
           <button
             aria-controls="search-price-filter"
-            aria-expanded={openRange === "price"}
+            aria-expanded={openPanel === "price"}
             className={`${controlClassName} ${
               filters.priceMin !== null || filters.priceMax !== null
                 ? "border-text-primary font-semibold text-text-primary"
                 : "border-border text-text-secondary"
             }`}
             onClick={() =>
-              setOpenRange((current) => (current === "price" ? null : "price"))
+              setOpenPanel((current) => (current === "price" ? null : "price"))
             }
             type="button"
           >
@@ -226,14 +290,14 @@ export function SearchFilters({ filters, onChange }: SearchFiltersProps) {
 
           <button
             aria-controls="search-year-filter"
-            aria-expanded={openRange === "year"}
+            aria-expanded={openPanel === "year"}
             className={`${controlClassName} ${
               filters.pubYearFrom !== null || filters.pubYearTo !== null
                 ? "border-text-primary font-semibold text-text-primary"
                 : "border-border text-text-secondary"
             }`}
             onClick={() =>
-              setOpenRange((current) => (current === "year" ? null : "year"))
+              setOpenPanel((current) => (current === "year" ? null : "year"))
             }
             type="button"
           >
@@ -242,29 +306,38 @@ export function SearchFilters({ filters, onChange }: SearchFiltersProps) {
         </div>
       </div>
 
-      {openRange === "price" ? (
+      {openPanel === "category" ? (
+        <CategoryFilterPanel
+          onSelect={(category) => {
+            onChange({ ...filters, category });
+            setOpenPanel(null);
+          }}
+          selected={filters.category}
+        />
+      ) : null}
+      {openPanel === "price" ? (
         <RangeFilterPanel
           from={filters.priceMin}
           key={`price-${filters.priceMin}-${filters.priceMax}`}
           kind="price"
           onApply={(priceMin, priceMax) => {
             onChange({ ...filters, priceMax, priceMin });
-            setOpenRange(null);
+            setOpenPanel(null);
           }}
-          onClose={() => setOpenRange(null)}
+          onClose={() => setOpenPanel(null)}
           to={filters.priceMax}
         />
       ) : null}
-      {openRange === "year" ? (
+      {openPanel === "year" ? (
         <RangeFilterPanel
           from={filters.pubYearFrom}
           key={`year-${filters.pubYearFrom}-${filters.pubYearTo}`}
           kind="year"
           onApply={(pubYearFrom, pubYearTo) => {
             onChange({ ...filters, pubYearFrom, pubYearTo });
-            setOpenRange(null);
+            setOpenPanel(null);
           }}
-          onClose={() => setOpenRange(null)}
+          onClose={() => setOpenPanel(null)}
           to={filters.pubYearTo}
         />
       ) : null}

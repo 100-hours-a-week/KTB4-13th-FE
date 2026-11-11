@@ -4,6 +4,8 @@ export type RecommendationFeedSort = "match" | "newest" | "price_asc";
 export type RecommendationFeedQuery =
   | { cursor: string | null; surface: "home" }
   | {
+      // One onboarding interest category label; the backend rejects any other value with 400.
+      category: string | null;
       cursor: string | null;
       matchScoreMin: number | null;
       pubYearFrom: number | null;

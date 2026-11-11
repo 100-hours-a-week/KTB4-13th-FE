@@ -1,6 +1,8 @@
 export type BookSearchSort = "popular" | "newest" | "price_asc";
 
 export interface BookSearchQuery {
+  // One onboarding interest category label; the backend rejects any other value with 400.
+  category: string | null;
   cursor: string | null;
   priceMax: number | null;
   priceMin: number | null;

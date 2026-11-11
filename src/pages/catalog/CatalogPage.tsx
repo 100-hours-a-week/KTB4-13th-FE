@@ -17,6 +17,7 @@ import type {
 
 const INITIAL_FILTERS: CatalogFilterState = {
   categoryId: null,
+  interestCategory: null,
   matchScoreMin: null,
   publicationYearFrom: null,
   publicationYearTo: null,

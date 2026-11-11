@@ -1,3 +1,4 @@
+import { toInterestCategory } from "@/features/onboarding/lib/interestCategories";
 import type { BookSearchSort } from "@/features/search/types/bookSearch";
 import type {
   SearchFilters,
@@ -28,6 +29,8 @@ function readSort(value: string | null): BookSearchSort {
 
 export function readSearchRequest(searchParams: URLSearchParams): SearchRequestModel {
   return {
+    // An unknown category in a shared or old link is dropped rather than sent, since it would be a 400.
+    category: toInterestCategory(searchParams.get("category")),
     priceMax: readNonNegativeInteger(searchParams.get("priceMax")),
     priceMin: readNonNegativeInteger(searchParams.get("priceMin")),
     pubYearFrom: readPositiveInteger(searchParams.get("pubYearFrom")),
@@ -48,6 +51,7 @@ export function updateSearchParams(
   const entries: [string, number | string | null | undefined][] = [
     ["q", updates.query],
     ["sort", updates.sort],
+    ["category", updates.category],
     ["priceMin", updates.priceMin],
     ["priceMax", updates.priceMax],
     ["pubYearFrom", updates.pubYearFrom],

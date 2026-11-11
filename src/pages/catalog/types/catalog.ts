@@ -1,3 +1,4 @@
+import type { InterestCategory } from "@/features/onboarding/lib/interestCategories";
 import type { RecommendationFeedSort } from "@/features/recommendation/types/recommendationFeed";
 
 export type CatalogMode = "ranking" | "recommendation";
@@ -18,7 +19,9 @@ export interface CatalogBookItem {
 }
 
 export interface CatalogFilterState {
+  // Ranking filters by /api/v1/categories id; the recommendation feed by onboarding interest label.
   categoryId: number | null;
+  interestCategory: InterestCategory | null;
   matchScoreMin: number | null;
   publicationYearFrom: number | null;
   publicationYearTo: number | null;

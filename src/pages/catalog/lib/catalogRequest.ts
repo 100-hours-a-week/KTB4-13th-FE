@@ -40,12 +40,13 @@ export function toRankingQuery(
   };
 }
 
-// categoryId is not sent: the feed accepts onboarding category labels, not /api/v1/categories ids.
+// The feed takes an onboarding interest label as category, so categoryId is never sent here.
 export function toRecommendationQuery(
   request: RecommendationRequestModel,
   cursor?: string,
 ): RecommendationFeedQuery {
   return {
+    category: request.interestCategory,
     cursor: cursor ?? null,
     matchScoreMin: request.matchScoreMin,
     pubYearFrom: request.publicationYearFrom,

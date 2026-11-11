@@ -38,11 +38,13 @@ export function useSearchResults(request: SearchRequestModel) {
     state: { kind: "loading" },
   });
   const requestVersionRef = useRef(0);
-  const { priceMax, priceMin, pubYearFrom, pubYearTo, query, sort } = request;
+  const { category, priceMax, priceMin, pubYearFrom, pubYearTo, query, sort } =
+    request;
   // Any change to the query, filters, or sort starts again from the first page without a cursor.
   const requestId = JSON.stringify([
     query,
     sort,
+    category,
     priceMin,
     priceMax,
     pubYearFrom,
@@ -61,6 +63,7 @@ export function useSearchResults(request: SearchRequestModel) {
 
     void fetchBookSearchResults(
       {
+        category,
         cursor: null,
         priceMax,
         priceMin,
@@ -78,7 +81,16 @@ export function useSearchResults(request: SearchRequestModel) {
     });
 
     return () => controller.abort();
-  }, [priceMax, priceMin, pubYearFrom, pubYearTo, query, requestId, sort]);
+  }, [
+    category,
+    priceMax,
+    priceMin,
+    pubYearFrom,
+    pubYearTo,
+    query,
+    requestId,
+    sort,
+  ]);
 
   let state: SearchResultState;
 
@@ -111,6 +123,7 @@ export function useSearchResults(request: SearchRequestModel) {
     );
 
     void fetchBookSearchResults({
+      category,
       cursor: nextCursor,
       priceMax,
       priceMin,
@@ -149,6 +162,7 @@ export function useSearchResults(request: SearchRequestModel) {
       });
     });
   }, [
+    category,
     nextCursor,
     paginationStatus,
     priceMax,

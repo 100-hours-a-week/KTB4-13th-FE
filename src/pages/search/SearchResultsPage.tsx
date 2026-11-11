@@ -21,6 +21,7 @@ export function SearchResultsPage() {
   const request = readSearchRequest(searchParams);
   const searchResults = useSearchResults(request);
   const filters: SearchFilterValues = {
+    category: request.category,
     priceMax: request.priceMax,
     priceMin: request.priceMin,
     pubYearFrom: request.pubYearFrom,

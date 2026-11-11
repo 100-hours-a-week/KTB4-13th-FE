@@ -73,6 +73,7 @@ export function useCatalogBooks(request: CatalogRequestModel) {
 
   const {
     categoryId,
+    interestCategory,
     matchScoreMin,
     mode,
     publicationYearFrom,
@@ -82,6 +83,7 @@ export function useCatalogBooks(request: CatalogRequestModel) {
   const requestId = [
     mode,
     categoryId ?? "all",
+    interestCategory ?? "all",
     publicationYearFrom ?? "all",
     publicationYearTo ?? "all",
     matchScoreMin ?? "all",
@@ -112,6 +114,7 @@ export function useCatalogBooks(request: CatalogRequestModel) {
     });
   }, [
     categoryId,
+    interestCategory,
     matchScoreMin,
     mode,
     publicationYearFrom,
