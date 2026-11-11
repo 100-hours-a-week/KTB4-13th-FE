@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { CatalogBookList } from "@/pages/catalog/components/CatalogBookList";
 import { CatalogFilters } from "@/pages/catalog/components/CatalogFilters";
 import { CatalogHeader } from "@/pages/catalog/components/CatalogHeader";
+import { RankingFilters } from "@/pages/catalog/components/RankingFilters";
 import { useCatalogBooks } from "@/pages/catalog/hooks/useCatalogBooks";
 import { useCatalogCategories } from "@/pages/catalog/hooks/useCatalogCategories";
 import {
@@ -47,15 +48,21 @@ export function CatalogPage({ mode }: { mode: CatalogMode }) {
 
       <main className="min-h-0 flex-1 overflow-y-auto">
         <div className="sticky top-0 z-10">
-          <CatalogFilters
-            categoryState={categoryState}
-            filters={filters}
-            mode={mode}
-            onFilterChange={handleFilterChange}
-            onRetryCategories={retryCategories}
-            onSortChange={setSort}
-            sort={sort}
-          />
+          {mode === "ranking" ? (
+            <RankingFilters
+              categoryState={categoryState}
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              onRetryCategories={retryCategories}
+            />
+          ) : (
+            <CatalogFilters
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              onSortChange={setSort}
+              sort={sort}
+            />
+          )}
         </div>
         <CatalogBookList
           hasActiveFilters={Object.values(filters).some((value) => value !== null)}

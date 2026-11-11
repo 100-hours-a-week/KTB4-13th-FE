@@ -7,7 +7,7 @@ import type {
 } from "@/pages/catalog/types/catalog";
 
 const HEADER_COPY: Record<CatalogMode, { title: string }> = {
-  ranking: { title: "책 랭킹 전체" },
+  ranking: { title: "책 랭킹" },
   recommendation: { title: "추천 도서 전체" },
 };
 
@@ -27,10 +27,9 @@ export function CatalogHeader({
   recommendationSort,
 }: CatalogHeaderProps) {
   const copy = HEADER_COPY[mode];
+  // The ranking's "많이 팔린 순서 · 1시간마다 갱신" lives beside its filters instead.
   const description =
-    mode === "ranking"
-      ? "많이 팔린 순서 · 1시간마다 갱신"
-      : `추천 도서 · ${SORT_LABEL[recommendationSort]}`;
+    mode === "recommendation" ? `추천 도서 · ${SORT_LABEL[recommendationSort]}` : null;
 
   return (
     <header className="page-content shrink-0 bg-surface pb-2 pt-3">
@@ -46,9 +45,11 @@ export function CatalogHeader({
           {copy.title}
         </h1>
       </div>
-      <p className="pl-11 type-caption text-text-tertiary">
-        {description}
-      </p>
+      {description !== null ? (
+        <p className="pl-11 type-caption text-text-tertiary">
+          {description}
+        </p>
+      ) : null}
     </header>
   );
 }

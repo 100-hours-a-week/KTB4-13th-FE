@@ -14,6 +14,8 @@ export interface CatalogBookItem {
   originalPrice: number | null;
   price: number | null;
   productId: number | null;
+  // Ranking rows only, and only when the book has rated reviews.
+  review: { count: number; rate: number } | null;
   thumbnailUrl: string | null;
   title: string;
 }
