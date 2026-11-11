@@ -1,5 +1,7 @@
 import { memo, useState } from "react";
 
+import { isBlankCover, mayBeBlankCover } from "@/common/lib/blankCover";
+
 interface BookCoverProps {
   // Empty when adjacent text already names the book.
   alt: string;
@@ -41,10 +43,14 @@ export const BookCover = memo(function BookCover({
 }: BookCoverProps) {
   // Compared with the current URL so a new thumbnailUrl loads again instead of inheriting the previous result.
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  // A cover that may be the library's blank logo stays invisible until it has loaded and been checked.
+  const [checkedUrl, setCheckedUrl] = useState<string | null>(null);
   const imageUrl = thumbnailUrl?.trim() ?? "";
   const radiusClassName = COVER_RADIUS_CLASS_NAMES[radius];
 
   if (imageUrl && imageUrl !== failedUrl) {
+    const isUnchecked = mayBeBlankCover(imageUrl) && imageUrl !== checkedUrl;
+
     return (
       <div
         className={`aspect-[3/4] w-full overflow-hidden border border-border bg-muted ${radiusClassName}`}
@@ -52,11 +58,19 @@ export const BookCover = memo(function BookCover({
       >
         <img
           alt={alt}
-          className="size-full object-cover"
+          className={`size-full object-cover ${isUnchecked ? "opacity-0" : ""}`}
           decoding="async"
           fetchPriority={priority ? "high" : "auto"}
           loading={priority ? "eager" : "lazy"}
           onError={() => setFailedUrl(imageUrl)}
+          onLoad={(event) => {
+            if (!mayBeBlankCover(imageUrl)) return;
+            if (isBlankCover(imageUrl, event.currentTarget)) {
+              setFailedUrl(imageUrl);
+            } else {
+              setCheckedUrl(imageUrl);
+            }
+          }}
           src={imageUrl}
         />
       </div>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { isBlankCover, mayBeBlankCover } from "@/common/lib/blankCover";
 import type { BookCandidate } from "@/features/onboarding/types/onboarding";
 
 interface BookPickStepProps {
@@ -14,17 +15,30 @@ interface BookCandidateCoverProps {
 
 function BookCandidateCover({ book }: BookCandidateCoverProps) {
   const [hasImageError, setHasImageError] = useState(false);
+  // A cover that may be the library's blank logo stays invisible until it has loaded and been checked.
+  const [isImageChecked, setIsImageChecked] = useState(false);
   const className =
     "flex aspect-[3/4] w-full items-center justify-center overflow-hidden rounded-cover border border-border bg-muted";
 
   if (book.coverImageUrl && !hasImageError) {
+    const imageUrl = book.coverImageUrl;
+    const isUnchecked = mayBeBlankCover(imageUrl) && !isImageChecked;
+
     return (
       <img
         alt={`${book.title} 표지`}
-        className={`${className} object-cover`}
+        className={`${className} object-cover ${isUnchecked ? "opacity-0" : ""}`}
         loading="lazy"
         onError={() => setHasImageError(true)}
-        src={book.coverImageUrl}
+        onLoad={(event) => {
+          if (!mayBeBlankCover(imageUrl)) return;
+          if (isBlankCover(imageUrl, event.currentTarget)) {
+            setHasImageError(true);
+          } else {
+            setIsImageChecked(true);
+          }
+        }}
+        src={imageUrl}
       />
     );
   }

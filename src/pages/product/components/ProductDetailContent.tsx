@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { BookCover } from "@/common/components/BookCover";
+import { isBlankCover } from "@/common/lib/blankCover";
 import { COVER_TRANSITION_NAME, type CoverPreview } from "@/common/lib/coverTransition";
 import { resetMouseTilt, tiltTowardMouse } from "@/common/lib/mouseTilt";
 import type { ProductDetail } from "@/features/product/types/product";
@@ -32,7 +33,14 @@ function CoverBackdrop({ thumbnailUrl }: { thumbnailUrl: string | null }) {
           imageUrl === loadedUrl ? "opacity-55" : "opacity-0"
         }`}
         onError={() => setFailedUrl(imageUrl)}
-        onLoad={() => setLoadedUrl(imageUrl)}
+        onLoad={(event) => {
+          // Blurring the library's blank logo would paint a grey smear, so show no backdrop instead.
+          if (isBlankCover(imageUrl, event.currentTarget)) {
+            setFailedUrl(imageUrl);
+          } else {
+            setLoadedUrl(imageUrl);
+          }
+        }}
         src={imageUrl}
       />
       <div className="absolute inset-x-0 bottom-0 h-2/5 bg-linear-to-b from-transparent to-surface" />
