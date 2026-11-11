@@ -42,52 +42,97 @@ function BookPrice({ price, originalPrice }: { originalPrice: number | null; pri
   );
 }
 
-function CatalogBookRow({
+// Every rank reads the same; the + sits on the cover corner, outside the link, since a button
+// cannot nest in a link. The title link stretches over the whole row.
+function RankingBookRow({
   book,
   priority,
   rank,
 }: {
   book: CatalogBookItem;
   priority: boolean;
-  rank?: number;
+  rank: number;
 }) {
   const onCoverLinkClick = useCoverLinkClick();
-  const isFeatured = rank === 1;
-  const row = isFeatured ? (
-    // The first place gets its own dark card so the order reads at a glance.
-    <article className="my-3 flex gap-4 rounded-panel bg-primary p-4 text-white">
-      <div className="w-24 shrink-0 rounded-cover shadow-[0_10px_20px_-12px_rgba(0,0,0,0.8)]">
-        <BookCover alt="" fallbackTitle={book.title} priority={priority} radius="cover" thumbnailUrl={book.thumbnailUrl} />
-      </div>
-      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
-        <span className="type-numeral text-2xl text-[#f6c3c8]">
-          01<span className="sr-only">위</span>
-        </span>
-        <h2 className="line-clamp-2 break-keep type-title">{book.title}</h2>
-        <p className="truncate type-body-small text-white/70">{book.author ?? "저자 정보 없음"}</p>
-        {book.price !== null ? (
-          <p className="type-body-small font-semibold tabular-nums">{priceFormatter.format(book.price)}원</p>
+  const { productId } = book;
+
+  return (
+    <li className="book-lift relative flex items-center gap-4 py-3">
+      <span aria-hidden="true" className="w-6 shrink-0 text-center type-numeral text-xl text-text-primary">
+        {rank}
+      </span>
+      <div className="relative w-[4.75rem] shrink-0">
+        <div className="book-lift-cover rounded-cover">
+          <BookCover alt="" fallbackTitle={book.title} priority={priority} radius="cover" thumbnailUrl={book.thumbnailUrl} />
+        </div>
+        {productId !== null ? (
+          <QuickAddToCartButton
+            className="absolute -bottom-1 -right-1 z-10"
+            productId={productId}
+            thumbnailUrl={book.thumbnailUrl}
+            title={book.title}
+            variant="icon-small"
+          />
         ) : null}
-        {book.productId === null ? (
-          <div className="flex">
+      </div>
+      <div className="min-w-0 flex-1">
+        <h2 className="line-clamp-2 break-keep type-body font-semibold text-text-primary">
+          {productId !== null ? (
+            <Link
+              aria-label={`${rank}위, ${book.title} 상세 보기`}
+              className="after:absolute after:inset-0 after:rounded-control focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-primary"
+              onClick={(event) =>
+                onCoverLinkClick(event, `/products/${productId}`, { thumbnailUrl: book.thumbnailUrl, title: book.title })
+              }
+              to={`/products/${productId}`}
+            >
+              {book.title}
+            </Link>
+          ) : (
+            <>
+              <span className="sr-only">{rank}위, </span>
+              {book.title}
+            </>
+          )}
+        </h2>
+        <p className="mt-0.5 truncate type-caption text-text-secondary">
+          {book.author ?? "저자 정보 없음"}
+        </p>
+        {book.review !== null ? (
+          <p className="mt-1 flex items-center gap-1 type-caption font-semibold text-accent">
+            <span aria-hidden="true">★</span>
+            <span className="tabular-nums">
+              {book.review.rate.toFixed(1)} ({book.review.count.toLocaleString("ko-KR")})
+            </span>
+            <span className="sr-only">점, 리뷰 {book.review.count}건</span>
+          </p>
+        ) : null}
+        {book.price !== null ? (
+          <div className="mt-1.5">
+            <BookPrice originalPrice={book.originalPrice} price={book.price} />
+          </div>
+        ) : null}
+        {productId === null ? (
+          <div className="mt-1.5 flex">
             <ProductAvailabilityBadge />
           </div>
         ) : null}
       </div>
-    </article>
-  ) : (
+    </li>
+  );
+}
+
+function CatalogBookRow({
+  book,
+  priority,
+}: {
+  book: CatalogBookItem;
+  priority: boolean;
+}) {
+  const onCoverLinkClick = useCoverLinkClick();
+  const row = (
     <article className="flex gap-4 py-4">
-      {rank !== undefined ? (
-        <span
-          className={`w-9 shrink-0 self-center type-numeral text-xl ${
-            rank <= 3 ? "text-accent" : "text-text-tertiary"
-          }`}
-        >
-          {String(rank).padStart(2, "0")}
-          <span className="sr-only">위</span>
-        </span>
-      ) : null}
-      <div className={`shrink-0 ${rank !== undefined && rank > 3 ? "w-14" : "w-[4.5rem]"}`}>
+      <div className="w-[4.5rem] shrink-0">
         <BookCover
           alt=""
           fallbackTitle={book.title}
@@ -129,9 +174,7 @@ function CatalogBookRow({
   return (
     <Link
       aria-label={`${book.title} 상세 보기`}
-      className={`block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
-        isFeatured ? "rounded-panel" : "hover:bg-muted/60"
-      }`}
+      className="block hover:bg-muted/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       onClick={(event) =>
         onCoverLinkClick(event, `/products/${book.productId}`, { thumbnailUrl: book.thumbnailUrl, title: book.title })
       }
@@ -177,13 +220,15 @@ export function CatalogBookList({
         <p className="sr-only" role="status">
           도서 목록을 불러오는 중이에요
         </p>
-        <div aria-hidden="true" className="divide-y divide-hairline">
+        <div aria-hidden="true" className={mode === "ranking" ? "" : "divide-y divide-hairline"}>
           {Array.from({ length: SKELETON_COUNT }, (_, index) => (
-            <div className="flex gap-4 py-4" key={index}>
+            <div className={`flex gap-4 ${mode === "ranking" ? "py-3" : "py-4"}`} key={index}>
               {mode === "ranking" ? (
-                <div className="h-5 w-9 shrink-0 self-center rounded-cover bg-muted" />
+                <div className="h-6 w-6 shrink-0 self-center rounded-cover bg-muted" />
               ) : null}
-              <div className="aspect-[3/4] w-[4.5rem] shrink-0 rounded-cover bg-muted" />
+              <div
+                className={`aspect-[3/4] shrink-0 rounded-cover bg-muted ${mode === "ranking" ? "w-[4.75rem]" : "w-[4.5rem]"}`}
+              />
               <div className="flex flex-1 flex-col justify-center gap-2">
                 <div className="h-5 w-3/4 rounded bg-muted" />
                 <div className="h-4 w-1/3 rounded bg-muted" />
@@ -234,22 +279,21 @@ export function CatalogBookList({
 
   return (
     <div className="page-content pb-6">
-      <ol aria-label={mode === "ranking" ? "책 랭킹 목록" : "추천 도서 목록"}>
-        {items.map((book, index) => (
-          <li className="flex items-center gap-2 border-b border-hairline last:border-b-0" key={book.key}>
-            <div className="min-w-0 flex-1">
-              <CatalogBookRow
-                book={book}
-                priority={index === 0}
-                rank={mode === "ranking" ? index + 1 : undefined}
-              />
-            </div>
-            {mode === "ranking" && book.productId !== null ? (
-              <QuickAddToCartButton productId={book.productId} thumbnailUrl={book.thumbnailUrl} title={book.title} />
-            ) : null}
-          </li>
-        ))}
-      </ol>
+      {mode === "ranking" ? (
+        <ol aria-label="책 랭킹 목록" className="pt-1">
+          {items.map((book, index) => (
+            <RankingBookRow book={book} key={book.key} priority={index === 0} rank={index + 1} />
+          ))}
+        </ol>
+      ) : (
+        <ol aria-label="추천 도서 목록">
+          {items.map((book, index) => (
+            <li className="border-b border-hairline last:border-b-0" key={book.key}>
+              <CatalogBookRow book={book} priority={index === 0} />
+            </li>
+          ))}
+        </ol>
+      )}
 
       {nextCursor !== null ? (
         <div aria-live="polite" className="flex flex-col items-center gap-2 pt-4">

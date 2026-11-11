@@ -14,6 +14,11 @@ export function toRankingBookItem(product: ProductListItem): CatalogBookItem {
     originalPrice: hasDiscount ? product.salePrice : null,
     price: hasDiscount ? product.discountedPrice : product.salePrice,
     productId: product.itemId,
+    review:
+      product.reviewCount !== undefined && product.reviewCount > 0 &&
+      product.reviewRate !== undefined && product.reviewRate > 0
+        ? { count: product.reviewCount, rate: product.reviewRate }
+        : null,
     thumbnailUrl: product.thumbnailUrl,
     title: product.itemName,
   };
@@ -29,6 +34,7 @@ export function toRecommendationBookItem(
     originalPrice: null,
     price: book.price,
     productId: book.productId,
+    review: null,
     thumbnailUrl: book.coverUrl,
     title: book.title,
   };
