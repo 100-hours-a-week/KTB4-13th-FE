@@ -35,6 +35,18 @@ export type SaveScannedBooks = (
   bookIds: number[],
 ) => Promise<{ ok: true } | { ok: false }>;
 
+// 사진에서 못 찾은 책을 직접 고를 때, 찾은 책의 상품을 찾을 때 쓰는 검색 결과 한 권.
+// bookId 는 BE 가 ISBN 으로 붙인 BE 책 번호라 사진 인식 결과·담기 API 와 같은 번호다
+export interface PhotoScanSearchBook extends PhotoScanBook {
+  // 우리 서점에서 팔지 않는 책이면 null
+  productId: number | null;
+}
+
+export type SearchBooks = (
+  query: string,
+  signal: AbortSignal,
+) => Promise<{ data: PhotoScanSearchBook[]; ok: true } | { ok: false; reason: "rate_limited" | "error" }>;
+
 export interface PhotoScanSaved {
   missedCount: number;
   savedCount: number;

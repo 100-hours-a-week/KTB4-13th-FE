@@ -7,7 +7,7 @@ import { CameraIcon } from "@/common/components/AppIcons";
 import { BookCover } from "@/common/components/BookCover";
 import { Button } from "@/common/components/Button";
 import { libraryPreviewBooks, photoScanPreviewCases, type PhotoScanPreviewCase } from "@/dev/fixtures/photoScan";
-import { createPreviewSaveBooks, createPreviewScanPhoto } from "@/dev/photoScanPreview";
+import { createPreviewSaveBooks, createPreviewScanPhoto, previewSearchBooks } from "@/dev/photoScanPreview";
 import { AuthContext, type AuthContextValue } from "@/features/auth/context/authContext";
 import { PhotoCaptureSheet } from "@/features/library/components/PhotoCaptureSheet";
 import { PhotoScanEntryCard } from "@/features/library/components/PhotoScanEntryCard";
@@ -72,8 +72,8 @@ function LibraryPreview({ previewCase, setPreviewCase }: PreviewProps) {
               <CameraIcon aria-hidden="true" className="size-8" />
             </span>
             <h2 className="mt-4 type-title">아직 담아둔 책이 없어요</h2>
-            <p className="mt-2 type-body-small text-text-secondary">집에 있는 책장을 찍으면 한 번에 담을 수 있어요.</p>
-            <Button className="mt-5 px-5" onClick={() => setIsCaptureOpen(true)}>책장 사진으로 담기</Button>
+            <p className="mt-2 type-body-small text-text-secondary">책장이나 책 표지를 찍으면 바로 담을 수 있어요.</p>
+            <Button className="mt-5 px-5" onClick={() => setIsCaptureOpen(true)}>사진으로 담기</Button>
             <Button className="mt-2 px-5" variant="secondary">AI 추천 열기</Button>
           </section>
         )}
@@ -104,7 +104,7 @@ function LibraryPreview({ previewCase, setPreviewCase }: PreviewProps) {
         <div className="page-content shrink-0 border-t border-hairline py-2.5">
           <Button className="w-full" onClick={() => setIsCaptureOpen(true)} variant="secondary">
             <CameraIcon aria-hidden="true" className="size-5" />
-            다른 칸도 찍기
+            사진 더 찍기
           </Button>
         </div>
       ) : null}
@@ -133,6 +133,7 @@ function PhotoScanPreview({ previewCase }: Pick<PreviewProps, "previewCase">) {
       onSaved={(saved) => navigate("/my/library", { replace: true, state: { saved } })}
       saveBooks={saveBooks}
       scanPhoto={scanPhoto}
+      searchBooks={previewSearchBooks}
     />
   );
 }

@@ -1,10 +1,11 @@
-import type { PhotoScanResult } from "@/features/library/types/photoScan";
+import type { PhotoScanResult, PhotoScanSearchBook } from "@/features/library/types/photoScan";
 
 // 개발용 미리보기 결과다. 책장 결과는 AI #615 시험 사진(CNU book-spine-dataset)을 돌린 결과에서 골랐다.
 export type PhotoScanPreviewCase =
   | "shelf"
   | "emptyLibrary"
   | "cover"
+  | "coverMissed"
   | "allMissed"
   | "noBooks"
   | "timeout"
@@ -36,6 +37,10 @@ export const photoScanPreviewCases: Record<
       photoType: "cover",
     },
   },
+  coverMissed: {
+    label: "표지 못 찾음",
+    result: { items: [{ book: null, readText: "클린 코드 로버트 C. 마틴", state: "NOT_FOUND" }], photoType: "cover" },
+  },
   allMissed: {
     label: "모두 못 찾음",
     result: { items: shelfResult.items.filter((item) => item.state === "NOT_FOUND"), photoType: "shelf" },
@@ -44,6 +49,14 @@ export const photoScanPreviewCases: Record<
   timeout: { label: "시간 초과", result: "timeout" },
   saveFailed: { label: "담기 실패", result: shelfResult, saveFails: true },
 };
+
+// 검색해서 담기·상품 찾기 미리보기에서 검색어와 상관없이 돌려주는 결과
+export const searchPreviewBooks: PhotoScanSearchBook[] = [
+  { author: "손원평", bookId: 90005, coverUrl: null, productId: 90105, publisher: "창비", title: "아몬드", year: null },
+  { author: "로버트 C. 마틴", bookId: 90011, coverUrl: null, productId: 90111, publisher: "인사이트", title: "클린 코드", year: null },
+  { author: "로버트 C. 마틴", bookId: 90012, coverUrl: null, productId: null, publisher: "인사이트", title: "클린 코드 (개정판)", year: null },
+  { author: "Peter Cooper 외", bookId: 90013, coverUrl: null, productId: 90113, publisher: "생능출판사", title: "Julia 프로그래밍", year: null },
+];
 
 // 미리보기 도서관에 이미 담겨 있는 책
 export const libraryPreviewBooks = [

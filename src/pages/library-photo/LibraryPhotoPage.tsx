@@ -1,6 +1,7 @@
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 
 import { addLibraryBooks } from "@/features/library/api/libraryApi";
+import { searchLibraryBooks } from "@/features/library/api/libraryBookSearchApi";
 import { scanLibraryPhoto } from "@/features/library/api/photoScanApi";
 import { PhotoScanFlow } from "@/features/library/components/PhotoScanFlow";
 import type {
@@ -27,6 +28,7 @@ export function LibraryPhotoPage() {
         }}
         saveBooks={addLibraryBooks}
         scanPhoto={scanLibraryPhoto}
+        searchBooks={searchLibraryBooks}
       />
     </div>
   );
