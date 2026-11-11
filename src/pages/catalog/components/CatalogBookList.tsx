@@ -161,7 +161,7 @@ function CatalogBookRow({
           {book.author ?? "저자 정보 없음"}
         </p>
         {book.matchScore !== null ? (
-          <p className="mt-1 type-caption font-medium tabular-nums text-text-secondary">
+          <p className="mt-1 type-caption tabular-nums text-text-secondary">
             취향 매칭 {book.matchScore}%
           </p>
         ) : null}

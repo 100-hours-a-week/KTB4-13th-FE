@@ -22,7 +22,7 @@ import { DeleteCartItemsDialog } from "@/pages/cart/components/DeleteCartItemsDi
 import { OrderedCartCleanupDialog } from "@/pages/cart/components/OrderedCartCleanupDialog";
 import { useCart } from "@/pages/cart/hooks/useCart";
 import { useCartSelection } from "@/pages/cart/hooks/useCartSelection";
-import { calculateCartTotals } from "@/pages/cart/lib/cartTotals";
+import { calculateCartTotals, formatWon } from "@/pages/cart/lib/cartTotals";
 
 type DeleteTarget =
   | { cartItemIds: number[]; kind: "selection" }
@@ -367,7 +367,11 @@ export function CartPage() {
             }
             onClick={handleOrder}
           >
-            {selection.selectedCount === 0 ? "상품을 선택해 주세요" : "주문하기"}
+            {selection.selectedCount === 0
+              ? "상품을 선택해 주세요"
+              : totals.total > 0
+                ? `${formatWon(totals.total)} 주문하기`
+                : "주문하기"}
           </Button>
         </div>
       ) : null}

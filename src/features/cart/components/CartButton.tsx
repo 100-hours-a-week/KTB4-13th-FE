@@ -10,8 +10,9 @@ interface CartButtonProps {
   onClick: () => void;
 }
 
-function getCartQuantity(items: { quantity: number }[]) {
-  return items.reduce((total, item) => total + item.quantity, 0);
+// Count cart lines, not copies, so the badge matches the number of rows on the cart page.
+function getCartItemCount(items: readonly unknown[]) {
+  return items.length;
 }
 
 export function CartButton({
@@ -36,7 +37,7 @@ export function CartButton({
       const result = await fetchCart(controller.signal);
 
       if (isActive && result.ok) {
-        setCount(getCartQuantity(result.data.items));
+        setCount(getCartItemCount(result.data.items));
       }
     };
 

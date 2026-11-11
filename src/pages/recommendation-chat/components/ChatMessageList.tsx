@@ -161,7 +161,8 @@ function RecommendationCard({
           <ProductAvailabilityBadge />
         </div>
       ) : null}
-      <p className="mt-1.5 type-caption font-semibold tabular-nums text-text-primary">
+      {/* A bold low score read as "this book does not fit", so the score stays in the quiet caption style. */}
+      <p className="mt-1.5 type-caption tabular-nums text-text-secondary">
         취향 매칭 {recommendation.matchScore}%
       </p>
       {/* The card fits about 10 Korean characters per line, so the reason gets its own lines (FE #155). */}

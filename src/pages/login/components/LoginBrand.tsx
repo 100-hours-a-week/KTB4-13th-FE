@@ -12,7 +12,10 @@ export function LoginBrand() {
         북적북적
       </h1>
       <p className="mt-3 break-keep type-handwriting text-text-secondary">
-        대화 몇 마디로 지금 나에게 맞는 책을 찾아드려요
+        {/* Break on purpose so the line never wraps before only the last word (375px). */}
+        대화 몇 마디로
+        <br />
+        지금 나에게 맞는 책을 찾아드려요
       </p>
     </div>
   );
