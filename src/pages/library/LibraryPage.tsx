@@ -179,14 +179,14 @@ export function LibraryPage() {
         ) : null}
       </main>
       {isEditing ? (
-        <div className="page-content absolute inset-x-0 bottom-0 border-t border-hairline bg-surface pb-5 pt-3">
+        <div className="page-content absolute inset-x-0 bottom-0 z-20 border-t border-hairline bg-surface pb-5 pt-3">
           <Button className="w-full bg-error" disabled={selected.length === 0} isLoading={isDeleting} onClick={() => setIsConfirming(true)}>
             선택한 책 삭제{selected.length ? ` (${selected.length})` : ""}
           </Button>
         </div>
       ) : null}
       {photoScanSaved && !isEditing ? (
-        <div className="page-content absolute inset-x-0 bottom-0 border-t border-hairline bg-surface py-2.5">
+        <div className="page-content absolute inset-x-0 bottom-0 z-20 border-t border-hairline bg-surface py-2.5">
           <Button className="w-full" onClick={() => setIsCaptureOpen(true)} variant="secondary">
             <CameraIcon aria-hidden="true" className="size-5" />
             사진 더 찍기
