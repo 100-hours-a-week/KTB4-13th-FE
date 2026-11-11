@@ -42,8 +42,11 @@ function BookPrice({ price, originalPrice }: { originalPrice: number | null; pri
   );
 }
 
-// Every rank reads the same; the + sits on the cover corner, outside the link, since a button
-// cannot nest in a link. The title link stretches over the whole row.
+const TOP_RANK_COUNT = 3;
+
+// Ranks share one row shape; the top three get an accent numeral and first place a slightly larger
+// cover and title. The + sits on the cover corner, outside the link, since a button cannot nest in a
+// link. The title link stretches over the whole row.
 function RankingBookRow({
   book,
   priority,
@@ -55,13 +58,20 @@ function RankingBookRow({
 }) {
   const onCoverLinkClick = useCoverLinkClick();
   const { productId } = book;
+  const isFirst = rank === 1;
+  const isTop = rank <= TOP_RANK_COUNT;
 
   return (
     <li className="book-lift relative flex items-center gap-4 py-3">
-      <span aria-hidden="true" className="w-6 shrink-0 text-center type-numeral text-xl text-text-primary">
+      <span
+        aria-hidden="true"
+        className={`w-6 shrink-0 text-center type-numeral ${isFirst ? "text-2xl" : "text-xl"} ${
+          isTop ? "text-accent" : "text-text-tertiary"
+        }`}
+      >
         {rank}
       </span>
-      <div className="relative w-[4.75rem] shrink-0">
+      <div className={`relative shrink-0 ${isFirst ? "w-[5.5rem]" : "w-[4.75rem]"}`}>
         <div className="book-lift-cover rounded-cover">
           <BookCover alt="" fallbackTitle={book.title} priority={priority} radius="cover" thumbnailUrl={book.thumbnailUrl} />
         </div>
@@ -76,7 +86,9 @@ function RankingBookRow({
         ) : null}
       </div>
       <div className="min-w-0 flex-1">
-        <h2 className="line-clamp-2 break-keep type-body font-semibold text-text-primary">
+        <h2
+          className={`line-clamp-2 break-keep text-text-primary ${isFirst ? "type-title" : "type-body font-semibold"}`}
+        >
           {productId !== null ? (
             <Link
               aria-label={`${rank}위, ${book.title} 상세 보기`}
