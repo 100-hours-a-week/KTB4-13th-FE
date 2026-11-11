@@ -64,14 +64,14 @@ function RankingTiers({
       <li>
         <Link
           aria-label={`1위, ${first.itemName} 상세 보기`}
-          className="flex gap-4 rounded-panel bg-primary p-3 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="book-lift flex gap-4 rounded-panel bg-primary p-3 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           onClick={(event) => {
             onProductClick();
             onCoverLinkClick(event, `/products/${first.itemId}`, { thumbnailUrl: first.thumbnailUrl, title: first.itemName });
           }}
           to={`/products/${first.itemId}`}
         >
-          <div className="w-24 shrink-0 rounded-cover shadow-[0_10px_20px_-12px_rgba(0,0,0,0.8)]">
+          <div className="book-lift-cover w-24 shrink-0 rounded-cover shadow-[0_10px_20px_-12px_rgba(0,0,0,0.8)]">
             <BookCover alt="" fallbackTitle={first.itemName} radius="cover" thumbnailUrl={first.thumbnailUrl} />
           </div>
           <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
@@ -93,14 +93,14 @@ function RankingTiers({
               <li className="flex min-w-0 flex-col" key={item.itemId}>
                 <Link
                   aria-label={`${index + 2}위, ${item.itemName} 상세 보기`}
-                  className="flex h-full gap-2.5 rounded-panel bg-white/80 p-2.5 ring-1 ring-[#f3e7e1] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  className="book-lift flex h-full gap-2.5 rounded-panel bg-white/80 p-2.5 ring-1 ring-[#f3e7e1] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   onClick={(event) => {
                     onProductClick();
                     onCoverLinkClick(event, `/products/${item.itemId}`, { thumbnailUrl: item.thumbnailUrl, title: item.itemName });
                   }}
                   to={`/products/${item.itemId}`}
                 >
-                  <div className="w-12 shrink-0">
+                  <div className="book-lift-cover w-12 shrink-0 self-start rounded-cover">
                     <BookCover alt="" fallbackTitle={item.itemName} radius="cover" thumbnailUrl={item.thumbnailUrl} />
                   </div>
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
