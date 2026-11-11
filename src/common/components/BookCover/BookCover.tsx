@@ -1,5 +1,6 @@
 import { memo, useState } from "react";
 
+import { displayBookTitle } from "@/common/lib/bookTitle";
 import { isBlankCover, mayBeBlankCover } from "@/common/lib/blankCover";
 
 interface BookCoverProps {
@@ -96,7 +97,7 @@ export const BookCover = memo(function BookCover({
         className="flex h-full flex-col justify-between pb-2 pl-4 pr-2.5 pt-4"
       >
         <span className="line-clamp-3 break-words break-keep type-caption font-semibold leading-snug">
-          {fallbackTitle}
+          {displayBookTitle(fallbackTitle)}
         </span>
         <span
           className={`hidden self-end text-[0.625rem] tracking-wide @[6rem]:block ${fallbackTone.publisher}`}

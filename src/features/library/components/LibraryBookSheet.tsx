@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+import { displayBookTitle } from "@/common/lib/bookTitle";
 import { BookCover } from "@/common/components/BookCover";
 import { LibrarySheet } from "@/features/library/components/LibrarySheet";
 import { SimilarBooksLink } from "@/features/library/components/SimilarBooksLink";
@@ -26,7 +27,7 @@ export function LibraryBookSheet({ book, onClose, onRemove }: LibraryBookSheetPr
               <BookCover alt="" fallbackTitle={book.title} radius="cover" thumbnailUrl={book.coverImageUrl} />
             </span>
             <div className="min-w-0 pt-1">
-              <p className="break-words break-keep type-title">{book.title}</p>
+              <p className="break-words break-keep type-title">{displayBookTitle(book.title)}</p>
               <p className="mt-1 break-words type-body-small text-text-secondary">{book.author}</p>
               <p className="mt-2 type-caption text-text-tertiary">{addedDateLabel(book.addedAt)}</p>
               {book.productId === null ? (

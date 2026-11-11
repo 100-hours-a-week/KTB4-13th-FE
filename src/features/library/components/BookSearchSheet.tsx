@@ -1,5 +1,6 @@
 import { useEffect, useEffectEvent, useId, useState } from "react";
 
+import { displayBookTitle } from "@/common/lib/bookTitle";
 import { BookCover } from "@/common/components/BookCover";
 import { Button } from "@/common/components/Button";
 import { RetryButton } from "@/common/components/RetryButton";
@@ -126,7 +127,7 @@ export function BookSearchSheet({
                       <BookCover alt="" fallbackTitle={book.title} radius="control" thumbnailUrl={book.coverUrl} />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="line-clamp-2 type-body-small font-semibold">{book.title}</span>
+                      <span className="line-clamp-2 type-body-small font-semibold">{displayBookTitle(book.title)}</span>
                       <span className="block truncate text-xs leading-[1.125rem] text-text-secondary">{bookMeta(book)}</span>
                     </span>
                     <span

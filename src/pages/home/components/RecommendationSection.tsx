@@ -9,6 +9,7 @@ import {
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+import { displayBookTitle } from "@/common/lib/bookTitle";
 import { BookCover } from "@/common/components/BookCover";
 import { ProductAvailabilityBadge } from "@/common/components/ProductAvailabilityBadge";
 import { RetryButton } from "@/common/components/RetryButton";
@@ -123,7 +124,7 @@ const CoverflowSlot = memo(function CoverflowSlot({
         style={{ transformStyle: "preserve-3d" }}
       >
         <button
-          aria-label={isActive ? `${book.title}, 현재 선택됨` : `${book.title} 선택`}
+          aria-label={isActive ? `${displayBookTitle(book.title)}, 현재 선택됨` : `${displayBookTitle(book.title)} 선택`}
           aria-pressed={isActive}
           className={`pointer-events-auto absolute inset-0 cursor-pointer rounded-control outline-offset-4 focus-visible:outline-2 focus-visible:outline-primary ${
             isActive ? "book-lift" : ""
@@ -520,10 +521,10 @@ export function CoverflowRecommendations({
               onClick={onProductClick}
               to={`/products/${activeBook.productId}`}
             >
-              {activeBook.title}
+              {displayBookTitle(activeBook.title)}
             </Link>
           ) : (
-            <p className="text-xl font-bold text-text-primary">{activeBook.title}</p>
+            <p className="text-xl font-bold text-text-primary">{displayBookTitle(activeBook.title)}</p>
           )}
           {activeBook.author ? (
             <p className="type-body-small text-text-secondary">{activeBook.author}</p>

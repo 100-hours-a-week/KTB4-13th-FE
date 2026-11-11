@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { displayBookTitle } from "@/common/lib/bookTitle";
 import { isBlankCover, mayBeBlankCover } from "@/common/lib/blankCover";
 import type { BookCandidate } from "@/features/onboarding/types/onboarding";
 
@@ -26,7 +27,7 @@ function BookCandidateCover({ book }: BookCandidateCoverProps) {
 
     return (
       <img
-        alt={`${book.title} 표지`}
+        alt={`${displayBookTitle(book.title)} 표지`}
         className={`${className} object-cover ${isUnchecked ? "opacity-0" : ""}`}
         loading="lazy"
         onError={() => setHasImageError(true)}
@@ -45,12 +46,12 @@ function BookCandidateCover({ book }: BookCandidateCoverProps) {
 
   return (
     <span
-      aria-label={`${book.title} 표지 이미지 없음`}
+      aria-label={`${displayBookTitle(book.title)} 표지 이미지 없음`}
       className={`${className} p-2 text-center type-caption text-text-tertiary`}
       role="img"
     >
       <span aria-hidden="true" className="line-clamp-3">
-        {book.title}
+        {displayBookTitle(book.title)}
       </span>
     </span>
   );
@@ -92,7 +93,7 @@ export function BookPickStep({
               </span>
             ) : null}
             <span className="line-clamp-2 type-body-small font-semibold text-text-primary">
-              {book.title}
+              {displayBookTitle(book.title)}
             </span>
             <span className="type-caption truncate text-text-tertiary">
               {book.author}

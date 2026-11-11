@@ -1,5 +1,6 @@
 import { useContext } from "react";
 
+import { displayBookTitle } from "@/common/lib/bookTitle";
 import { PlusIcon } from "@/common/components/AppIcons";
 import { QuickCartContext, type QuickCartItem } from "@/features/cart/context/quickCartContext";
 
@@ -22,7 +23,7 @@ export function QuickAddToCartButton({ className = "", variant = "text", ...item
 
   const sharedProps = {
     "aria-busy": cart.pendingProductId === item.productId,
-    "aria-label": `${item.title} 장바구니에 담기`,
+    "aria-label": `${displayBookTitle(item.title)} 장바구니에 담기`,
     disabled: cart.isDisabled,
     onClick: () => { void cart.add(item); },
     type: "button" as const,

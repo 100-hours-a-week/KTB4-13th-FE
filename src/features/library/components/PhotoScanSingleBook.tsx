@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+import { displayBookTitle } from "@/common/lib/bookTitle";
 import { BookCover } from "@/common/components/BookCover";
 import { Button } from "@/common/components/Button";
 import { Toast } from "@/common/components/Toast";
@@ -72,7 +73,7 @@ function FoundBook({
           <span className="w-32">
             <BookCover alt="" fallbackTitle={book.title} priority thumbnailUrl={book.coverUrl} />
           </span>
-          <h2 className="mt-4 type-heading" id="photo-scan-single-title">{book.title}</h2>
+          <h2 className="mt-4 type-heading" id="photo-scan-single-title">{displayBookTitle(book.title)}</h2>
           <p className="mt-1 type-body-small text-text-secondary">{bookMeta(book)}</p>
         </section>
 

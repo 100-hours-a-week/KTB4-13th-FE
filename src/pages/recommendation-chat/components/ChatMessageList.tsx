@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 
+import { displayBookTitle } from "@/common/lib/bookTitle";
 import { BookCover } from "@/common/components/BookCover";
 import { ProductAvailabilityBadge } from "@/common/components/ProductAvailabilityBadge";
 import { LoginRequiredDialog } from "@/features/auth/components/LoginRequiredDialog";
@@ -90,7 +91,7 @@ function RecommendationCard({
     : null;
   const cover = (
     <BookCover
-      alt={`${recommendation.title} 표지`}
+      alt={`${displayBookTitle(recommendation.title)} 표지`}
       fallbackTitle={recommendation.title}
       radius="cover"
       thumbnailUrl={recommendation.coverImageUrl}
@@ -106,7 +107,7 @@ function RecommendationCard({
       <div className="relative">
         {detailPath ? (
           <Link
-            aria-label={`${recommendation.title} 상세 보기`}
+            aria-label={`${displayBookTitle(recommendation.title)} 상세 보기`}
             className="block rounded-cover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             to={detailPath}
           >
@@ -116,7 +117,7 @@ function RecommendationCard({
           <div className="opacity-60">{cover}</div>
         )}
         <button
-          aria-label={hasProduct ? `${recommendation.title} 선택` : `${recommendation.title}은 구매할 수 없어요`}
+          aria-label={hasProduct ? `${displayBookTitle(recommendation.title)} 선택` : `${displayBookTitle(recommendation.title)}은 구매할 수 없어요`}
           aria-pressed={hasProduct ? isSelected : undefined}
           className="group absolute -right-1.5 -top-1.5 flex size-11 items-start justify-end p-2 focus-visible:outline-none disabled:cursor-not-allowed"
           disabled={!hasProduct || isSending}
@@ -142,9 +143,9 @@ function RecommendationCard({
             className="rounded-sm underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             to={detailPath}
           >
-            {recommendation.title}
+            {displayBookTitle(recommendation.title)}
           </Link>
-        ) : recommendation.title}
+        ) : displayBookTitle(recommendation.title)}
       </h3>
       {recommendation.author ? (
         <p className="mt-0.5 truncate type-caption text-text-tertiary">
@@ -172,7 +173,7 @@ function RecommendationCard({
         </p>
       ) : null}
       <button
-        aria-label={`${recommendation.title} 비슷한 책 더 보기`}
+        aria-label={`${displayBookTitle(recommendation.title)} 비슷한 책 더 보기`}
         className="mt-auto -ml-1 flex min-h-11 w-fit items-end rounded-control px-1 pb-1 type-caption font-semibold text-text-secondary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:text-text-disabled"
         disabled={isSending}
         onClick={() => onQuickMessage(similarBooksMessage(recommendation.title))}
@@ -344,7 +345,7 @@ function RecommendationCardList({
         <ul aria-label="장바구니 담기 결과" className="mt-2 space-y-1" role="status">
           {visibleRecommendations.filter((book) => results[book.id]).map((book) => (
             <li className="type-caption text-text-secondary" key={book.id}>
-              <span className="font-semibold text-text-primary">{book.title}</span>: {results[book.id]}
+              <span className="font-semibold text-text-primary">{displayBookTitle(book.title)}</span>: {results[book.id]}
             </li>
           ))}
         </ul>
@@ -410,7 +411,7 @@ function CartProposalPanel({
                     className="line-clamp-1 rounded-sm type-body-small font-semibold text-text-primary underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                     to={`/products/${item.productId}`}
                   >
-                    {item.itemName ?? `상품 #${item.productId}`}
+                    {item.itemName ? displayBookTitle(item.itemName) : `상품 #${item.productId}`}
                   </Link>
                   <p className="type-caption text-text-tertiary">
                     {proposalChangeLabel(item)}

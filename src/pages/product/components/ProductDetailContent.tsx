@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
+import { displayBookTitle } from "@/common/lib/bookTitle";
 import { BookCover } from "@/common/components/BookCover";
 import { isBlankCover } from "@/common/lib/blankCover";
 import { COVER_TRANSITION_NAME, type CoverPreview } from "@/common/lib/coverTransition";
@@ -263,7 +264,7 @@ export function ProductDetailContent({
   return (
     <article className="page-content">
       <DetailCoverHero
-        alt={`${product.itemName} 표지`}
+        alt={`${displayBookTitle(product.itemName)} 표지`}
         thumbnailUrl={product.thumbnailUrl}
         title={product.itemName}
       />
@@ -275,7 +276,7 @@ export function ProductDetailContent({
             {product.category}
           </p>
           <h2 className="mt-2 scroll-mt-16 break-words break-keep type-section text-text-primary" id="product-book-title" tabIndex={-1}>
-            {product.itemName}
+            {displayBookTitle(product.itemName)}
           </h2>
           <dl className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-text-secondary">
             <div>
