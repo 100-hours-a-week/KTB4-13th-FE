@@ -1,12 +1,15 @@
-const CONTACT_EMAIL = "bookjeok13@gmail.com";
+import { Link } from "react-router-dom";
+
+import { CONTACT_EMAIL, TERMS_PATH } from "@/common/lib/serviceInfo";
+
 const PROJECT_REPOSITORY_URL = "https://github.com/100-hours-a-week/KTB4-13th-wiki";
 const DATA4LIBRARY_URL = "https://data4library.kr/";
 
 const LINK_CLASS_NAME =
   "underline underline-offset-2 hover:text-text-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
-// Business registration and terms links are left out on purpose: the service has no business operator yet
-// and the policy texts are still internal drafts (FS-4 6.3).
+// Business registration is left out on purpose: the service has no business operator. The privacy policy link
+// is added once the BE confirms what is erased on withdrawal (#196).
 export function HomeFooter() {
   return (
     <footer className="page-content mt-3 border-t border-hairline pt-6 pb-2">
@@ -58,7 +61,13 @@ export function HomeFooter() {
         </p>
       </div>
 
-      <p className="mt-4 type-caption text-text-tertiary">© 2026 북적북적</p>
+      <p className="mt-4 type-caption text-text-tertiary">
+        <Link className={LINK_CLASS_NAME} to={TERMS_PATH}>
+          이용약관
+        </Link>
+      </p>
+
+      <p className="mt-2 type-caption text-text-tertiary">© 2026 북적북적</p>
     </footer>
   );
 }
