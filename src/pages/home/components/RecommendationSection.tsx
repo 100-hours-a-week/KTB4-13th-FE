@@ -136,9 +136,10 @@ const CoverflowSlot = memo(function CoverflowSlot({
         >
           <div className="book-lift-cover relative size-full overflow-hidden rounded-control bg-muted shadow-[0_14px_30px_-12px_rgba(36,33,31,0.38)] [&>div]:!h-full [&>div]:!aspect-auto [&>div]:!rounded-control [&>div]:!border-transparent">
             <BookCover alt={book.title} fallbackTitle={book.title} priority={isActive} radius="cover" thumbnailUrl={book.coverUrl} />
+            {/* Its own layer: the opacity changes every frame of a turn, and without one the whole cover and shadow repaint. */}
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 bg-black"
+              className="pointer-events-none absolute inset-0 bg-black will-change-[opacity]"
               ref={(node) => onShadeNode(slot, node)}
             />
           </div>
