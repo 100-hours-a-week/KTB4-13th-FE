@@ -18,7 +18,36 @@ export type ReviewCountResult =
 
 export type ReviewMutationResult =
   | { reviewId: number; ok: true }
-  | { ok: false; reason: "invalid-request" | "unauthorized" | "error" };
+  | {
+      ok: false;
+      reason:
+        | "no-reviewable-order"
+        | "already-reviewed"
+        | "edit-expired"
+        | "invalid-request"
+        | "unauthorized"
+        | "error";
+    };
+
+export type MyProductReviewResult =
+  | { ok: true; review: ProductReview | null }
+  | { ok: false };
+
+// BE ErrorCode: REVIEW_HAS_NOT_ORDER, REVIEW_ALREADY_REVIEWED, REVIEW_UPDATE_EXPIRED
+const REVIEW_ERROR_REASONS = {
+  E7000: "no-reviewable-order",
+  E7001: "already-reviewed",
+  E7002: "edit-expired",
+} as const;
+
+function reviewErrorReason(code: string | undefined) {
+  return code !== undefined && code in REVIEW_ERROR_REASONS
+    ? REVIEW_ERROR_REASONS[code as keyof typeof REVIEW_ERROR_REASONS]
+    : null;
+}
+
+const MY_REVIEW_PAGE_LIMIT = 100;
+const MY_REVIEW_MAX_PAGES = 5;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -113,6 +142,26 @@ export async function fetchProductReviewCount(
   }
 }
 
+// The list API has no "my review" filter, so walk pages until isMyReview shows up.
+export async function fetchMyProductReview(
+  productId: number,
+  signal?: AbortSignal,
+): Promise<MyProductReviewResult> {
+  for (let page = 0; page < MY_REVIEW_MAX_PAGES; page += 1) {
+    const result = await fetchProductReviews(
+      productId,
+      page * MY_REVIEW_PAGE_LIMIT,
+      MY_REVIEW_PAGE_LIMIT,
+      signal,
+    );
+    if (!result.ok) return { ok: false };
+    const review = result.data.reviews.find((item) => item.isMyReview);
+    if (review) return { ok: true, review };
+    if (!result.data.hasNext) return { ok: true, review: null };
+  }
+  return { ok: false };
+}
+
 export async function createProductReview(
   request: CreateProductReviewRequest,
 ): Promise<ReviewMutationResult> {
@@ -132,6 +181,8 @@ export async function createProductReview(
     );
 
     if (!result.ok) {
+      const reason = reviewErrorReason(result.error?.code);
+      if (reason) return { ok: false, reason };
       if (result.status === 400 || result.status === 404) {
         return { ok: false, reason: "invalid-request" };
       }
@@ -162,6 +213,8 @@ export async function updateProductReview(
       }),
     );
     if (!result.ok) {
+      const reason = reviewErrorReason(result.error?.code);
+      if (reason) return { ok: false, reason };
       if (result.status === 400 || result.status === 403 || result.status === 404) {
         return { ok: false, reason: "invalid-request" };
       }

@@ -6,8 +6,14 @@ import { RetryButton } from "@/common/components/RetryButton";
 import { Toast } from "@/common/components/Toast";
 import type {
   OrderHistoryEntry,
+  OrderHistoryItem,
   OrderStatus,
 } from "@/features/order/types/order";
+import {
+  useMyProductReviews,
+  type MyProductReviewState,
+} from "@/features/review/hooks/useMyProductReviews";
+import { isWithinReviewWindow } from "@/features/review/lib/reviewEligibility";
 
 const priceFormatter = new Intl.NumberFormat("ko-KR");
 const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
@@ -40,7 +46,56 @@ function formatOrderDate(createdAt: string) {
     : `${dateFormatter.format(date)} 주문`;
 }
 
-function OrderCard({ order }: { order: OrderHistoryEntry }) {
+const ACTION_LINK_CLASS =
+  "inline-flex min-h-11 items-center justify-center rounded-control border type-body-small font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+
+// Same rule BE checks on POST /reviews; a second review for the same order item is caught by myReview.
+function canWriteReview(order: OrderHistoryEntry, item: OrderHistoryItem) {
+  return (
+    order.status === "PAID" &&
+    order.payment !== null &&
+    item.quantity > item.canceledQuantity &&
+    isWithinReviewWindow(order.payment.paidAt)
+  );
+}
+
+function ReviewAction({
+  item,
+  myReview,
+  orderKey,
+}: {
+  item: OrderHistoryItem;
+  myReview: MyProductReviewState;
+  orderKey: string;
+}) {
+  if (myReview.kind === "loading") {
+    return (
+      <span aria-busy="true" className={`${ACTION_LINK_CLASS} border-border text-text-tertiary`}>
+        리뷰 확인 중
+      </span>
+    );
+  }
+  if (myReview.kind === "found") {
+    return (
+      <Link className={`${ACTION_LINK_CLASS} border-border text-text-primary hover:bg-muted`} to={`/products/${item.productId}/reviews`}>
+        내 리뷰 보기
+      </Link>
+    );
+  }
+  return (
+    <Link className={`${ACTION_LINK_CLASS} border-accent text-accent hover:bg-accent-soft`} to={`/products/${item.productId}/reviews/new?orderKey=${encodeURIComponent(orderKey)}&orderItemId=${item.orderItemId}`}>
+      리뷰 쓰기
+    </Link>
+  );
+}
+
+function OrderCard({
+  getMyReview,
+  order,
+}: {
+  getMyReview: (productId: number) => MyProductReviewState;
+  order: OrderHistoryEntry;
+}) {
   const currentPaidAmount = order.payment
     ? Math.max(0, order.payment.paidAmount - order.payment.cancelledPaidAmount)
     : order.totalPrice;
@@ -59,7 +114,9 @@ function OrderCard({ order }: { order: OrderHistoryEntry }) {
       </div>
 
       <ul className="mt-3 divide-y divide-hairline">
-        {order.items.map((item) => (
+        {order.items.map((item) => {
+          const isReviewable = canWriteReview(order, item);
+          return (
           <li className="py-3 first:pt-0 last:pb-0" key={item.orderItemId}>
             <div className="flex gap-3">
               <div className="w-14 shrink-0">
@@ -85,12 +142,13 @@ function OrderCard({ order }: { order: OrderHistoryEntry }) {
                 </p>
               </div>
             </div>
-            <div className={`mt-3 grid gap-2 ${order.status === "PAID" && item.quantity > item.canceledQuantity ? "grid-cols-2" : "grid-cols-1"}`}>
-              <Link className="inline-flex min-h-11 items-center justify-center rounded-control border border-border type-body-small font-semibold text-text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" to={`/products/${item.productId}`}>도서 상세</Link>
-              {order.status === "PAID" && item.quantity > item.canceledQuantity ? <Link className="inline-flex min-h-11 items-center justify-center rounded-control border border-accent type-body-small font-semibold text-accent hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" to={`/products/${item.productId}/reviews/new?orderKey=${encodeURIComponent(order.key)}&orderItemId=${item.orderItemId}`}>리뷰 쓰기</Link> : null}
+            <div className={`mt-3 grid gap-2 ${isReviewable ? "grid-cols-2" : "grid-cols-1"}`}>
+              <Link className={`${ACTION_LINK_CLASS} border-border text-text-primary hover:bg-muted`} to={`/products/${item.productId}`}>도서 상세</Link>
+              {isReviewable ? <ReviewAction item={item} myReview={getMyReview(item.productId)} orderKey={order.key} /> : null}
             </div>
           </li>
-        ))}
+          );
+        })}
       </ul>
 
       <div className="mt-4 flex items-center justify-between border-t border-hairline pt-4">
@@ -112,6 +170,12 @@ export function OrderHistoryList({
   orders,
   status,
 }: OrderHistoryListProps) {
+  const getMyReview = useMyProductReviews(
+    orders.flatMap((order) =>
+      order.items.filter((item) => canWriteReview(order, item)).map((item) => item.productId),
+    ),
+  );
+
   if (status === "loading") {
     return (
       <div aria-busy="true" className="page-content space-y-3 py-5">
@@ -156,7 +220,7 @@ export function OrderHistoryList({
 
   return (
     <div className="page-content space-y-3 py-5">
-      {orders.map((order) => <OrderCard key={order.key} order={order} />)}
+      {orders.map((order) => <OrderCard getMyReview={getMyReview} key={order.key} order={order} />)}
       {nextCursor !== null ? (
         <div aria-live="polite" className="flex flex-col items-center gap-2 pt-2">
           {hasLoadMoreError ? (
